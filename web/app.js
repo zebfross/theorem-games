@@ -33,6 +33,9 @@ const state = {
   phase: 'placing',       // 'placing' | 'pulling' | 'result'
   sim: null,
   raf: 0,
+  hinted: new Set(),   // regions the hint has pointed at
+  hintLevel: 0,
+  usedHint: false,
 };
 
 /* ---------- geometry helpers ---------- */
@@ -460,6 +463,44 @@ function simStep(sim) {
 const holds = (level, pinned) =>
   level.generators.some((g) => g.every((r) => pinned.has(r)));
 
+/** Regions that appear in every minimal solution.
+ *  These are the ones worth pointing at: naming one gives nothing away about
+ *  which solution to go for, and on all but a handful of levels there is at
+ *  least one. They are largely the spaces with only one or two corners, which
+ *  is the rule the game is really teaching. */
+function forcedRegions(level) {
+  const [first, ...rest] = level.generators;
+  if (!first) return [];
+  return first.filter((r) => rest.every((g) => g.includes(r)));
+}
+
+/** Fewest further pins that would make it hold, keeping what is placed. */
+function stillNeeded(level, pinned) {
+  return Math.min(...level.generators.map(
+    (g) => g.filter((r) => !pinned.has(r)).length));
+}
+
+/** The minimal solution closest to what the player has already placed.
+ *  Most levels have several, so showing an arbitrary one would often throw
+ *  away reasoning that was perfectly sound. */
+function nearestSolution(level, pinned, optimalOnly) {
+  // Generators are minimal by inclusion, which does not make them all the same
+  // size. When the answer is being shown outright it has to be one of the
+  // smallest, or it would not be the solution the level is scored against.
+  const pool = optimalOnly
+    ? level.generators.filter((g) => g.length === level.effectiveMinimum)
+    : level.generators;
+  let best = null;
+  let bestCost = Infinity;
+  for (const g of pool) {
+    const set = new Set(g);
+    const cost = g.filter((r) => !pinned.has(r)).length
+               + [...pinned].filter((r) => !set.has(r)).length;
+    if (cost < bestCost) { bestCost = cost; best = g; }
+  }
+  return best;
+}
+
 /* ---------- rendering ---------- */
 
 function svgEl(name, attrs) {
@@ -519,9 +560,11 @@ function renderBoard() {
     // Once the rope starts moving the shaded region no longer means anything —
     // it marks where a space used to be, not where it is.
     const shade = state.phase === 'placing' && state.pinned.has(s.n);
+    const glow = state.phase === 'placing'
+      && state.hinted.has(s.n) && !state.pinned.has(s.n);
     const poly = svgEl('polygon', {
       points: s.polygon.map((p) => p.join(',')).join(' '),
-      class: 'region' + (shade ? ' pinned' : ''),
+      class: 'region' + (shade ? ' pinned' : '') + (glow ? ' hinted' : ''),
     });
     if (state.phase === 'placing') {
       poly.addEventListener('click', () => togglePin(s.n));
@@ -579,6 +622,7 @@ function renderStatus(liveCrossings) {
 
   el('pull').disabled = state.phase !== 'placing';
   el('clear').disabled = state.phase !== 'placing' || state.pinned.size === 0;
+  el('stuck').disabled = state.phase === 'pulling';
 }
 
 /* ---------- interaction ---------- */
@@ -589,6 +633,7 @@ function togglePin(n) {
     state.pinned.delete(n);
     state.pinAt.delete(n);
   } else {
+    state.hinted.delete(n);
     const s = state.level.sockets.find((k) => k.n === n);
     state.pinned.add(n);
     state.pinAt.set(n, { x: s.x, y: s.y });
@@ -622,6 +667,8 @@ function pullTight() {
   renderStatus(state.level.crossings);
   renderBoard();
 
+  el('hint').textContent = '';          // the advice is spent once you pull
+  el('hint').className = '';
   record(state.sim);                    // frame 0: the rope as you laid it out
   let frame = 0;
   const started = performance.now();
@@ -666,7 +713,11 @@ function finish() {
     el('verdict-detail').textContent = perfect
       ? `All ${lv.crossings} crossings survived, and you used the fewest pins possible (${lv.effectiveMinimum}).`
       : `All ${lv.crossings} crossings survived with ${state.pinned.size} pins. It can be done with ${lv.effectiveMinimum}.`;
-    recordBest(lv.id, state.pinned.size);
+    if (state.usedHint) {
+      localStorage.setItem('unpinning.hinted.' + lv.id, '1');
+    } else {
+      recordBest(lv.id, state.pinned.size);
+    }
   } else if (left >= lv.crossings) {
     // Curve shortening found a locally taut configuration and stopped, the way
     // real rope can jam when you haul on it. A jam is luck, not a lock: these
@@ -706,6 +757,65 @@ function scrubTo(i) {
   board.setAttribute('viewBox', frame.view.join(' '));
   updateRope();
   renderStatus(frame.crossings);
+}
+
+/** One button that gives a little more each press, so a level is not spent by
+ *  the first request for help. */
+function nudge() {
+  const lv = state.level;
+  if (state.phase !== 'placing') resetLevel(true);   // come back from a result
+  state.usedHint = true;
+  state.hintLevel = Math.min(3, (state.hintLevel || 0) + 1);
+  const hint = el('hint');
+  hint.className = 'tip';
+
+  if (state.hintLevel === 1) {
+    const need = stillNeeded(lv, state.pinned);
+    hint.textContent = need === 0
+      ? 'What you have already holds it — pull it tight and see.'
+      : `You need at least ${need} more pin${need === 1 ? '' : 's'} from here. `
+        + 'Adding pins can only ever help, so nothing you have placed needs '
+        + 'taking out to make it hold.';
+    renderStatus();
+    return;
+  }
+
+  if (state.hintLevel === 2) {
+    const forced = forcedRegions(lv).filter((r) => !state.pinned.has(r));
+    const pick = forced.length
+      ? forced[0]
+      : nearestSolution(lv, state.pinned).find((r) => !state.pinned.has(r));
+    if (pick === undefined) {
+      hint.textContent = 'Every space a solution needs is already pinned.';
+      renderStatus();
+      return;
+    }
+    state.hinted.add(pick);
+    hint.textContent = forced.length
+      ? 'The glowing space has to be pinned in every solution — look at how '
+        + 'few corners it has.'
+      : 'Try pinning the glowing space.';
+    renderBoard();
+    renderStatus();
+    return;
+  }
+
+  const answer = nearestSolution(lv, state.pinned, true);
+  const kept = answer.filter((r) => state.pinned.has(r)).length;
+  const dropped = [...state.pinned].filter((r) => !answer.includes(r)).length;
+  state.pinned = new Set(answer);
+  state.pinAt = new Map(answer.map((n) => {
+    const s = lv.sockets.find((k) => k.n === n);
+    return [n, { x: s.x, y: s.y }];
+  }));
+  state.hinted = new Set(answer);
+  hint.textContent =
+    `Here is a solution with the fewest pins (${answer.length}). `
+    + (kept ? `It keeps ${kept} of yours` : 'It uses none of yours')
+    + (dropped ? `, and sets ${dropped} aside. ` : '. ')
+    + 'Pull it tight to see it hold.';
+  renderBoard();
+  renderStatus();
 }
 
 function resetLevel(keepPins) {
@@ -756,7 +866,9 @@ function renderPicker() {
       const b = document.createElement('button');
       b.className = 'chip';
       const best = bestFor(l.id);
+      const assisted = localStorage.getItem('unpinning.hinted.' + l.id);
       if (best) b.classList.add(best === l.effectiveMinimum ? 'perfect' : 'solved');
+      else if (assisted) b.classList.add('assisted');
       if (state.level && l.id === state.level.id) b.classList.add('current');
       b.textContent = `${l.index}·${l.effectiveMinimum}`;
       b.title = `${l.id} — ${l.effectiveMinimum} pins minimum` + (best ? `, your best ${best}` : '');
@@ -773,6 +885,9 @@ async function loadLevel(id) {
   const res = await fetch(`data/levels/${encodeURIComponent(id)}.json`);
   state.level = await res.json();
   state.viewBox = null;
+  state.hinted = new Set();
+  state.hintLevel = 0;
+  state.usedHint = false;
   localStorage.setItem('unpinning.last', id);
   resetLevel(false);
   renderPicker();
@@ -794,6 +909,8 @@ async function boot() {
   el('pull').addEventListener('click', pullTight);
   el('clear').addEventListener('click', () => resetLevel(false));
   el('again').addEventListener('click', () => resetLevel(true));
+  el('stuck').addEventListener('click', nudge);
+  el('stuck-result').addEventListener('click', nudge);
   el('scrub-range').addEventListener('input', (ev) => scrubTo(Number(ev.target.value)));
   el('next').addEventListener('click', nextLevel);
   el('browse').addEventListener('click', () => {
