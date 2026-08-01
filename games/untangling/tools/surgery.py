@@ -257,6 +257,27 @@ def _resample(points, spacing):
     return out
 
 
+def _accept(cand, want, spacing):
+    """The drawing, if it really is the diagram the move predicts, else None.
+
+    Resampling has to happen inside the check, not after it. Evening out the
+    points moves them, and moving them can add or lose a crossing, so a
+    candidate verified before resampling is not necessarily the diagram that
+    comes back — and the caller then draws the next move on top of something
+    the maths never sanctioned. Prefer the resampled form, since keeping the
+    density even is what makes later edits predictable, and fall back to the
+    candidate as built when the resample is what broke it.
+    """
+    for pts in (_resample(cand, spacing), cand):
+        try:
+            got = diagram.from_polyline(pts)
+        except ValueError:
+            continue
+        if got.canonical() == want:
+            return pts
+    return None
+
+
 def apply_collapse(points, dia, crossings, spacing=6.0):
     """Redraw after collapsing these crossings, or None if it could not be done.
 
@@ -279,12 +300,9 @@ def apply_collapse(points, dia, crossings, spacing=6.0):
                 for fade in (2, 5, 10):
                     cands += contract_lens(points, dia, face, delta, fade)
                 for cand in cands:
-                    try:
-                        got = diagram.from_polyline(cand)
-                    except ValueError:
-                        continue
-                    if got.canonical() == want:
-                        return _resample(cand, spacing)
+                    ok = _accept(cand, want, spacing)
+                    if ok is not None:
+                        return ok
         return None
 
     if len(crossings) == 1:
@@ -297,13 +315,9 @@ def apply_collapse(points, dia, crossings, spacing=6.0):
             cut = cut_loop(points, dia, pa, pb)
             if cut is None:
                 continue
-            cut = _resample(cut, spacing)
-            try:
-                got = diagram.from_polyline(cut)
-            except ValueError:
-                continue
-            if got.canonical() == want:
-                return cut
+            ok = _accept(cut, want, spacing)
+            if ok is not None:
+                return ok
         return None
 
     return None

@@ -72,8 +72,12 @@ every edit is accepted only if rebuilding a diagram from the new drawing gives
 back exactly what the combinatorial move predicts. That check is what makes
 approximate geometry safe to attempt at all.
 
-**It currently succeeds on 90% of bigon collapses.** What works and what does
-not:
+**It succeeds on 84% of bigon collapses, and 88% of levels can be played all
+the way to the simple curve in par using only moves that can be drawn.** That
+last number is the one that matters: a level is shippable when the drawing
+never blocks a best-possible route, not when every single move draws.
+
+What works and what does not:
 
 - Cutting a loop out for an R1 is exact. It never comes up here though: the
   source catalogue holds only irreducible curves, so across all 498 there are
@@ -89,13 +93,22 @@ not:
 - Contracting the lens — replacing both arcs by the line midway between them,
   parting them by a whisker, and fading the parting into the curve either side
   — is what an R2 physically is: the two crossings slide together and cancel.
-  Offering both constructions and keeping whichever verifies takes it to 90%,
+  Offering both constructions and keeping whichever verifies takes it to 84%,
   because they fail on different lenses.
+- The self-check had a hole worth remembering: the drawing was evened out
+  *after* being verified, and evening it out moves points, which can add or
+  lose a crossing. So the drawing handed back was not always the one that
+  passed. It read as a higher success rate than was real, and worse, the next
+  move was then drawn on top of a diagram the maths never sanctioned — one
+  seven-crossing curve wandered into 301 states when only 5 are reachable.
+  Resampling now happens inside the check.
 
 Still to do:
 
-- **Closing the last 10%.** A level needs every reachable diagram drawn, so
-  even one gap can strand part of a level.
+- **Closing the gaps**, or shipping around them. The 12% that fall short are
+  almost all 10 crossings and up, where a longer optimal route gives the
+  drawing more chances to block it. Shipping only the levels that verify is a
+  perfectly good first pack; the alternative is a better construction.
 - **Speed**, partly. Each collapse tries about eighty candidate drawings and
   checks each by rebuilding the whole arrangement, so that rebuild is the
   entire cost of building a pack. Finding the crossings by a grid over the
