@@ -117,7 +117,11 @@ function status(readout) {
   el('goal-text').innerHTML = readout === undefined ? d.goal : `${d.goal} &nbsp;·&nbsp; ${readout}`;
   const best = bestFor(app.level.id);
   el('score').textContent = d.status + (best ? ` · your best ${best}` : '');
-  el('run').disabled = app.phase !== 'placing' || !app.game.runnable(app.level, app.play);
+  // A game without a simulation is played move by move: there is nothing to
+  // run, so the button goes away rather than sitting there permanently dead.
+  el('run').hidden = !app.game.sim;
+  el('run').disabled = app.phase !== 'placing'
+    || !(app.game.runnable ? app.game.runnable(app.level, app.play) : false);
   el('clear').disabled = app.phase !== 'placing';
   el('stuck').disabled = app.phase === 'running';
 }
@@ -130,7 +134,14 @@ board.addEventListener('click', (ev) => {
   const p = pt.matrixTransform(board.getScreenCTM().inverse());
   const r = app.game.click(app.level, app.play, p) || {};
   if (r.message) { say(r.message, false); return; }
-  if (r.changed) { say(''); draw(); status(); }
+  if (r.changed) {
+    say('');
+    draw();
+    status();
+    // Move by move, a click can be the last one. The game says when, since
+    // only it knows whether the position it is now in is a finished one.
+    if (app.game.over && app.game.over(app.level, app.play)) finishRun();
+  }
 });
 
 function say(text, isTip = true) {

@@ -56,6 +56,24 @@ click(level, play, point) // -> {changed} or {message} for a miss
 you can import along with `svgEl` from the engine. Redraws happen whenever the
 engine thinks state changed; keep it cheap enough to call freely.
 
+## Games without a run
+
+The summary above — arrange, run, watch — is the common shape, not the only
+one. A game played move by move has no separate run: each click *is* a move,
+and the level ends when the position says it has. Leave `sim` and `verb` out
+and the run button disappears; supply `over` instead and the engine goes
+straight to the verdict the moment a click returns true from it.
+
+```js
+over(level, play)  // -> has the level just ended?
+```
+
+Everything else is unchanged: `click` still reports `{changed}`, `verdict`
+still decides the outcome, and hints and best scores work the same. `verdict`
+is handed `null` where the sim would be, and with no recorded frames the
+scrubber stays hidden, since there is nothing to replay that the player did
+not already watch happen.
+
 ## The run
 
 Frames are recorded by *distance moved*, not on a step timer, so the scrub bar
