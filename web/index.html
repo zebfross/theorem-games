@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unpinning</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Unpinning</h1>
+  <button id="browse" class="ghost">All puzzles</button>
+</header>
+
+<main>
+  <section id="board-pane">
+    <div id="goal">
+      <span id="goal-text"></span>
+      <span id="pins-used"></span>
+    </div>
+
+    <div id="stage">
+      <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div id="scrub" hidden>
+      <span>Loose</span>
+      <input id="scrub-range" type="range" min="0" max="0" value="0"
+             aria-label="Scrub through the pull">
+      <span>Tight</span>
+    </div>
+
+    <div id="verdict" hidden>
+      <p id="verdict-title"></p>
+      <p id="verdict-detail"></p>
+      <div class="verdict-actions">
+        <button id="again">Try again</button>
+        <button id="next" class="primary">Next puzzle</button>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="clear" class="ghost">Clear pins</button>
+      <button id="pull" class="primary">Pull it tight</button>
+    </div>
+
+    <p id="hint"></p>
+  </section>
+
+  <aside id="picker" hidden>
+    <div class="picker-head">
+      <h2>All puzzles</h2>
+      <button id="close-picker" class="ghost">Close</button>
+    </div>
+    <p class="picker-note">Grouped by size. The number is the fewest pins that
+    can hold it.</p>
+    <div id="picker-list"></div>
+  </aside>
+</main>
+
+<footer>
+  <p>
+    Puzzles from the <a href="https://christopherlloyd.github.io/LooPindex/">LooPindex</a>
+    catalog by Christopher-Lloyd Simon and Ben Stucky, accompanying
+    <a href="https://arxiv.org/abs/2405.16216"><i>The pinning ideal of a
+    multiloop</i></a>. Catalog and this game are GPL-3.0.
+  </p>
+  <p id="coverage"></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

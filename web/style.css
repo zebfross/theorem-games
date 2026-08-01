@@ -1,0 +1,206 @@
+:root {
+  --felt: #1d3a30;
+  --felt-deep: #16302733;
+  --ink: #f2ece1;
+  --ink-dim: #a8b8ae;
+  --rope: #d9a441;
+  --rope-dark: #8a5a1c;
+  --brass: #e8c37a;
+  --brass-dark: #6b4a12;
+  --good: #6fdc9a;
+  --bad: #ef7a6a;
+  --line: #ffffff1f;
+}
+
+* { box-sizing: border-box; }
+
+/* An explicit display rule outranks the UA style for [hidden], so without this
+   the flex rows below ignore the attribute entirely. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(ellipse at 50% 0%, #24473b 0%, var(--felt) 60%, #14261f 100%);
+  color: var(--ink);
+  font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem 0.25rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+main {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+#board-pane { flex: 1 1 auto; min-width: 0; }
+
+#goal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 0.2rem;
+  font-size: 0.98rem;
+}
+
+#goal-text { color: var(--ink); }
+#goal-text b { color: var(--brass); font-weight: 650; }
+#pins-used { color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+#stage { position: relative; }
+
+#board {
+  display: block;
+  width: 100%;
+  height: min(52vh, 520px);
+  background: linear-gradient(160deg, #ffffff0a, #00000026);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  touch-action: manipulation;
+}
+
+.region { fill: transparent; cursor: pointer; transition: fill 0.15s; }
+.region:hover { fill: #ffffff12; }
+.region.pinned { fill: #e8c37a1f; }
+.region:not(.pinned):hover { fill: #ffffff1c; }
+
+.rope-shadow { fill: none; stroke: #00000055; stroke-linejoin: round; stroke-linecap: round; }
+.rope-core { fill: none; stroke: var(--rope-dark); stroke-linejoin: round; stroke-linecap: round; }
+.rope-top { fill: none; stroke: var(--rope); stroke-linejoin: round; stroke-linecap: round; }
+
+/* Pins are drawn over the regions, so without this they swallow the click and
+   the region underneath never sees it — making a placed pin impossible to
+   click off again. Let the click through to the region instead. */
+.pin-shadow, .pin-head, .pin-dot { pointer-events: none; }
+
+.pin-shadow { fill: #00000055; }
+.pin-head { fill: var(--brass); stroke: var(--brass-dark); }
+.pin-dot { fill: #00000066; }
+
+/* In normal flow, not floating over the board — it used to cover the bottom of
+   the finished knot, which is the one thing you want to look at. */
+#verdict {
+  margin-top: 0.85rem;
+  padding: 0.8rem 1rem;
+  background: #0d1a16cc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+#scrub {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+}
+#scrub-range {
+  flex: 1 1 auto;
+  accent-color: var(--brass);
+  cursor: grab;
+}
+#scrub-range:active { cursor: grabbing; }
+#verdict p { margin: 0 0 0.35rem; }
+#verdict-title { font-weight: 650; font-size: 1.05rem; }
+#verdict.win #verdict-title { color: var(--good); }
+#verdict.lose #verdict-title { color: var(--bad); }
+#verdict-detail { color: var(--ink-dim); font-size: 0.92rem; }
+.verdict-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+
+#controls { display: flex; gap: 0.6rem; margin-top: 0.85rem; }
+
+#hint {
+  color: var(--ink-dim);
+  font-size: 0.88rem;
+  margin: 0.85rem 0.2rem 0;
+  min-height: 1.5em;
+}
+
+button {
+  font: inherit;
+  font-size: 0.94rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #ffffff12;
+  color: var(--ink);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: #ffffff20; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { background: var(--brass); border-color: var(--brass); color: #241a05; font-weight: 600; }
+button.primary:hover:not(:disabled) { background: #f0d093; }
+button.ghost { background: transparent; }
+
+#picker {
+  flex: 0 0 300px;
+  max-height: 78vh;
+  overflow-y: auto;
+  padding: 0.9rem 1rem;
+  background: #0d1a1699;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.picker-head { display: flex; justify-content: space-between; align-items: center; }
+.picker-head h2 { font-size: 1rem; margin: 0; }
+.picker-note { color: var(--ink-dim); font-size: 0.82rem; margin: 0.4rem 0 0.8rem; }
+.group-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-dim);
+  margin: 0.9rem 0 0.4rem;
+}
+.group { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+  padding: 0.22rem 0.5rem;
+  font-size: 0.82rem;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #ffffff0d;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.chip:hover { background: #ffffff20; }
+.chip.current { outline: 2px solid var(--brass); }
+.chip.solved { color: var(--good); border-color: #6fdc9a55; }
+.chip.perfect { background: #6fdc9a2b; color: var(--good); border-color: #6fdc9a88; }
+
+footer {
+  max-width: 1180px;
+  margin: 2rem auto 0;
+  padding: 1rem 1.25rem 2rem;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--line);
+}
+footer p { margin: 0.3rem 0; }
+footer a { color: var(--brass); }
+
+@media (max-width: 860px) {
+  main { flex-direction: column; }
+  #picker { flex: 1 1 auto; width: 100%; max-height: 60vh; }
+}

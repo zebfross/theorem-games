@@ -1,0 +1,12 @@
+# Upstream catalog clone, ~733MB. Only needed to regenerate web/data:
+#   git clone --depth 1 https://github.com/ChristopherLloyd/LooPindex.git reference/LooPindex
+#   python3 tools/extract_levels.py
+reference/
+
+# web/data/ is generated, but is committed on purpose: rebuilding it needs the
+# 733MB clone above, so ignoring it would leave a fresh checkout unable to run
+# the game at all.
+
+__pycache__/
+*.pyc
+.DS_Store
