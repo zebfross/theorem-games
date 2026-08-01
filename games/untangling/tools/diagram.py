@@ -1,31 +1,37 @@
 """Generic closed curves in the plane, as combinatorial diagrams.
 
-A generic closed curve is a 4-valent plane graph in which the curve goes
-straight through every vertex. The structure is carried by *darts*: each
-crossing owns four, numbered anticlockwise, and
+A generic closed curve is a 4-valent plane graph the curve runs straight
+through at every vertex. Two pieces of data pin one down:
 
-    alpha   pairs the two darts of an edge
-    i -> i+2  at a vertex pairs the darts the curve runs straight between
+    code    the crossings in the order the curve meets them, each appearing
+            twice — the Gauss code
+    rings   for each crossing, its four dart-ends in anticlockwise order
 
-Faces are the orbits of `sigma . alpha`, so a face's degree is how many
-crossings sit on its boundary. That is what the moves key off:
+A dart is `(position in the code, 'in' or 'out')`, so `code` alone says which
+darts are joined by an edge: the out of one visit meets the in of the next.
+`rings` supplies the anticlockwise order the drawing had, which `code` cannot.
+Rings are stored against a crossing's own two visits rather than absolute
+positions, so deleting crossings never has to renumber them.
 
-    degree 1   a monogon, removable by an R1, losing one crossing
-    degree 2   a bigon, removable by an R2, losing two
-    degree 3   a triangle, flippable by an R3, losing none
+Faces are the orbits of `sigma . alpha`, and a face's degree is the number of
+crossings around it, which is exactly what the moves key off:
 
-Chang and Erickson show a curve with n crossings needs Theta(n^{3/2}) such
-moves to become simple, which is the game: untangle it in as few as you can.
+    1 corner, a monogon    R1 collapses it, losing one crossing
+    2 corners, a bigon     R2 collapses it, losing two
+    3 corners, a triangle  R3 flips it, losing none
 
-The structure is read off an actual drawing rather than built abstractly,
-because a drawing is what the game has to show anyway, and the anticlockwise
-order at a crossing is right there in the geometry.
+Collapsing is a deletion from the code and nothing else: pulling the strands
+apart does not disturb the order in which the curve meets everything else.
+
+Chang and Erickson show a curve with n crossings needs Theta(n^{3/2}) of these
+moves to become simple, which is the game.
 """
 
 import math
 from itertools import combinations
 
 EPS = 1e-9
+IN, OUT = 0, 1
 
 
 def _seg_intersect(p, q, r, s):
@@ -43,110 +49,131 @@ def _seg_intersect(p, q, r, s):
 
 
 class Diagram:
-    """A closed curve's crossings, darts and faces.
+    def __init__(self, code, rings, points=None):
+        self.code = list(code)           # crossing id per visit, each twice
+        self.rings = {c: list(r) for c, r in rings.items()}   # c -> [(k, side)]
+        self.points = points             # optional crossing coordinates
 
-    Built from a closed polyline. `visits` is the curve read as a cyclic
-    sequence of (crossing, strand) pairs — the Gauss code with the strand
-    saying which of the two passes through that crossing this is.
-    """
-
-    def __init__(self, crossings, darts, alpha, visits):
-        self.crossings = crossings      # index -> (x, y)
-        self.darts = darts              # index -> (crossing, slot 0..3)
-        self.alpha = alpha              # dart -> dart, along an edge
-        self.visits = visits            # cyclic [(crossing, 0 or 1), ...]
-
-    # --- structure -------------------------------------------------------
+    # --- basics ----------------------------------------------------------
 
     @property
     def n(self):
-        return len(self.crossings)
+        return len(self.rings)
+
+    @property
+    def length(self):
+        return len(self.code)
+
+    def visits(self, c):
+        """The two code positions where the curve meets crossing c."""
+        return [i for i, x in enumerate(self.code) if x == c]
+
+    def dart(self, pos, side):
+        return (pos, side)
+
+    def alpha(self, d):
+        pos, side = d
+        return ((pos + 1) % self.length, IN) if side == OUT else ((pos - 1) % self.length, OUT)
 
     def sigma(self, d):
         """Next dart anticlockwise at the same crossing."""
-        c, slot = self.darts[d]
-        return self.dart_at(c, (slot + 1) % 4)
-
-    def straight(self, d):
-        """The dart the curve runs straight on to, through the crossing."""
-        c, slot = self.darts[d]
-        return self.dart_at(c, (slot + 2) % 4)
-
-    def dart_at(self, c, slot):
-        return self._index[(c, slot)]
+        pos, side = d
+        c = self.code[pos]
+        k = 0 if self.visits(c)[0] == pos else 1
+        ring = self.rings[c]
+        i = ring.index((k, side))
+        nk, nside = ring[(i + 1) % 4]
+        return (self.visits(c)[nk], nside)
 
     def faces(self):
-        """Orbits of sigma . alpha, as lists of darts."""
         seen = set()
         out = []
-        for d in range(len(self.darts)):
-            if d in seen:
-                continue
-            face = []
-            cur = d
-            while cur not in seen:
-                seen.add(cur)
-                face.append(cur)
-                cur = self.sigma(self.alpha[cur])
-            out.append(face)
+        for pos in range(self.length):
+            for side in (IN, OUT):
+                d = (pos, side)
+                if d in seen:
+                    continue
+                face = []
+                cur = d
+                while cur not in seen:
+                    seen.add(cur)
+                    face.append(cur)
+                    cur = self.sigma(self.alpha(cur))
+                out.append(face)
         return out
 
     def face_degrees(self):
         return sorted(len(f) for f in self.faces())
 
-    # --- what the player can do -----------------------------------------
+    def valid(self):
+        """Euler's formula, the one check that catches a botched move."""
+        if self.n == 0:
+            return self.length == 0
+        return self.n - 2 * self.n + len(self.faces()) == 2
+
+    # --- moves -----------------------------------------------------------
 
     def moves(self):
-        """Faces that can be played, as (kind, face).
-
-        A face of degree 1 or 2 can be collapsed; one of degree 3 can be
-        flipped. The outer face is not special here: on the sphere it is a
-        face like any other, and a curve drawn with a monogon on the outside
-        is still reducible.
-        """
+        """Playable faces, as (kind, crossings, face)."""
         out = []
         for f in self.faces():
+            cs = sorted({self.code[pos] for pos, _s in f})
             if len(f) == 1:
-                out.append(('R1', f))
+                out.append(('R1', cs, f))
             elif len(f) == 2:
-                out.append(('R2', f))
+                out.append(('R2', cs, f))
             elif len(f) == 3:
-                out.append(('R3', f))
+                out.append(('R3', cs, f))
         return out
+
+    def collapse(self, crossings):
+        """Remove these crossings — an R1 on one, an R2 on two.
+
+        Pulling the strands apart leaves the order in which the curve meets
+        everything else exactly as it was, so the whole move is a deletion
+        from the code. Rings are held against a crossing's own visits, so the
+        survivors need no adjusting at all.
+        """
+        gone = set(crossings)
+        code = [c for c in self.code if c not in gone]
+        rings = {c: r for c, r in self.rings.items() if c not in gone}
+        return Diagram(code, rings)
 
     # --- identity --------------------------------------------------------
 
-    def gauss(self):
-        """Canonical Gauss code, for recognising a diagram already seen.
+    def canonical(self):
+        """A key that is the same for any two drawings of the same diagram.
 
-        Relabelled by order of first appearance, then minimised over every
-        rotation and both directions, so the same curve read from anywhere
-        gives the same string.
+        Minimised over where the reading starts, with crossings relabelled by
+        first appearance. Reflections are left as distinct, which only means
+        a search explores a mirror pair separately rather than getting an
+        answer wrong.
         """
-        seq = [c for c, _s in self.visits]
-        n = len(seq)
         best = None
-        for src in (seq, seq[::-1]):
-            for r in range(n):
-                rot = src[r:] + src[:r]
-                relabel = {}
-                out = []
-                for c in rot:
-                    if c not in relabel:
-                        relabel[c] = len(relabel)
-                    out.append(relabel[c])
-                key = tuple(out)
-                if best is None or key < best:
-                    best = key
+        L = self.length
+        if L == 0:
+            return ((), ())
+        for r in range(L):
+            rot = self.code[r:] + self.code[:r]
+            label = {}
+            seq = []
+            for c in rot:
+                if c not in label:
+                    label[c] = len(label)
+                seq.append(label[c])
+            rings = tuple(
+                tuple(self.rings[c]) for c in sorted(label, key=lambda x: label[x]))
+            key = (tuple(seq), rings)
+            if best is None or key < best:
+                best = key
         return best
 
 
 def from_polyline(points):
-    """Build a diagram from a closed polyline, or raise if it is not generic."""
+    """Build a diagram from a closed polyline."""
     n = len(points)
     segs = [(points[i], points[(i + 1) % n]) for i in range(n)]
 
-    # every crossing, with where along each segment it falls
     hits = {}
     for i, j in combinations(range(len(segs)), 2):
         if abs(i - j) <= 1 or (i == 0 and j == len(segs) - 1):
@@ -155,77 +182,76 @@ def from_polyline(points):
         if r is None:
             continue
         t, u, pt = r
-        hits.setdefault(i, []).append((t, pt, j))
-        hits.setdefault(j, []).append((u, pt, i))
+        hits.setdefault(i, []).append((t, pt))
+        hits.setdefault(j, []).append((u, pt))
 
-    # walk the curve, meeting crossings in order
     order = []
-    coords = {}
+    ids = {}
+    coords = []
     for i in range(len(segs)):
-        for t, pt, _other in sorted(hits.get(i, [])):
+        for t, pt in sorted(hits.get(i, [])):
             key = (round(pt[0], 6), round(pt[1], 6))
-            if key not in coords:
-                coords[key] = len(coords)
-            order.append((coords[key], key, i, t))
-    # The direction the curve is actually travelling as it passes each
-    # crossing. It has to be the tangent of the segment the crossing sits on:
-    # the chord to the next crossing can point somewhere else entirely on a
-    # curve that wanders in between, and the anticlockwise order round a
-    # crossing is exactly what the whole structure rests on.
+            if key not in ids:
+                ids[key] = len(ids)
+                coords.append(key)
+            order.append((ids[key], i))
+
+    if not order:
+        return Diagram([], {}, [])
+
+    code = [c for c, _i in order]
+    for c in range(len(coords)):
+        if code.count(c) != 2:
+            raise ValueError('not a generic curve: a crossing was not met twice')
+
+    # The anticlockwise order at a crossing has to come from the tangent of the
+    # segment the crossing sits on. The chord to the neighbouring crossing
+    # points somewhere else entirely on a curve that wanders in between, and
+    # everything here rests on this order being right.
     tangent = []
-    for _c, _key, i, _t in order:
+    for _c, i in order:
         (ax, ay), (bx, by) = segs[i]
         tangent.append(math.atan2(by - ay, bx - ax))
 
-    crossings = [None] * len(coords)
-    for key, idx in coords.items():
-        crossings[idx] = key
-    if not crossings:
-        return Diagram([], [], {}, [])
+    rings = {}
+    for c in range(len(coords)):
+        vs = [p for p, x in enumerate(code) if x == c]
+        ends = []
+        for k, p in enumerate(vs):
+            ends.append(((tangent[p] + math.pi) % (2 * math.pi), (k, IN)))
+            ends.append((tangent[p] % (2 * math.pi), (k, OUT)))
+        ends.sort()
+        rings[c] = [tag for _a, tag in ends]
 
-    seen = {}
-    visits = []
-    for c, _key, _i, _t in order:
-        strand = 1 if c in seen else 0
-        seen[c] = True
-        visits.append((c, strand))
-    if any(sum(1 for c, _ in visits if c == k) != 2 for k in range(len(crossings))):
-        raise ValueError('not a generic curve: a crossing was not met twice')
+    return Diagram(code, rings, coords)
 
-    # four darts per crossing, sorted anticlockwise by the direction each
-    # points away from it: the tangent forwards, and the tangent reversed
-    incident = {c: [] for c in range(len(crossings))}
-    for pos, (c, _s) in enumerate(visits):
-        incident[c].append((tangent[pos] + math.pi, ('in', pos)))
-        incident[c].append((tangent[pos], ('out', pos)))
 
-    darts = []
-    index = {}
-    role = {}
-    for c in range(len(crossings)):
-        ring = sorted(incident[c], key=lambda z: z[0] % (2 * math.pi))
-        if len(ring) != 4:
-            raise ValueError('not a generic curve: a crossing had %d ends' % len(ring))
-        for slot, (_ang, tag) in enumerate(ring):
-            d = len(darts)
-            darts.append((c, slot))
-            index[(c, slot)] = d
-            role[d] = tag
+def reduce_bfs(dia, limit=200000):
+    """Fewest collapses that make the curve simple, or None if stuck.
 
-    # an edge joins the dart leaving one visit to the dart entering the next
-    out_dart = {}
-    in_dart = {}
-    for d, tag in role.items():
-        (kind, pos) = tag
-        (out_dart if kind == 'out' else in_dart)[pos] = d
-    alpha = {}
-    for pos in range(len(visits)):
-        a = out_dart[pos]
-        b = in_dart[(pos + 1) % len(visits)]
-        alpha[a] = b
-        alpha[b] = a
-
-    dia = Diagram(crossings, darts, alpha, visits)
-    dia._index = index
-    dia._role = role
-    return dia
+    Only R1 and R2 are tried here; the R3 flip is not implemented yet, so a
+    curve that needs one to expose a monogon or bigon comes back unsolved.
+    How often that happens is the point of measuring.
+    """
+    from collections import deque
+    start = dia.canonical()
+    seen = {start: 0}
+    q = deque([(dia, 0)])
+    explored = 0
+    while q:
+        cur, d = q.popleft()
+        explored += 1
+        if cur.n == 0:
+            return d, len(seen), explored
+        if explored > limit:
+            return None, len(seen), explored
+        for kind, cs, _f in cur.moves():
+            if kind == 'R3':
+                continue
+            nxt = cur.collapse(cs)
+            key = nxt.canonical()
+            if key in seen:
+                continue
+            seen[key] = d + 1
+            q.append((nxt, d + 1))
+    return None, len(seen), explored

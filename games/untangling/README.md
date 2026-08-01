@@ -14,8 +14,32 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Not playable yet.** The combinatorial layer is built and checked; the moves
-themselves, the solver and the drawing are not.
+**Not playable yet.** The combinatorial layer, the collapsing moves and the
+solver are built and checked. The drawing and the engine hook are not.
+
+### What the solver settled
+
+Run over all 498 single-curve drawings in the Unpinning pack, two seconds
+altogether:
+
+| crossings | reduce with R1/R2 | need R3 | par | states, median/max |
+| --- | --- | --- | --- | --- |
+| 4-7 | 16 | 0 | 2-4 | 8-28 |
+| 8 | 26 | 1 | 4-5 | 28 / 36 |
+| 9 | 99 | 1 | 5-6 | 36 / 52 |
+| 10 | 351 | 4 | 5-6 | 48 / 83 |
+
+Two things follow, and both make what is left much smaller than feared.
+
+**The reachable graph is tiny.** The worst level holds 83 diagrams. So
+precomputing every reachable diagram offline and shipping a drawing with each
+is comfortably affordable, and a move at runtime is a lookup rather than live
+geometry surgery — the part most likely to have sunk the idea.
+
+**R3 is barely needed.** 492 of 498 curves reduce with collapses alone; only 6
+ever need a triangle flip to expose something collapsible. A first playable
+version can offer R1 and R2 only and not ship those 6, taking the fiddliest
+surgery off the critical path.
 
 Done, in `tools/diagram.py`:
 
@@ -32,20 +56,25 @@ builds, Euler's formula holds on every one, the crossing counts agree, and the
 face degrees match the region degrees the source catalogue published
 independently. Every curve starts with between 5 and 10 moves available.
 
+Also done:
+
+- Collapsing a monogon or a bigon, which turns out to be a deletion from the
+  code and nothing else: pulling the strands apart leaves the order in which
+  the curve meets everything else exactly as it was. Every collapse tried
+  produced a valid diagram with the expected number of crossings.
+- Breadth-first search to the simple curve, keyed by canonical Gauss code,
+  which gives par.
+
 Still to do:
 
-- **The moves.** R1 and R2 removal and the R3 flip, as surgery on the darts.
-- **The solver.** Breadth-first search over diagrams, by canonical Gauss code,
-  to the simple curve. This gives par, and answers the question the whole
-  design hangs on: how large the reachable graph gets.
-- **The drawing.** Each move changes the curve, so something has to redraw it.
-  The plan is to avoid live geometry entirely by precomputing the reachable
-  diagrams offline and shipping a drawing with each, making a move a lookup.
-  Whether that is affordable depends on the graph size above.
+- **A drawing for each reachable diagram.** The one genuinely open problem.
+  Every state needs a picture, and consecutive states must look related, or a
+  move will read as the puzzle being swapped rather than changed.
+- **The R3 flip**, if the 6 curves needing it are ever worth having.
 - **An engine hook.** Unpinning is arrange, then run, then a verdict. This is
   move by move with no separate run, which the engine does not model yet. It
-  needs a mode where a click advances the game and the level ends when the game
-  says it is done.
+  needs a mode where a click advances the game and the level ends when the
+  game says it is done.
 
 ## A note on level data
 
