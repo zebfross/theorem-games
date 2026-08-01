@@ -14,20 +14,30 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Not playable yet.** The combinatorial layer, the collapsing moves and the
-solver are built and checked. The drawing and the engine hook are not.
+**Not playable yet.** The combinatorial layer, the collapsing moves, the solver
+and the drawing are built and checked, and the engine can now be played move by
+move. What is missing is the level pack and the game module itself.
+
+### How much of it works
+
+Building every level's full state graph and drawing every diagram in it, then
+asking the question that actually decides shippability — **is there a route to
+the simple curve in par using only moves that can be drawn?** Over all 498
+single-curve drawings in the Unpinning pack, 6½ minutes altogether:
+
+| crossings | curves | playable in par | need R3 |
+| --- | --- | --- | --- |
+| 4-7 | 16 | 16 | 0 |
+| 8 | 27 | 23 | 1 |
+| 9 | 100 | 90 | 1 |
+| 10 | 355 | 312 | 6 |
+| **all** | **498** | **441 (89%)** | **8** |
+
+So a pack of 441 levels can be built today with no further work on the
+drawing. The 57 that fall short are almost all 10 crossings, where a longer
+optimal route gives the drawing more chances to block it.
 
 ### What the solver settled
-
-Run over all 498 single-curve drawings in the Unpinning pack, two seconds
-altogether:
-
-| crossings | reduce with R1/R2 | need R3 | par | states, median/max |
-| --- | --- | --- | --- | --- |
-| 4-7 | 16 | 0 | 2-4 | 8-28 |
-| 8 | 26 | 1 | 4-5 | 28 / 36 |
-| 9 | 99 | 1 | 5-6 | 36 / 52 |
-| 10 | 351 | 4 | 5-6 | 48 / 83 |
 
 Two things follow, and both make what is left much smaller than feared.
 
@@ -36,10 +46,11 @@ precomputing every reachable diagram offline and shipping a drawing with each
 is comfortably affordable, and a move at runtime is a lookup rather than live
 geometry surgery — the part most likely to have sunk the idea.
 
-**R3 is barely needed.** 492 of 498 curves reduce with collapses alone; only 6
+**R3 is barely needed.** 490 of 498 curves reduce with collapses alone; only 8
 ever need a triangle flip to expose something collapsible. A first playable
-version can offer R1 and R2 only and not ship those 6, taking the fiddliest
-surgery off the critical path.
+version can offer R1 and R2 only and not ship those 8, taking the fiddliest
+surgery off the critical path. (An earlier count here said 6, from a smaller
+run; the full sweep finds 8, none of them merely hitting the search cap.)
 
 Done, in `tools/diagram.py`:
 
@@ -72,10 +83,9 @@ every edit is accepted only if rebuilding a diagram from the new drawing gives
 back exactly what the combinatorial move predicts. That check is what makes
 approximate geometry safe to attempt at all.
 
-**It succeeds on 84% of bigon collapses, and 88% of levels can be played all
-the way to the simple curve in par using only moves that can be drawn.** That
-last number is the one that matters: a level is shippable when the drawing
-never blocks a best-possible route, not when every single move draws.
+**It succeeds on 84% of bigon collapses**, which turns into the 89% of levels
+above, since a level survives a failed move as long as some other
+best-possible route is still drawable.
 
 What works and what does not:
 
@@ -105,10 +115,11 @@ What works and what does not:
 
 Still to do:
 
-- **Closing the gaps**, or shipping around them. The 12% that fall short are
-  almost all 10 crossings and up, where a longer optimal route gives the
-  drawing more chances to block it. Shipping only the levels that verify is a
-  perfectly good first pack; the alternative is a better construction.
+- **The level pack and the game module.** Nothing blocks these now: 441 levels
+  verify, and the engine takes a move-by-move game.
+- **Closing the gaps**, or shipping around them. The 57 levels that fall short
+  are almost all 10 crossings. Shipping only the 441 that verify is a perfectly
+  good first pack; the alternative is a third construction.
 - **Speed**, partly. Each collapse tries about eighty candidate drawings and
   checks each by rebuilding the whole arrangement, so that rebuild is the
   entire cost of building a pack. Finding the crossings by a grid over the
@@ -116,10 +127,6 @@ Still to do:
   370-point curve, 40x, giving identical diagrams on all 498. Still untried:
   ordering the candidates by what usually works.
 - **The R3 flip**, if the 6 curves needing it are ever worth having.
-- **An engine hook.** Unpinning is arrange, then run, then a verdict. This is
-  move by move with no separate run, which the engine does not model yet. It
-  needs a mode where a click advances the game and the level ends when the
-  game says it is done.
 
 ## A note on level data
 
