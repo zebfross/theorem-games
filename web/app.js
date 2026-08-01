@@ -228,18 +228,25 @@ function makeSim(level, pins) {
     steps: 0,
     lastLength: Infinity,
     seen: level.crossings,
+    pending: null,
     history: [],
     tick: 0,
-    recordEvery: RECORD_EVERY,
+    recordDrift: RECORD_DRIFT,
+    travel: 0,
   };
 }
 
-const RECORD_EVERY = 10;   // simulation steps between recorded frames
+// Board units the rope must move before another frame is kept. Frames are
+// spaced by distance travelled rather than by step count, so the scrub bar is
+// even in how much changes rather than even in simulation effort.
+const RECORD_DRIFT = 1.6;
 const MAX_FRAMES = 180;    // thinned out beyond this, so memory stays bounded
 
 /** Keep a frame so the pull can be scrubbed through afterwards. */
 function record(sim) {
   const strands = sim.strands.map((s) => s.map((p) => ({ x: p.x, y: p.y })));
+  sim.lastRecSig = outline(sim.strands);
+  sim.travel = 0;
   sim.history.push({
     strands,
     view: fitView(strands, sim.pins),
@@ -247,17 +254,36 @@ function record(sim) {
   });
   if (sim.history.length > MAX_FRAMES) {
     sim.history = sim.history.filter((_f, i) => i % 2 === 0);
-    sim.recordEvery *= 2;
+    sim.recordDrift *= 2;
   }
 }
 
-/** Run the simulation on, recording as it goes. Returns true when settled. */
+/** Run the simulation on, recording as it goes. Returns true when settled.
+ *
+ *  Frames are kept when the rope has actually moved, not every so many steps.
+ *  The pull is front-loaded — the rope does most of its visible travel early
+ *  and then spends a long time settling by amounts too small to see — so
+ *  recording on a step timer produces a scrub bar whose back half shows
+ *  nothing. Spacing frames by distance moved makes the whole slider useful.
+ */
 function advance(sim, maxSteps) {
   let done = false;
   for (let k = 0; k < maxSteps && !done; k++) {
     done = simStep(sim);
     sim.tick++;
-    if (done || sim.tick % sim.recordEvery === 0) record(sim);
+    if (done) { record(sim); break; }
+    // Comparing outlines is far too costly to do every step on a big level, so
+    // gate it on the distance the rope could possibly have covered: summing the
+    // largest single-point move per step can only overstate it. When that sum
+    // is still under a frame's worth, no frame can be due, and the real check
+    // is skipped entirely.
+    sim.travel += sim.maxMove;
+    if (sim.travel < sim.recordDrift) continue;
+    sim.travel = 0;
+    const sig = outline(sim.strands);
+    if (!sim.lastRecSig || outlineDrift(sig, sim.lastRecSig) > sim.recordDrift) {
+      record(sim);
+    }
   }
   return done;
 }
@@ -270,7 +296,18 @@ function advance(sim, maxSteps) {
  *  polylines jitter across each other over and over. Clamping to the running
  *  minimum throws that noise away without ever hiding a real cancellation. */
 function crossingsLeft(sim) {
-  sim.seen = Math.min(sim.seen, countCrossings(sim.strands));
+  const count = countCrossings(sim.strands);
+  if (count < sim.seen) {
+    // Believe a drop only when two readings in a row agree on it. While the
+    // rope is moving fast the coarse polyline can sample a small feature away
+    // for a moment, and a plain running minimum would make that momentary
+    // undercount permanent for the rest of the pull. Take the less extreme of
+    // the two confirming readings.
+    if (sim.pending !== null) sim.seen = Math.max(count, sim.pending);
+    sim.pending = count;
+  } else {
+    sim.pending = null;
+  }
   return sim.seen;
 }
 
