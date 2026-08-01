@@ -49,10 +49,14 @@ def _seg_intersect(p, q, r, s):
 
 
 class Diagram:
-    def __init__(self, code, rings, points=None):
+    def __init__(self, code, rings, points=None, param=None):
         self.code = list(code)           # crossing id per visit, each twice
         self.rings = {c: list(r) for c, r in rings.items()}   # c -> [(k, side)]
         self.points = points             # optional crossing coordinates
+        # Where along the drawing each visit falls, as (segment, t in [0,1]).
+        # Surgery needs it: to cut a loop out you have to know which stretch of
+        # polyline the loop actually is.
+        self.param = param or []
 
     # --- basics ----------------------------------------------------------
 
@@ -194,12 +198,13 @@ def from_polyline(points):
             if key not in ids:
                 ids[key] = len(ids)
                 coords.append(key)
-            order.append((ids[key], i))
+            order.append((ids[key], i, t))
 
     if not order:
-        return Diagram([], {}, [])
+        return Diagram([], {}, [], [])
 
-    code = [c for c, _i in order]
+    code = [c for c, _i, _t in order]
+    param = [(i, t) for _c, i, t in order]
     for c in range(len(coords)):
         if code.count(c) != 2:
             raise ValueError('not a generic curve: a crossing was not met twice')
@@ -209,7 +214,7 @@ def from_polyline(points):
     # points somewhere else entirely on a curve that wanders in between, and
     # everything here rests on this order being right.
     tangent = []
-    for _c, i in order:
+    for _c, i, _t in order:
         (ax, ay), (bx, by) = segs[i]
         tangent.append(math.atan2(by - ay, bx - ax))
 
@@ -223,7 +228,7 @@ def from_polyline(points):
         ends.sort()
         rings[c] = [tag for _a, tag in ends]
 
-    return Diagram(code, rings, coords)
+    return Diagram(code, rings, coords, param)
 
 
 def reduce_bfs(dia, limit=200000):

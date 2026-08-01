@@ -65,11 +65,36 @@ Also done:
 - Breadth-first search to the simple curve, keyed by canonical Gauss code,
   which gives par.
 
+### The drawing, so far
+
+`tools/surgery.py` edits the drawing in place after a move, and checks itself:
+every edit is accepted only if rebuilding a diagram from the new drawing gives
+back exactly what the combinatorial move predicts. That check is what makes
+approximate geometry safe to attempt at all.
+
+**It currently succeeds on 56% of bigon collapses**, which is not enough. A
+level needs *every* reachable diagram drawn, so at this rate almost no level
+can be built end to end. What works and what does not:
+
+- Cutting a loop out for an R1 is exact. It never comes up here though: the
+  source catalogue holds only irreducible curves, so across all 498 there are
+  1912 bigons and not one monogon.
+- Translating a bigon's arc sideways does not work at all, 0%. A lens can pair
+  a short arc with a long curved one, and shoving the long one along a fixed
+  direction drags it through unrelated parts of the curve. It moves the
+  crossings rather than removing them.
+- Sliding one arc across the lens, by replacing it with a copy of the arc it
+  has to clear nudged just past it, works 56% of the time. Trying more offsets
+  bought two points, so the rest needs a better construction rather than
+  better parameters.
+
 Still to do:
 
-- **A drawing for each reachable diagram.** The one genuinely open problem.
-  Every state needs a picture, and consecutive states must look related, or a
-  move will read as the puzzle being swapped rather than changed.
+- **Getting that number to 100%**, or close enough that a level pack can be
+  built. Two directions: relax the edited stretch briefly after surgery to
+  clear the near misses, or abandon surgery and lay each diagram out afresh
+  from its combinatorics, morphing between consecutive states so the picture
+  does not appear to be swapped.
 - **The R3 flip**, if the 6 curves needing it are ever worth having.
 - **An engine hook.** Unpinning is arrange, then run, then a verdict. This is
   move by move with no separate run, which the engine does not model yet. It
