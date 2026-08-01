@@ -423,6 +423,10 @@ function nearestSolution(level, pinned, optimalOnly) {
 
 let ropeEls = [];
 
+// What the player themselves arranged, held aside while they step through the
+// other solutions, and put straight back when they stop.
+let mine = null;
+
 function paintRope(strands) {
   for (let i = 0; i < ropeEls.length && i < strands.length; i++) {
     const d = polyPath(strands[i]);
@@ -447,7 +451,10 @@ export default {
   chip: (m) => `${m.index}·${m.effectiveMinimum}`,
   par: (m) => m.effectiveMinimum,
 
-  start: () => ({ pinned: new Set(), pinAt: new Map(), hinted: new Set(), sim: null }),
+  start: () => {
+    mine = null;
+    return { pinned: new Set(), pinAt: new Map(), hinted: new Set(), sim: null };
+  },
   runnable: () => true,
   view: (level) => level.viewBox,
 
@@ -598,6 +605,37 @@ export default {
       title: 'It came undone.',
       detail: `${cheer} It slipped to ${left} crossing${left === 1 ? '' : 's'}. ${more}`,
     };
+  },
+
+  solutions: {
+    // Smallest first, so the ties for the best score come before the larger
+    // minimal ones. Deterministic order, so the numbering does not shuffle.
+    list: (level) => [...level.generators]
+      .sort((a, b) => a.length - b.length || String(a).localeCompare(String(b))),
+    count(level) { return this.list(level).length; },
+
+    show(level, play, i) {
+      if (!mine) mine = { pinned: new Set(play.pinned), pinAt: new Map(play.pinAt) };
+      const all = this.list(level);
+      const g = all[i];
+      play.pinned = new Set(g);
+      play.pinAt = new Map(g.map((n) => {
+        const s = level.sockets.find((k) => k.n === n);
+        return [n, { x: s.x, y: s.y }];
+      }));
+      play.hinted = new Set();
+      const yours = mine.pinned.size === g.length && g.every((n) => mine.pinned.has(n));
+      return `Solution ${i + 1} of ${all.length} · ${g.length} pins`
+        + (yours ? ' · the one you found' : '')
+        + (g.length > level.effectiveMinimum ? ' · works, but not the fewest' : '');
+    },
+
+    restore(level, play) {
+      if (!mine) return;
+      play.pinned = new Set(mine.pinned);
+      play.pinAt = new Map(mine.pinAt);
+      mine = null;
+    },
   },
 
   hint(level, play, tier) {

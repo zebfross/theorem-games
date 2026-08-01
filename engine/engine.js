@@ -64,6 +64,7 @@ const app = {
   frames: [],
   viewBox: null,
   zoom: 0,
+  browsing: null,
   hintTier: 0,
   usedHint: false,
 };
@@ -122,7 +123,7 @@ function status(readout) {
 }
 
 board.addEventListener('click', (ev) => {
-  if (app.phase !== 'placing') return;
+  if (app.phase !== 'placing' || app.browsing !== null) return;
   const pt = board.createSVGPoint();
   pt.x = ev.clientX;
   pt.y = ev.clientY;
@@ -227,11 +228,52 @@ function finishRun() {
   if (app.frames.length && v.readout !== undefined) {
     app.frames[app.frames.length - 1].readout = v.readout;
   }
+  const alts = v.won && app.game.solutions
+    ? app.game.solutions.count(app.level) : 0;
+  el('alts').hidden = alts < 2;
+
   const range = el('scrub-range');
   range.max = String(Math.max(0, app.frames.length - 1));
   range.value = range.max;
   el('scrub').hidden = app.frames.length < 2;
   el('controls').hidden = true;
+}
+
+/* ---------- browsing other answers ---------- */
+
+/** Step through the other ways a solved level could have been solved.
+ *
+ *  Optional: a game that offers `solutions` gets a button after a win. Worth
+ *  having generically, since any puzzle with a minimum in it tends to have ties
+ *  for it, and seeing the alternatives is where the structure of the answer
+ *  shows itself. Display only — the player's own arrangement is put back the
+ *  moment they leave. */
+function browseSolutions() {
+  const s = app.game.solutions;
+  const total = s.count(app.level);
+  const next = app.browsing === null ? 0 : app.browsing + 1;
+
+  app.phase = 'placing';           // show the board as laid out, not pulled tight
+  cancelAnimationFrame(app.zoom);  // and drop the zoom onto the finished knot
+  setView(app.game.view(app.level, app.play));
+
+  if (next >= total) {             // round the loop and hand it back
+    stopBrowsing();
+    say('Back to your own solution.', false);
+  } else {
+    app.browsing = next;
+    say(s.show(app.level, app.play, next), false);
+    el('alts').textContent = `Next solution (${next + 1}/${total})`;
+  }
+  draw();
+  status();
+}
+
+function stopBrowsing() {
+  if (app.browsing === null) return;
+  app.game.solutions.restore(app.level, app.play);
+  app.browsing = null;
+  el('alts').textContent = 'Other solutions';
 }
 
 function scrubTo(i) {
@@ -258,6 +300,8 @@ function nudge() {
 
 function resetLevel(keep) {
   unschedule();
+  stopBrowsing();
+  el('alts').hidden = true;
   app.sim = null;
   app.frames = [];
   app.viewBox = null;
@@ -368,6 +412,7 @@ async function boot() {
   el('again').addEventListener('click', () => resetLevel(true));
   el('stuck').addEventListener('click', nudge);
   el('stuck-result').addEventListener('click', nudge);
+  el('alts').addEventListener('click', browseSolutions);
   el('next').addEventListener('click', nextLevel);
   el('scrub-range').addEventListener('input', (ev) => scrubTo(Number(ev.target.value)));
   el('browse').addEventListener('click', () => {

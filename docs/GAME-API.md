@@ -100,6 +100,24 @@ Physics is for showing the player why, and it will occasionally jam or drift.
 Unpinning reads the verdict off precomputed pinning sets and uses the animation
 purely as illustration.
 
+## Other solutions (optional)
+
+Puzzles with a minimum in them usually have ties for it, and seeing the
+alternatives is where the structure of the answer shows itself. Provide this
+and a button appears after a win; leave it out and nothing changes.
+
+```js
+solutions: {
+  count(level)           // how many there are; the button needs at least two
+  show(level, play, i)   // put solution i on the board, -> a caption
+  restore(level, play)   // give the player their own arrangement back
+}
+```
+
+The engine steps through them, then rounds the loop back to what the player
+did. It is display only: hold their arrangement aside on the first `show` and
+put it back on `restore`, which the engine calls on every way out.
+
 ## Hints
 
 ```js
