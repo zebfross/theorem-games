@@ -228,7 +228,10 @@ function finishRun() {
   if (app.frames.length && v.readout !== undefined) {
     app.frames[app.frames.length - 1].readout = v.readout;
   }
-  const alts = v.won && app.game.solutions
+  // Only for a best-possible answer. Showing the alternatives to somebody who
+  // solved it with pieces to spare would hand them the optimum they have not
+  // reached yet; earning it first is the point.
+  const alts = v.won && v.perfect && app.game.solutions
     ? app.game.solutions.count(app.level) : 0;
   el('alts').hidden = alts < 2;
 

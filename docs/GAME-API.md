@@ -104,7 +104,12 @@ purely as illustration.
 
 Puzzles with a minimum in them usually have ties for it, and seeing the
 alternatives is where the structure of the answer shows itself. Provide this
-and a button appears after a win; leave it out and nothing changes.
+and a button appears after a **best-possible** answer — a win your `verdict`
+marked `perfect`. Leave it out and nothing changes.
+
+Gating on `perfect` rather than on any win is deliberate: handing the
+alternatives to somebody who solved it with pieces to spare gives away the
+optimum they have not reached yet.
 
 ```js
 solutions: {
