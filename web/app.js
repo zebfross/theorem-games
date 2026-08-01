@@ -158,13 +158,40 @@ function countCrossings(strands) {
 // the rope then slips its pins and collapses.
 const COARSE = Math.min(15, PIN_RADIUS);
 const FINE = 5;      // spacing for the final settle, so it hugs the pins
-// Convergence is judged on how far the rope still moves per step, not on how
-// its length is changing. Per-step motion never reaches zero — projecting off
-// the pins and resampling leave a residual jitter, measured at about 0.015 at
-// the fine spacing — so the threshold sits just above that floor. The caps are
-// what actually ends the coarse phase, whose jitter floor is higher; measured
-// on 6^2_1, shape stops changing by roughly step 3000 there and 12000 overall.
-const MOVE_EPS = 0.02;
+// How the pull decides it is finished: compare the rope's outline against
+// itself SHAPE_CHECK steps earlier, and stop once it has drifted less than
+// SHAPE_EPS board units. Length is a poor signal, since bowing a long side
+// barely changes it, and per-step motion is a poor one too, since it never
+// reaches zero.
+const SHAPE_CHECK = 150;
+const SHAPE_EPS = 0.35;
+const SHAPE_SAMPLES = 48;
+
+/** Sample each strand at fixed fractions of its length. */
+function outline(strands) {
+  const pts = [];
+  for (const s of strands) {
+    const L = perimeter(s);
+    if (!(L > 1e-9)) continue;
+    for (const p of resample(s, L / SHAPE_SAMPLES)) pts.push(p);
+  }
+  return pts;
+}
+
+/** How far the outline moved, measured nearest-point to nearest-point so that
+ *  points sliding along a stationary rope do not read as movement. */
+function outlineDrift(a, b) {
+  let worst = 0;
+  for (const p of a) {
+    let best = Infinity;
+    for (const q of b) {
+      const d = (p.x - q.x) ** 2 + (p.y - q.y) ** 2;
+      if (d < best) best = d;
+    }
+    if (best > worst) worst = best;
+  }
+  return Math.sqrt(worst);
+}
 
 function makeSim(level, pins) {
   // Start from a curve that still has every crossing the drawing has. At the
@@ -172,18 +199,26 @@ function makeSim(level, pins) {
   // silently losing a crossing before the pull even begins — and since the
   // readout is clamped to a running minimum, that wrong low count would then
   // stick for the whole run.
-  // Refine only as far as it helps: a level whose count cannot be matched at
-  // all (a crossing landing exactly on a sample point, say) must not drag the
-  // spacing down to something that makes the simulation crawl.
-  let best = null;
-  for (const spacing of [COARSE, COARSE / 2, COARSE / 4]) {
-    const strands = level.rope.map(
-      (s) => resample(s.map(([x, y]) => ({ x, y })), spacing));
-    const count = countCrossings(strands);
-    if (count === level.crossings) { best = { strands, spacing, count }; break; }
-    if (!best || count > best.count) best = { strands, spacing, count };
+  // Refine only if it actually recovers the count. Settling for a finer
+  // spacing that merely does better is a bad trade: it multiplies the point
+  // count for every step that follows, and on the levels where no spacing
+  // matches it dropped to a quarter of the coarse setting and made the pull
+  // several times slower. Better a readout that is briefly a crossing or two
+  // low — it self-corrects, and the verdict never comes from it anyway.
+  const at = (spacing) => level.rope.map(
+    (s) => resample(s.map(([x, y]) => ({ x, y })), spacing));
+  let strands = at(COARSE);
+  let spacing = COARSE;
+  if (countCrossings(strands) !== level.crossings) {
+    for (const finer of [COARSE / 2, COARSE / 4]) {
+      const candidate = at(finer);
+      if (countCrossings(candidate) === level.crossings) {
+        strands = candidate;
+        spacing = finer;
+        break;
+      }
+    }
   }
-  const { strands, spacing } = best;
   return {
     strands,
     pins,
@@ -351,18 +386,36 @@ function simStep(sim) {
 
   sim.steps++;
   sim.maxMove = maxMove;
-  sim.settled = maxMove < MOVE_EPS ? sim.settled + 1 : 0;
   sim.lastLength = length;
 
-  if (sim.phase === 'shrink' && (sim.settled > 20 || sim.steps > 4000)) {
-    // tighten the sampling so the rope wraps the pins cleanly
-    sim.phase = 'polish';
+  // Stop when the shape stops changing, which is the thing anyone watching
+  // actually cares about. Per-step motion is no good for this: it never
+  // settles to zero, because projecting off the pins and resampling leave a
+  // permanent jitter, so it can only ever be compared against a fudged floor.
+  // Comparing the outline against itself a few hundred steps earlier averages
+  // that jitter away and leaves only real drift.
+  if (sim.steps % SHAPE_CHECK) return false;
+  const sig = outline(sim.strands);
+  const drift = sim.lastSig ? outlineDrift(sig, sim.lastSig) : Infinity;
+  sim.lastSig = sig;
+  sim.drift = drift;
+
+  // A crossing about to cancel sits in a bigon that can be far too small to
+  // register as drift, so the outline alone would call it finished with the
+  // cancellation still pending — which is exactly the moment that matters on a
+  // placement that does not hold. Never stop while the count is still falling.
+  const count = crossingsLeft(sim);
+  const settling = count !== sim.lastCount;
+  sim.lastCount = count;
+
+  if (sim.phase === 'shrink') {
+    if ((drift > SHAPE_EPS || settling) && sim.steps < 8000) return false;
+    sim.phase = 'polish';                 // sample finer so it hugs the pins
     sim.spacing = Math.min(sim.spacing, FINE);
-    sim.settled = 0;
-    sim.lastLength = Infinity;
+    sim.lastSig = null;
     return false;
   }
-  return sim.phase === 'polish' && (sim.settled > 30 || sim.steps > 12000);
+  return (drift < SHAPE_EPS && !settling) || sim.steps > 20000;
 }
 
 /* ---------- rules ---------- */
