@@ -1,0 +1,10 @@
+{
+  "games": [
+    {
+      "id": "unpinning",
+      "title": "Unpinning",
+      "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
+      "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)"
+    }
+  ]
+}

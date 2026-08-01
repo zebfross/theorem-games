@@ -298,6 +298,9 @@ def low_degree_sites(strands, sites):
     monogon: a monogon has a single vertex, whereas the trace looks for a
     second crossing where the two legs meet again.
     """
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'lib' / 'geometry'))
     import arrangement
 
     faces, _crossings = arrangement.build(

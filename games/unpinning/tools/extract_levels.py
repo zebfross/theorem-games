@@ -22,11 +22,13 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'lib' / 'geometry'))
 import arrangement
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
+GAME = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "reference" / "LooPindex" / "docs" / "multiloops"
-OUT = ROOT / "web" / "data"
+OUT = GAME / "data"
 
 # --- SVG parsing -----------------------------------------------------------
 
@@ -409,10 +411,19 @@ def main():
             failures.append(f"{lid}: {exc}")
 
     levels.sort(key=lambda l: (l["regions"], l["strands"], l["index"]))
+    dropped = len(pages) - len(levels)
     (OUT / "index.json").write_text(json.dumps({
         "source": "LooPindex by Christopher-Lloyd Simon and Ben Stucky (GPL-3.0)",
         "sourceUrl": "https://github.com/ChristopherLloyd/LooPindex",
         "count": len(levels),
+        # The engine puts this in the footer. A pack that quietly drops what it
+        # could not handle reads as complete when it is not.
+        "note": (
+            f"{len(levels)} of {len(pages)} catalogued multiloops are playable "
+            f"here; {dropped} are omitted ({dropped - 1} whose region labels "
+            "could not be matched to the drawing unambiguously, and 5^1_1, "
+            "whose catalog page is empty upstream)."
+        ),
         "levels": levels,
     }, separators=(",", ":")))
 

@@ -28,12 +28,27 @@ html, body {
 
 header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.25rem 0.25rem;
   max-width: 1180px;
   margin: 0 auto;
+}
+.brand p {
+  margin: 0.25rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.86rem;
+}
+.header-actions { display: flex; gap: 0.5rem; align-items: center; }
+#game-switch {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #ffffff12;
+  color: var(--ink);
 }
 
 h1 {
@@ -67,7 +82,7 @@ main {
 
 #goal-text { color: var(--ink); }
 #goal-text b { color: var(--brass); font-weight: 650; }
-#pins-used { color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#score { color: var(--ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 #stage { position: relative; }
 
@@ -81,31 +96,6 @@ main {
   touch-action: manipulation;
 }
 
-.region { fill: transparent; cursor: pointer; transition: fill 0.15s; }
-.region:hover { fill: #ffffff12; }
-.region.pinned { fill: #e8c37a1f; }
-.region:not(.pinned):hover { fill: #ffffff1c; }
-
-/* A space the hint has pointed at. Pulses so it is findable at a glance
-   without an arrow or a label cluttering the board. */
-.region.hinted { animation: hint-pulse 1.7s ease-in-out infinite; }
-@keyframes hint-pulse {
-  0%, 100% { fill: #6fdc9a1a; }
-  50%      { fill: #6fdc9a55; }
-}
-
-.rope-shadow { fill: none; stroke: #00000055; stroke-linejoin: round; stroke-linecap: round; }
-.rope-core { fill: none; stroke: var(--rope-dark); stroke-linejoin: round; stroke-linecap: round; }
-.rope-top { fill: none; stroke: var(--rope); stroke-linejoin: round; stroke-linecap: round; }
-
-/* Pins are drawn over the regions, so without this they swallow the click and
-   the region underneath never sees it — making a placed pin impossible to
-   click off again. Let the click through to the region instead. */
-.pin-shadow, .pin-head, .pin-dot { pointer-events: none; }
-
-.pin-shadow { fill: #00000055; }
-.pin-head { fill: var(--brass); stroke: var(--brass-dark); }
-.pin-dot { fill: #00000066; }
 
 /* In normal flow, not floating over the board — it used to cover the bottom of
    the finished knot, which is the one thing you want to look at. */
@@ -219,3 +209,5 @@ footer a { color: var(--brass); }
   main { flex-direction: column; }
   #picker { flex: 1 1 auto; width: 100%; max-height: 60vh; }
 }
+
+.colophon { margin-top: 0.6rem; opacity: 0.75; }

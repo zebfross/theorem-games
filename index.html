@@ -3,21 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unpinning</title>
-<link rel="stylesheet" href="style.css">
+<title>Theorem games</title>
+<link rel="stylesheet" href="engine/style.css">
 </head>
 <body>
 
 <header>
-  <h1>Unpinning</h1>
-  <button id="browse" class="ghost">All puzzles</button>
+  <div class="brand">
+    <h1 id="title"></h1>
+    <p id="blurb"></p>
+  </div>
+  <div class="header-actions">
+    <select id="game-switch" hidden aria-label="Choose a game"></select>
+    <button id="browse" class="ghost">All puzzles</button>
+  </div>
 </header>
 
 <main>
   <section id="board-pane">
     <div id="goal">
       <span id="goal-text"></span>
-      <span id="pins-used"></span>
+      <span id="score"></span>
     </div>
 
     <div id="stage">
@@ -25,10 +31,10 @@
     </div>
 
     <div id="scrub" hidden>
-      <span>Loose</span>
+      <span>Start</span>
       <input id="scrub-range" type="range" min="0" max="0" value="0"
-             aria-label="Scrub through the pull">
-      <span>Tight</span>
+             aria-label="Scrub through the run">
+      <span>End</span>
     </div>
 
     <div id="verdict" hidden>
@@ -42,9 +48,9 @@
     </div>
 
     <div id="controls">
-      <button id="clear" class="ghost">Clear pins</button>
+      <button id="clear" class="ghost">Clear</button>
       <button id="stuck" class="ghost">Stuck?</button>
-      <button id="pull" class="primary">Pull it tight</button>
+      <button id="run" class="primary">Run</button>
     </div>
 
     <p id="hint"></p>
@@ -55,22 +61,20 @@
       <h2>All puzzles</h2>
       <button id="close-picker" class="ghost">Close</button>
     </div>
-    <p class="picker-note">Grouped by size. The number is the fewest pins that
-    can hold it.</p>
+    <p class="picker-note">Grouped by size. The number is the best score possible.</p>
     <div id="picker-list"></div>
   </aside>
 </main>
 
 <footer>
-  <p>
-    Puzzles from the <a href="https://christopherlloyd.github.io/LooPindex/">LooPindex</a>
-    catalog by Christopher-Lloyd Simon and Ben Stucky, accompanying
-    <a href="https://arxiv.org/abs/2405.16216"><i>The pinning ideal of a
-    multiloop</i></a>. Catalog and this game are GPL-3.0.
-  </p>
+  <p id="credit"></p>
   <p id="coverage"></p>
+  <p class="colophon">
+    Games built on mathematical theorems.
+    <a href="docs/GAME-API.md">Add your own.</a>
+  </p>
 </footer>
 
-<script src="app.js"></script>
+<script type="module" src="engine/engine.js"></script>
 </body>
 </html>
