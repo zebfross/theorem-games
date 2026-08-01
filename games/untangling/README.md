@@ -72,9 +72,8 @@ every edit is accepted only if rebuilding a diagram from the new drawing gives
 back exactly what the combinatorial move predicts. That check is what makes
 approximate geometry safe to attempt at all.
 
-**It currently succeeds on 56% of bigon collapses**, which is not enough. A
-level needs *every* reachable diagram drawn, so at this rate almost no level
-can be built end to end. What works and what does not:
+**It currently succeeds on 90% of bigon collapses.** What works and what does
+not:
 
 - Cutting a loop out for an R1 is exact. It never comes up here though: the
   source catalogue holds only irreducible curves, so across all 498 there are
@@ -84,17 +83,24 @@ can be built end to end. What works and what does not:
   direction drags it through unrelated parts of the curve. It moves the
   crossings rather than removing them.
 - Sliding one arc across the lens, by replacing it with a copy of the arc it
-  has to clear nudged just past it, works 56% of the time. Trying more offsets
-  bought two points, so the rest needs a better construction rather than
-  better parameters.
+  has to clear nudged just past it, works 56% of the time on its own. Trying
+  more offsets and easing the ends bought nothing, so the rest needed a
+  different construction rather than tuning.
+- Contracting the lens — replacing both arcs by the line midway between them,
+  parting them by a whisker, and fading the parting into the curve either side
+  — is what an R2 physically is: the two crossings slide together and cancel.
+  Offering both constructions and keeping whichever verifies takes it to 90%,
+  because they fail on different lenses.
 
 Still to do:
 
-- **Getting that number to 100%**, or close enough that a level pack can be
-  built. Two directions: relax the edited stretch briefly after surgery to
-  clear the near misses, or abandon surgery and lay each diagram out afresh
-  from its combinatorics, morphing between consecutive states so the picture
-  does not appear to be swapped.
+- **Closing the last 10%.** A level needs every reachable diagram drawn, so
+  even one gap can strand part of a level.
+- **Speed.** Each collapse currently tries about eighty candidate drawings,
+  and every candidate is checked by rebuilding the whole arrangement, which is
+  quadratic in the number of points. Fine for one move, far too slow to build
+  a whole pack. Ordering the candidates by what usually works, coarser
+  sampling, and a grid for the intersection test are all untried.
 - **The R3 flip**, if the 6 curves needing it are ever worth having.
 - **An engine hook.** Unpinning is arrange, then run, then a verdict. This is
   move by move with no separate run, which the engine does not model yet. It
