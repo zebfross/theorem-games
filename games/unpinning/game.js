@@ -559,15 +559,28 @@ export default {
     // exact truth; only a collapse needs measuring.
     const left = won ? level.crossings : crossingsLeft(sim);
     const readout = `now <b>${left}</b>`;
+    const perfect = won && play.pinned.size === level.effectiveMinimum;
+
+    // Earn the encouragement rather than always offering the same one: how far
+    // off they actually are is known, and "So close!" to somebody four pins
+    // short is worth nothing.
+    const need = won ? 0 : stillNeeded(level, play.pinned);
+    const cheer = perfect ? 'Great job!'
+      : won ? 'Nice work!'
+      : need <= 1 ? 'So close!'
+      : need <= 2 ? 'Nearly there.'
+      : 'Good start.';
+    const more = need === 1
+      ? 'One more pin in the right place holds it.'
+      : `${need} more pins in the right spaces hold it.`;
 
     if (won) {
-      const perfect = play.pinned.size === level.effectiveMinimum;
       return {
         won: true, perfect, readout, score: play.pinned.size,
         title: perfect ? 'Perfect — it holds.' : 'It holds.',
         detail: perfect
-          ? `All ${level.crossings} crossings survived, and you used the fewest pins possible (${level.effectiveMinimum}).`
-          : `All ${level.crossings} crossings survived with ${play.pinned.size} pins. It can be done with ${level.effectiveMinimum}.`,
+          ? `${cheer} All ${level.crossings} crossings survived, on the fewest pins possible.`
+          : `${cheer} All ${level.crossings} crossings survived — though ${level.effectiveMinimum} pins is enough.`,
       };
     }
     if (left >= level.crossings) {
@@ -576,17 +589,14 @@ export default {
       return {
         won: false, readout,
         title: 'It jammed — but it isn\'t locked.',
-        detail: 'The rope snagged on its way tight and happened to keep its '
-              + 'crossings. These pins do not actually hold it: worked loose '
-              + `more carefully, it comes apart. ${level.effectiveMinimum} pins `
-              + 'in the right spaces would make it secure.',
+        detail: `${cheer} It snagged rather than held, so these pins do not `
+              + `really secure it. ${more}`,
       };
     }
     return {
       won: false, readout,
       title: 'It came undone.',
-      detail: `The rope pulled through and slipped down to ${left} crossing${left === 1 ? '' : 's'}. `
-            + `Pins in the right spaces would have stopped that — ${level.effectiveMinimum} is enough.`,
+      detail: `${cheer} It slipped to ${left} crossing${left === 1 ? '' : 's'}. ${more}`,
     };
   },
 
