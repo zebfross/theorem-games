@@ -48,6 +48,43 @@ def _seg_intersect(p, q, r, s):
     return t, u, (px + t * dx1, py + t * dy1)
 
 
+def _candidate_pairs(segs):
+    """Segment pairs whose bounding boxes share a grid cell.
+
+    Every candidate drawing is checked by rebuilding the diagram from it, so
+    this scan runs tens of thousands of times and is the whole cost of building
+    a level. Comparing all pairs is quadratic; the polyline is resampled to an
+    even spacing, so a grid a couple of segments wide leaves a handful per cell.
+
+    Only a filter: pairs it yields are still tested exactly, and it is allowed
+    to yield too many. It must never yield too few, which is why a segment is
+    registered against every cell its bounding box touches rather than the cell
+    its midpoint lands in.
+    """
+    n = len(segs)
+    if n < 32:
+        return combinations(range(n), 2)
+
+    span = sum(max(abs(b[0] - a[0]), abs(b[1] - a[1])) for a, b in segs)
+    cell = 2.0 * span / n
+    if cell < EPS:
+        return combinations(range(n), 2)
+
+    buckets = {}
+    for i, (a, b) in enumerate(segs):
+        x0, x1 = sorted((a[0], b[0]))
+        y0, y1 = sorted((a[1], b[1]))
+        for cx in range(int(x0 // cell), int(x1 // cell) + 1):
+            for cy in range(int(y0 // cell), int(y1 // cell) + 1):
+                buckets.setdefault((cx, cy), []).append(i)
+
+    pairs = set()
+    for members in buckets.values():
+        if len(members) > 1:
+            pairs.update(combinations(members, 2))
+    return pairs
+
+
 class Diagram:
     def __init__(self, code, rings, points=None, param=None):
         self.code = list(code)           # crossing id per visit, each twice
@@ -179,7 +216,7 @@ def from_polyline(points):
     segs = [(points[i], points[(i + 1) % n]) for i in range(n)]
 
     hits = {}
-    for i, j in combinations(range(len(segs)), 2):
+    for i, j in _candidate_pairs(segs):
         if abs(i - j) <= 1 or (i == 0 and j == len(segs) - 1):
             continue
         r = _seg_intersect(segs[i][0], segs[i][1], segs[j][0], segs[j][1])

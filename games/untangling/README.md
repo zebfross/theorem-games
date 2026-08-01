@@ -96,11 +96,12 @@ Still to do:
 
 - **Closing the last 10%.** A level needs every reachable diagram drawn, so
   even one gap can strand part of a level.
-- **Speed.** Each collapse currently tries about eighty candidate drawings,
-  and every candidate is checked by rebuilding the whole arrangement, which is
-  quadratic in the number of points. Fine for one move, far too slow to build
-  a whole pack. Ordering the candidates by what usually works, coarser
-  sampling, and a grid for the intersection test are all untried.
+- **Speed**, partly. Each collapse tries about eighty candidate drawings and
+  checks each by rebuilding the whole arrangement, so that rebuild is the
+  entire cost of building a pack. Finding the crossings by a grid over the
+  segments rather than by comparing all pairs took it from 24ms to 0.6ms on a
+  370-point curve, 40x, giving identical diagrams on all 498. Still untried:
+  ordering the candidates by what usually works.
 - **The R3 flip**, if the 6 curves needing it are ever worth having.
 - **An engine hook.** Unpinning is arrange, then run, then a verdict. This is
   move by move with no separate run, which the engine does not model yet. It
