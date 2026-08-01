@@ -14,11 +14,12 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 // Board units; the rope cannot cross inside this. A taut loop round two pins
-// settles into a stadium only 2*PIN_RADIUS wide, so if the pin is not clearly
-// wider than the rope the two sides merge and a perfectly tight loop reads as
-// a fat blob. Every pin site has at least 24 units of clearance to the rope
-// (see arrangement.interior_point), which is what makes this size safe.
-const PIN_RADIUS = 16;
+// settles into a band 2*PIN_RADIUS wide, so this also sets how far apart the
+// two sides of such a loop sit. Every pin site has at least 24 units of
+// clearance to the rope (see arrangement.interior_point), so there is room to
+// go bigger, but big pins look wrong — this is about as small as it can be
+// while the two sides of a taut loop still read as two.
+const PIN_RADIUS = 10;
 const ROPE_WIDTH = 11;
 
 const el = (id) => document.getElementById(id);
@@ -152,8 +153,18 @@ function countCrossings(strands) {
 
 /* ---------- the pull-tight simulation ---------- */
 
-const COARSE = 15;   // simulation spacing while the rope is still slack
+// Simulation spacing while the rope is still slack. Never coarser than a pin,
+// or a single segment can span one and skip straight over it between steps —
+// the rope then slips its pins and collapses.
+const COARSE = Math.min(15, PIN_RADIUS);
 const FINE = 5;      // spacing for the final settle, so it hugs the pins
+// Convergence is judged on how far the rope still moves per step, not on how
+// its length is changing. Per-step motion never reaches zero — projecting off
+// the pins and resampling leave a residual jitter, measured at about 0.015 at
+// the fine spacing — so the threshold sits just above that floor. The caps are
+// what actually ends the coarse phase, whose jitter floor is higher; measured
+// on 6^2_1, shape stops changing by roughly step 3000 there and 12000 overall.
+const MOVE_EPS = 0.02;
 
 function makeSim(level, pins) {
   // Start from a curve that still has every crossing the drawing has. At the
@@ -283,6 +294,7 @@ function pushOffPins(pts, pins, radius) {
 function simStep(sim) {
   const alpha = 0.5;
   let length = 0;
+  let maxMove = 0;
 
   for (let s = 0; s < sim.strands.length; s++) {
     // A small per-strand standoff, so several strands collapsing onto the same
@@ -292,6 +304,7 @@ function simStep(sim) {
     const floor = 54 + s * 26;
     let pts = sim.strands[s];
     const n = pts.length;
+
     const next = new Array(n);
     for (let i = 0; i < n; i++) {
       const p = pts[i];
@@ -321,17 +334,27 @@ function simStep(sim) {
       pushOffPins(next, sim.pins, radius);
     }
 
+    // How far the furthest point actually moved, measured before resampling
+    // shuffles the points around. Length is a useless convergence signal here:
+    // a rope can sit with its sides bowed well away from taut while its length
+    // is within a percent of final, because bowing a long side barely changes
+    // how long it is. Motion sees that; length does not.
+    for (let i = 0; i < n; i++) {
+      const m = Math.hypot(next[i].x - pts[i].x, next[i].y - pts[i].y);
+      if (m > maxMove) maxMove = m;
+    }
+
     pts = resample(next, sim.spacing);
     sim.strands[s] = pts;
     length += perimeter(pts);
   }
 
   sim.steps++;
-  const delta = Math.abs(sim.lastLength - length);
-  sim.settled = delta < 0.08 ? sim.settled + 1 : 0;
+  sim.maxMove = maxMove;
+  sim.settled = maxMove < MOVE_EPS ? sim.settled + 1 : 0;
   sim.lastLength = length;
 
-  if (sim.phase === 'shrink' && (sim.settled > 20 || sim.steps > 6000)) {
+  if (sim.phase === 'shrink' && (sim.settled > 20 || sim.steps > 4000)) {
     // tighten the sampling so the rope wraps the pins cleanly
     sim.phase = 'polish';
     sim.spacing = Math.min(sim.spacing, FINE);
@@ -339,7 +362,7 @@ function simStep(sim) {
     sim.lastLength = Infinity;
     return false;
   }
-  return sim.phase === 'polish' && (sim.settled > 20 || sim.steps > 9000);
+  return sim.phase === 'polish' && (sim.settled > 30 || sim.steps > 12000);
 }
 
 /* ---------- rules ---------- */
@@ -515,11 +538,13 @@ function pullTight() {
   const tick = () => {
     // Curve shortening is slow per step, so take many steps per frame; the
     // rope should visibly pull tight in a couple of seconds, not a minute.
-    let done = advance(state.sim, 30);
+    // The coarse phase is the part worth watching; the fine settle afterwards
+    // is invisible fiddling, so push through it much faster.
+    let done = advance(state.sim, state.sim.phase === 'polish' ? 120 : 30);
     // A backgrounded tab throttles animation frames hard, which would leave the
     // rope frozen mid-pull. If we have been at it too long, just finish.
     if (!done && performance.now() - started > 8000) {
-      advance(state.sim, 20000);
+      advance(state.sim, 40000);   // must exceed the phase caps, or it stops mid-pull
       done = true;
     }
     frame++;
