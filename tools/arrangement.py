@@ -162,43 +162,45 @@ def point_in_polygon(pt, polygon):
 
 
 def interior_point(polygon):
-    """A point comfortably inside the polygon.
+    """The point of the polygon furthest from its boundary.
 
-    Starts from the centroid, which is inside for the convex-ish cells these
-    drawings produce, and otherwise falls back to the best of a grid of
-    candidates scored by distance to the boundary.
+    Not the centroid. A pin goes here, and it has to sit clear of the rope:
+    the centroid of a thin region can lie a hair off the boundary, or even on
+    it, which puts the pin under the rope and makes the taut shape unreadable.
+    Maximising clearance instead gives every pin as much room as its region
+    allows.
+
+    Found by a grid search refined a few times around the best candidate,
+    which is ample for the compact cells these drawings produce.
     """
     n = len(polygon)
-    a2 = 0.0
-    cx = cy = 0.0
-    for i in range(n):
-        x1, y1 = polygon[i]
-        x2, y2 = polygon[(i + 1) % n]
-        cross = x1 * y2 - x2 * y1
-        a2 += cross
-        cx += (x1 + x2) * cross
-        cy += (y1 + y2) * cross
-    if abs(a2) > EPS:
-        centroid = (cx / (3 * a2), cy / (3 * a2))
-        if point_in_polygon(centroid, polygon):
-            return centroid
-
     xs = [p[0] for p in polygon]
     ys = [p[1] for p in polygon]
     x0, x1b, y0, y1b = min(xs), max(xs), min(ys), max(ys)
+
+    def clearance(p):
+        if not point_in_polygon(p, polygon):
+            return -1.0
+        return min(_dist_to_segment(p, polygon[k], polygon[(k + 1) % n])
+                   for k in range(n))
+
     best, best_d = None, -1.0
-    steps = 24
-    for i in range(1, steps):
-        for j in range(1, steps):
-            p = (x0 + (x1b - x0) * i / steps, y0 + (y1b - y0) * j / steps)
-            if not point_in_polygon(p, polygon):
-                continue
-            d = min(
-                _dist_to_segment(p, polygon[k], polygon[(k + 1) % n])
-                for k in range(n)
-            )
-            if d > best_d:
-                best, best_d = p, d
+    steps = 16
+    for _round in range(4):
+        for i in range(steps + 1):
+            for j in range(steps + 1):
+                p = (x0 + (x1b - x0) * i / steps, y0 + (y1b - y0) * j / steps)
+                d = clearance(p)
+                if d > best_d:
+                    best, best_d = p, d
+        if best is None:
+            break
+        # zoom the search window in around the best point so far
+        wx = (x1b - x0) / steps
+        wy = (y1b - y0) / steps
+        x0, x1b = best[0] - wx, best[0] + wx
+        y0, y1b = best[1] - wy, best[1] + wy
+
     if best is None:
         raise ValueError("could not find an interior point")
     return best

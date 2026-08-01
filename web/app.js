@@ -13,7 +13,12 @@
  * there to *show* you why, not to decide. */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const PIN_RADIUS = 9;      // board units; the rope cannot cross inside this
+// Board units; the rope cannot cross inside this. A taut loop round two pins
+// settles into a stadium only 2*PIN_RADIUS wide, so if the pin is not clearly
+// wider than the rope the two sides merge and a perfectly tight loop reads as
+// a fat blob. Every pin site has at least 24 units of clearance to the rope
+// (see arrangement.interior_point), which is what makes this size safe.
+const PIN_RADIUS = 16;
 const ROPE_WIDTH = 11;
 
 const el = (id) => document.getElementById(id);
@@ -280,10 +285,10 @@ function simStep(sim) {
   let length = 0;
 
   for (let s = 0; s < sim.strands.length; s++) {
-    // Give each strand its own standoff so several strands collapsing onto the
-    // same pin stack around it like real rope, instead of landing on one
-    // shared circle and reading as a mess of spurious crossings.
-    const radius = PIN_RADIUS + s * 4.5;
+    // A small per-strand standoff, so several strands collapsing onto the same
+    // pin stack around it rather than landing on one shared circle. Kept small:
+    // it also widens that strand's taut shape, which reads as slack.
+    const radius = PIN_RADIUS + s * 4;
     const floor = 54 + s * 26;
     let pts = sim.strands[s];
     const n = pts.length;
