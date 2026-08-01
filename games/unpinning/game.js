@@ -497,7 +497,11 @@ export default {
     }
     board.appendChild(regions);
 
-    const strands = play.sim ? play.sim.strands : null;
+    // Only follow the simulation while there is one running. "Try again" keeps
+    // the play state on purpose, so a finished sim is still hanging off it —
+    // drawing from that would leave the rope pulled tight on a board that is
+    // back to accepting pins.
+    const strands = phase === 'placing' || !play.sim ? null : play.sim.strands;
     ropeEls = [];
     for (let i = 0; i < level.rope.length; i++) {
       const d = strands ? polyPath(strands[i]) : roundedPath(level.rope[i], 16);

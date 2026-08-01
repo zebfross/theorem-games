@@ -38,6 +38,8 @@ explain it. That split is the whole architecture.
 See [docs/GAME-API.md](docs/GAME-API.md) and
 [CONTRIBUTING.md](CONTRIBUTING.md). A game is one directory and one exported
 object; nothing in the engine needs to change to accept it.
+[docs/GAME-IDEAS.md](docs/GAME-IDEAS.md) keeps a running list of theorems that
+would suit it, with notes on why.
 
 The shape that fits: **the player arranges something, presses run, watches what
 happens, and is told whether it worked.** A surprising number of theorems are

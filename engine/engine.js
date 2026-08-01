@@ -49,6 +49,7 @@ function schedule(step) {
 
 function unschedule() {
   cancelAnimationFrame(app.raf);
+  cancelAnimationFrame(app.zoom);
   clearTimeout(app.timer);
 }
 
@@ -62,6 +63,7 @@ const app = {
   raf: 0,
   frames: [],
   viewBox: null,
+  zoom: 0,
   hintTier: 0,
   usedHint: false,
 };
@@ -86,8 +88,13 @@ function setView(box) {
 }
 
 /** Ease the view onto a final scene, which is often much smaller than the
- *  board it started on. */
+ *  board it started on.
+ *
+ *  Its handle is kept so a reset can stop it. An ease left running will go on
+ *  stamping the zoomed-in result view over a board that has already gone back
+ *  to accepting input, which looks exactly like the reset failing. */
 function easeView(to) {
+  cancelAnimationFrame(app.zoom);
   if (!to) return;
   const from = app.viewBox || to;
   const t0 = performance.now();
@@ -95,7 +102,7 @@ function easeView(to) {
     const k = Math.min(1, (performance.now() - t0) / 450);
     const e = 1 - (1 - k) ** 3;
     setView(from.map((v, i) => v + (to[i] - v) * e));
-    if (k < 1) requestAnimationFrame(tick);
+    if (k < 1) app.zoom = requestAnimationFrame(tick);
   };
   tick();
 }

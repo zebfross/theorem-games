@@ -13,6 +13,9 @@ Nothing in `engine/` should need to change to accept a new game. If it does,
 that is worth raising — it means the contract is missing something, and a hook
 added for a real second game is worth ten guessed at in advance.
 
+Looking for something to build? [docs/GAME-IDEAS.md](docs/GAME-IDEAS.md) has
+candidates with sketches of how each would work.
+
 ## What makes a good one
 
 The engine fits games where **the player arranges something, presses run,
