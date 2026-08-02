@@ -412,20 +412,9 @@ async function boot() {
   el('credit').innerHTML = app.game.credit || '';
   el('run').textContent = app.game.verb || 'Run';
 
-  if (registry.games.length > 1) {
-    const picker = el('game-switch');
-    picker.hidden = false;
-    for (const g of registry.games) {
-      const o = document.createElement('option');
-      o.value = g.id;
-      o.textContent = g.title;
-      o.selected = g.id === app.game.id;
-      picker.appendChild(o);
-    }
-    picker.addEventListener('change', () => {
-      location.search = `?game=${picker.value}`;
-    });
-  }
+  // Moving between games is the homepage's job, not a control tucked into the
+  // header here. A dropdown hides the collection behind something you have to
+  // already know to look at, and leaves no room to say what any game is.
 
   app.index = await (await fetch(`../games/${app.game.id}/data/index.json`)).json();
   el('coverage').textContent = app.index.note || '';

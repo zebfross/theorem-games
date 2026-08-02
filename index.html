@@ -5,77 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Theorem games</title>
 <link rel="stylesheet" href="engine/style.css">
+<link rel="stylesheet" href="engine/home.css">
 </head>
-<body>
+<body class="home">
 
 <header>
   <div class="brand">
-    <h1 id="title"></h1>
-    <p id="blurb"></p>
-  </div>
-  <div class="header-actions">
-    <select id="game-switch" hidden aria-label="Choose a game"></select>
-    <button id="browse" class="ghost">All puzzles</button>
+    <h1>Theorem games</h1>
+    <p>Puzzle games built on mathematical theorems. Each one has a real minimum
+       in it, so there is always a best possible answer to find.</p>
   </div>
 </header>
 
 <main>
-  <section id="board-pane">
-    <div id="goal">
-      <span id="goal-text"></span>
-      <span id="score"></span>
-    </div>
-
-    <div id="stage">
-      <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
-    </div>
-
-    <div id="scrub" hidden>
-      <span>Start</span>
-      <input id="scrub-range" type="range" min="0" max="0" value="0"
-             aria-label="Scrub through the run">
-      <span>End</span>
-    </div>
-
-    <div id="verdict" hidden>
-      <p id="verdict-title"></p>
-      <p id="verdict-detail"></p>
-      <div class="verdict-actions">
-        <button id="stuck-result" class="ghost">Stuck?</button>
-        <button id="alts" class="ghost" hidden>Other solutions</button>
-        <button id="again">Try again</button>
-        <button id="next" class="primary">Next puzzle</button>
-      </div>
-    </div>
-
-    <div id="controls">
-      <button id="clear" class="ghost">Clear</button>
-      <button id="stuck" class="ghost">Stuck?</button>
-      <button id="run" class="primary">Run</button>
-    </div>
-
-    <p id="hint"></p>
-  </section>
-
-  <aside id="picker" hidden>
-    <div class="picker-head">
-      <h2>All puzzles</h2>
-      <button id="close-picker" class="ghost">Close</button>
-    </div>
-    <p class="picker-note">Grouped by size. The number is the best score possible.</p>
-    <div id="picker-list"></div>
-  </aside>
+  <div id="games" class="game-grid"></div>
+  <p id="games-empty" hidden>No games are registered.</p>
 </main>
 
 <footer>
-  <p id="credit"></p>
-  <p id="coverage"></p>
   <p class="colophon">
-    Games built on mathematical theorems.
+    The engine is shared; each game brings its own levels and its own rules.
     <a href="docs/GAME-API.md">Add your own.</a>
   </p>
 </footer>
 
-<script type="module" src="engine/engine.js"></script>
+<script type="module" src="engine/home.js"></script>
 </body>
 </html>

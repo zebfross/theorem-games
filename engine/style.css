@@ -35,6 +35,17 @@ header {
   max-width: 1180px;
   margin: 0 auto;
 }
+/* Back to the gallery. Lives here rather than in the homepage stylesheet
+   because it is worn by the game page, which does not load that one. */
+.home-link {
+  display: inline-block;
+  margin-bottom: 0.15rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.home-link:hover { color: var(--ink); text-decoration: underline; }
+
 .brand p {
   margin: 0.25rem 0 0;
   color: var(--ink-dim);

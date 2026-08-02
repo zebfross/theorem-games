@@ -20,11 +20,12 @@ No build step, no dependencies, no server-side anything. Static files.
 ## Layout
 
 ```
-index.html          the shell
+index.html          the front door: a card per game
+play.html           the playing shell, opened as play.html?game=<id>
 engine/             everything not about any particular theorem
 games/
   registry.json     which games exist
-  unpinning/        one game: module, styles, level data, its own tooling
+  unpinning/        one game: module, styles, poster, level data, own tooling
 lib/geometry/       shared maths used by more than one game
 docs/               the game API and the level format
 ```

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A small network of pipes from a source to a sink, with two pipes cut">
+  <!-- Water running from the source on the left to the sink on the right, with
+       two pipes snipped in the middle. Suggests the game at a glance: fat pipes
+       are expensive, and the cut is what stops the water. -->
+  <defs>
+    <style>
+      .wall  { stroke: #0d1f18; stroke-linecap: round; }
+      .pipe  { stroke: #8a5a1c; stroke-linecap: round; }
+      .water { stroke: #3f8fbe; stroke-linecap: round; opacity: 0.9; }
+      .snip  { stroke: #e2765a; stroke-width: 3.5; stroke-linecap: round; }
+      .node  { fill: #16302a; stroke: #6b4a12; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <g>
+    <!-- upper route, cut -->
+    <line class="wall"  x1="52" y1="90" x2="132" y2="46" stroke-width="19"/>
+    <line class="pipe"  x1="52" y1="90" x2="132" y2="46" stroke-width="14"/>
+    <line class="water" x1="52" y1="90" x2="132" y2="46" stroke-width="9"/>
+    <line class="wall"  x1="132" y1="46" x2="212" y2="46" stroke-width="17"/>
+    <line class="pipe"  x1="132" y1="46" x2="212" y2="46" stroke-width="12"/>
+
+    <!-- lower route, still flowing -->
+    <line class="wall"  x1="52" y1="90" x2="132" y2="134" stroke-width="21"/>
+    <line class="pipe"  x1="52" y1="90" x2="132" y2="134" stroke-width="16"/>
+    <line class="water" x1="52" y1="90" x2="132" y2="134" stroke-width="11"/>
+    <line class="wall"  x1="132" y1="134" x2="212" y2="134" stroke-width="17"/>
+    <line class="pipe"  x1="132" y1="134" x2="212" y2="134" stroke-width="12"/>
+
+    <!-- the middle rung, cut -->
+    <line class="wall"  x1="132" y1="46" x2="132" y2="134" stroke-width="15"/>
+    <line class="pipe"  x1="132" y1="46" x2="132" y2="134" stroke-width="10"/>
+    <line class="water" x1="132" y1="46" x2="132" y2="134" stroke-width="6" opacity="0.5"/>
+
+    <!-- into the sink, dry -->
+    <line class="wall"  x1="212" y1="46" x2="268" y2="90" stroke-width="17"/>
+    <line class="pipe"  x1="212" y1="46" x2="268" y2="90" stroke-width="12"/>
+    <line class="wall"  x1="212" y1="134" x2="268" y2="90" stroke-width="17"/>
+    <line class="pipe"  x1="212" y1="134" x2="268" y2="90" stroke-width="12"/>
+  </g>
+
+  <!-- snips across the two pipes that were cut -->
+  <g class="snip">
+    <line x1="165" y1="35" x2="179" y2="57"/>
+    <line x1="179" y1="35" x2="165" y2="57"/>
+    <line x1="165" y1="123" x2="179" y2="145"/>
+    <line x1="179" y1="123" x2="165" y2="145"/>
+  </g>
+
+  <g>
+    <circle class="node" cx="132" cy="46" r="12"/>
+    <circle class="node" cx="212" cy="46" r="12"/>
+    <circle class="node" cx="132" cy="134" r="12"/>
+    <circle class="node" cx="212" cy="134" r="12"/>
+    <circle cx="52" cy="90" r="15" fill="#e8c37a" stroke="#6b4a12" stroke-width="2"/>
+    <circle cx="268" cy="90" r="15" fill="#58b6e8" stroke="#2b6d92" stroke-width="2"/>
+  </g>
+</svg>

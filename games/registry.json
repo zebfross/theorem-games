@@ -4,13 +4,15 @@
       "id": "unpinning",
       "title": "Unpinning",
       "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
-      "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)"
+      "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)",
+      "levels": 1074
     },
     {
       "id": "maxflow",
       "title": "Max-flow min-cut",
       "blurb": "Cut pipes until no water reaches the sink, spending as little as you can.",
-      "theorem": "Menger; Ford & Fulkerson, max-flow min-cut"
+      "theorem": "Menger; Ford & Fulkerson, max-flow min-cut",
+      "levels": 117
     }
   ]
 }

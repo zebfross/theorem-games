@@ -4,6 +4,7 @@ A game is one directory under `games/`, listed in `games/registry.json`. It
 supplies a level pack and a module default-exporting the object described here.
 The engine owns everything else: the page, the level picker, saved progress, the
 placing → running → result flow, the replay scrubber and the staged hint button.
+It also owns the homepage, which builds itself from the registry.
 
 The shortest useful summary of the shape: **the player arranges something, then
 presses run, then watches what happens and is told whether it worked.** If your
@@ -13,11 +14,18 @@ theorem fits that, it fits the engine.
 games/your-game/
   game.js          the module below
   style.css        optional, loaded automatically
+  poster.svg       optional, the picture on your card on the homepage
   data/index.json  level list
   data/levels/*.json
   tools/           whatever generates the data
   README.md
 ```
+
+Add a line to `games/registry.json` and a card appears on the homepage, linking
+to `play.html?game=<your-id>`. The card is drawn from that line alone — `title`,
+`blurb`, `theorem` and `levels` — plus your `poster.svg` and the player's saved
+progress, so nothing on the homepage needs editing when you add a game. A game
+with no poster still gets a card; the frame just stays empty.
 
 ## Identity
 
