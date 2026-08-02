@@ -59,11 +59,31 @@ pipes on the board.
 
 ### The picture
 
-Pipe width is capacity, so a fat pipe is an expensive cut. Water is drawn inside
-the pipe and only as wide as the flow actually running through it, which means a
-pipe with spare capacity reads as half empty and the bottleneck is visible
-rather than worked out. Cut pipes keep their place with a snip mark, so you can
-see what you spent and where without re-reading the network.
+Pipe width is capacity, so a fat pipe is an expensive cut. Cut pipes keep their
+place with a snip mark, so you can see what you spent and where without
+re-reading the network.
+
+Water is in two parts, and the split is the whole reading of a level:
+
+- **Standing water** fills every pipe the source can still reach, whether or
+  not it is going anywhere.
+- **The current** runs inside it, as wide as the flow actually passing through
+  that pipe and moving faster the fuller the pipe is. A pipe with spare
+  capacity shows a thin stream inside a full pipe, so the bottleneck is watched
+  rather than deduced.
+
+Getting the first of those wrong made the run that *proves* a correct answer a
+still picture: with a holding cut the flow is zero everywhere, so drawing only
+the current drew nothing at all. Now the water arrives, fills the source side,
+and stops dead at the snips while the sink side stays dry — which is the most
+useful thing the animation does.
+
+Two details worth keeping. The current runs from whichever end the flow says,
+not the end the search happened to reach first; those disagree often enough
+that taking the search order draws water visibly running uphill. And the
+movement is a CSS dash animation rather than particles — one element per pipe,
+animated by the browser without waking the main loop, which matters because the
+run itself is only twenty-odd frames long and then holds.
 
 ### Hints
 

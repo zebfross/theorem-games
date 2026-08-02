@@ -23,10 +23,34 @@
   50%      { stroke: #6fdc9a; }
 }
 
-/* Water is drawn inside the pipe and only as wide as the flow really running
-   through it, so a pipe with spare capacity reads as half empty and the
-   bottleneck is visible rather than worked out. */
-.water { stroke: #58b6e8; stroke-linecap: round; pointer-events: none; opacity: 0.92; }
+/* Water fills any pipe the source can reach. Where it is going nowhere it sits
+   there dimmed and still, which is what a holding cut looks like. */
+.water { stroke: #3f8fbe; stroke-linecap: round; pointer-events: none; opacity: 0.9; }
+/* Standing water still has to read as water. Much below this it turns grey
+   against the brown of the pipe and looks like an unlit pipe rather than a
+   full one, which is the opposite of what it means. */
+.water.still { stroke: #4f9ec9; opacity: 0.62; }
+
+/* The current: a moving stream inside the standing water, as wide as the flow
+   really running through that pipe. Drawn as dashes rather than particles
+   because it is one element per pipe and the browser animates it without
+   waking the main loop; the run itself is only twenty-odd frames long. */
+.current {
+  stroke: #a9e2ff;
+  stroke-linecap: butt;
+  pointer-events: none;
+  opacity: 0.85;
+  stroke-dasharray: 11 15;
+  animation: current 1s linear infinite;
+}
+@keyframes current {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -26; }   /* one dash plus one gap, so it loops seamlessly */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .current { animation: none; }
+}
 
 .cap-disc { fill: #12241d; stroke: #ffffff1f; stroke-width: 1; pointer-events: none; }
 .cap {

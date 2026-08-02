@@ -139,16 +139,34 @@ function drawNetwork(level, play, opts = {}) {
       x1: ax, y1: ay, x2: bx, y2: by, 'stroke-width': w, class: cls,
       'data-edge': i,
     }));
-    // Water sits inside the pipe, as wide as the flow actually running
-    // through it — so the bottleneck is visible rather than inferred.
-    if (flow && !isCut && Math.abs(flow[i]) > 0 && wet) {
+    // Water fills every pipe the source can still reach, whether or not it is
+    // going anywhere. That matters most when the cut holds: the flow is zero
+    // everywhere, and without this the run that proves the answer would be a
+    // still picture. Instead the water arrives, fills the source side, and
+    // stops dead at the snipped pipes.
+    if (wet && !isCut) {
       const run = wet(i, ax, ay, bx, by, front);
       if (run) {
+        const moving = Math.abs(flow[i]);
         pipes.appendChild(svgEl('line', {
           x1: run[0], y1: run[1], x2: run[2], y2: run[3],
-          'stroke-width': Math.max(3, pipeWidth(Math.abs(flow[i])) - 6),
-          class: 'water',
+          'stroke-width': w - 5,
+          class: 'water' + (moving ? '' : ' still'),
         }));
+        // The current itself: a moving stream as wide as the flow really
+        // running through the pipe, so a pipe with spare capacity reads as
+        // barely trickling and the bottleneck is watched rather than deduced.
+        if (moving) {
+          pipes.appendChild(svgEl('line', {
+            x1: run[0], y1: run[1], x2: run[2], y2: run[3],
+            'stroke-width': Math.max(3, pipeWidth(moving) - 9),
+            class: 'current',
+            // Fuller pipes run faster. Speed is the second reading of the same
+            // number, which is what makes a slow trickle next to a torrent
+            // legible at a glance.
+            style: `animation-duration:${(1.5 - 0.1 * Math.min(9, moving)).toFixed(2)}s`,
+          }));
+        }
       }
     }
     if (!isCut) {
@@ -246,8 +264,10 @@ export default {
   sim: {
     create(level, play) {
       const { total, flow } = maxFlow(level, play.cut);
-      // How far each junction is from the source along pipes that carry water,
-      // so the flood advances outwards rather than everywhere at once.
+      // How far each junction is from the source, so the flood advances
+      // outwards rather than everywhere at once. Over every uncut pipe, not
+      // only the ones carrying flow: the dead ends fill up too, and on a
+      // winning cut they are the entire picture.
       const n = level.nodes.length;
       const depth = new Array(n).fill(Infinity);
       depth[level.source] = 0;
@@ -255,7 +275,7 @@ export default {
       for (let qi = 0; qi < queue.length; qi++) {
         const u = queue[qi];
         level.edges.forEach(([a, b], i) => {
-          if (play.cut.has(i) || Math.abs(flow[i]) === 0) return;
+          if (play.cut.has(i)) return;
           const v = a === u ? b : b === u ? a : -1;
           if (v >= 0 && depth[v] === Infinity) {
             depth[v] = depth[u] + 1;
@@ -276,7 +296,11 @@ export default {
         front: sim.front,
         wet: (i, ax, ay, bx, by, front) => {
           const [u, v] = level.edges[i];
-          const from = depth[u] <= depth[v] ? u : v;
+          // Which end the water enters by. Where there is flow that is the
+          // flow's own direction, not the order the search happened to reach
+          // the two ends in — those disagree often enough that taking the
+          // search order draws water running visibly uphill.
+          const from = flow[i] > 0 ? u : flow[i] < 0 ? v : (depth[u] <= depth[v] ? u : v);
           const near = depth[from];
           if (!(near < Infinity)) return null;
           const t = Math.max(0, Math.min(1, front - near));
