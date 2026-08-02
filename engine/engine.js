@@ -201,7 +201,7 @@ function startRun() {
   app.travel = 0;
   app.recordDrift = RECORD_DRIFT;
   // Whether the run is worth scrubbing through. It is when the middle of it
-  // holds something you would want to stop on — Unpinning's rope contracting
+  // holds something you would want to stop on — Pinning's rope contracting
   // past its pins. It is not when the run only fills in an answer already
   // decided, where the back half of the bar shows a half-finished picture and
   // the front half shows nothing at all.

@@ -1,9 +1,9 @@
 # Upstream catalog clone, ~733MB. Only needed to regenerate web/data:
 #   git clone --depth 1 https://github.com/ChristopherLloyd/LooPindex.git reference/LooPindex
-#   python3 games/unpinning/tools/extract_levels.py
+#   python3 games/pinning/tools/extract_levels.py
 reference/
 
-# games/*/data is generated, but committed on purpose: rebuilding Unpinning's
+# games/*/data is generated, but committed on purpose: rebuilding Pinning's
 # needs the 733MB clone above, so ignoring it would leave a fresh checkout
 # unable to run the game at all.
 

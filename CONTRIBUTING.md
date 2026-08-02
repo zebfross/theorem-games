@@ -2,7 +2,7 @@
 
 ## Adding a game
 
-1. Copy `games/unpinning/` as a starting point, or start from the API alone —
+1. Copy `games/pinning/` as a starting point, or start from the API alone —
    [docs/GAME-API.md](docs/GAME-API.md) is the whole contract.
 2. Put your levels in `data/` following
    [docs/LEVEL-FORMAT.md](docs/LEVEL-FORMAT.md).
@@ -33,7 +33,7 @@ Good signs:
 
 ## Where the answers come from
 
-Deciding the answer is often expensive — Unpinning's underlying problem is
+Deciding the answer is often expensive — Pinning's underlying problem is
 NP-complete — so precompute. Ship each level with its answer and make the
 runtime check a lookup. This keeps play instant and, more importantly, keeps
 the verdict correct even when the animation misbehaves.
@@ -46,7 +46,7 @@ direction*: better to refuse to answer than to answer wrongly.
 There is no test runner. What there is instead, and what has actually caught
 things:
 
-- **Check your data against itself.** Unpinning's extractor computes each
+- **Check your data against itself.** Pinning's extractor computes each
   region's degree from its own geometry and requires it to match the degree the
   source published — an independent check that the two halves of the data line
   up. It found real mismatches.
@@ -69,5 +69,5 @@ things:
 
 The engine and `lib/` are MIT. Your game keeps its own licence — put it in your
 game's README and in the `credit` string that renders in the footer. If you
-embed data from a paper or a catalog, check its terms; that is why Unpinning is
+embed data from a paper or a catalog, check its terms; that is why Pinning is
 GPL-3.0 while the engine is not.

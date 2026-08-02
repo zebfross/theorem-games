@@ -1,6 +1,6 @@
 'use strict';
 
-/* Unpinning — pin a loop of rope so that pulling it tight can't untangle it.
+/* Pinning — pin a loop of rope so that pulling it tight can't untangle it.
  *
  * Levels come from the LooPindex catalog. The catalog pins on the sphere; this
  * game is a rope on a flat table, i.e. the plane, and a homotopy in R^2 minus P
@@ -437,8 +437,8 @@ function paintRope(strands) {
 /* ---------- the module ---------- */
 
 export default {
-  id: 'unpinning',
-  title: 'Unpinning',
+  id: 'pinning',
+  title: 'Pinning',
   blurb: 'Pin a loop of rope so that pulling it tight cannot untangle it.',
   verb: 'Pull it tight',
   credit:

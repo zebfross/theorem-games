@@ -10,7 +10,7 @@ them (Menger, Ford and Fulkerson). So the par for "stop the flow as cheaply as
 you can" is the max flow, and the player is discovering the theorem by playing
 it rather than being told it.
 
-Everything here is polynomial, so unlike Unpinning nothing has to be looked up
+Everything here is polynomial, so unlike Pinning nothing has to be looked up
 from a catalogue: levels can be generated at any size and the answers computed.
 """
 

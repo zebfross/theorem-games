@@ -11,7 +11,7 @@
  *
  * Progress is counted straight from localStorage, whose keys the engine
  * namespaces as `<game>.best.<level>`. That avoids fetching every game's level
- * index just to draw a homepage — Unpinning's alone is 158KB.
+ * index just to draw a homepage — Pinning's alone is 158KB.
  */
 
 const grid = document.getElementById('games');

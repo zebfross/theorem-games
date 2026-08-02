@@ -10,7 +10,7 @@
  * to stop are the same number, which is the whole point and is worth saying in
  * the verdict rather than leaving to be noticed.
  *
- * Unlike Unpinning nothing here is looked up: max flow is polynomial, so the
+ * Unlike Pinning nothing here is looked up: max flow is polynomial, so the
  * levels are generated and the answers computed. The win check is exact and
  * cheap — is the sink still reachable — so the animation is pure illustration
  * and cannot disagree with the verdict, which is the failure mode the engine's

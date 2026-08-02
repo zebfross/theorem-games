@@ -14,7 +14,7 @@ No build step, no dependencies, no server-side anything. Static files.
 
 | Game | Theorem |
 | --- | --- |
-| [Unpinning](games/unpinning/) | The pinning number of a multiloop — Simon & Stucky, [arXiv:2405.16216](https://arxiv.org/abs/2405.16216) |
+| [Pinning](games/pinning/) | The pinning number of a multiloop — Simon & Stucky, [arXiv:2405.16216](https://arxiv.org/abs/2405.16216) |
 | [Max-flow min-cut](games/maxflow/) | The greatest flow equals the cheapest cut — Menger; Ford & Fulkerson |
 | [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 
@@ -26,7 +26,7 @@ play.html           the playing shell, opened as play.html?game=<id>
 engine/             everything not about any particular theorem
 games/
   registry.json     which games exist
-  unpinning/        one game: module, styles, poster, level data, own tooling
+  pinning/        one game: module, styles, poster, level data, own tooling
 lib/geometry/       shared maths used by more than one game
 docs/               the game API and the level format
 ```
@@ -55,7 +55,7 @@ inheriting rather than rediscovering.
 
 **Decide the verdict from your answer data, never from the simulation.** The
 physics is there to show the player *why*, and it will sometimes jam, drift or
-land in a local minimum. Unpinning reads its verdict off precomputed pinning
+land in a local minimum. Pinning reads its verdict off precomputed pinning
 sets and treats the animation purely as illustration; when the two disagree, the
 game says so plainly rather than letting the picture argue with the truth.
 
@@ -68,6 +68,6 @@ much changes rather than even in effort spent.
 ## Licence
 
 The engine and `lib/` are MIT. Individual games carry their own licence, since
-they often embed data from published work. Unpinning is GPL-3.0 because the
+they often embed data from published work. Pinning is GPL-3.0 because the
 catalogue it derives from is. Max-flow min-cut and Art gallery are MIT, having no inherited data at all —
 their networks and rooms are generated here and their answers computed.

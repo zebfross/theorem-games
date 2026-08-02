@@ -1,6 +1,6 @@
 """Generate the level pack.
 
-Unlike Unpinning, nothing here comes from a catalogue and nothing is
+Unlike Pinning, nothing here comes from a catalogue and nothing is
 NP-complete: max flow is polynomial, so levels are made up on the spot and
 their answers computed exactly. That means no licence to inherit and no ceiling
 on size.

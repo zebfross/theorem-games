@@ -1,4 +1,4 @@
-/* Unpinning's own look. The engine supplies the page chrome and the colour
+/* Pinning's own look. The engine supplies the page chrome and the colour
    variables; everything here is rope, pins and the spaces between them. */
 
 .region { fill: transparent; cursor: pointer; transition: fill 0.15s; }

@@ -106,7 +106,7 @@ sim: {
 ```
 
 **Not every run is worth scrubbing.** The bar earns its place when the middle
-of the run holds something you would want to stop on — Unpinning's rope
+of the run holds something you would want to stop on — Pinning's rope
 contracting past its pins, where the interesting moment is halfway. It does not
 when the run merely fills in an answer already decided: stopping partway then
 shows a half-drawn picture that says less than the finished one. Set
@@ -134,7 +134,7 @@ Return it only when the attempt was unaided; the engine handles the rest.
 
 **Decide the verdict from your own answer data, never from the simulation.**
 Physics is for showing the player why, and it will occasionally jam or drift.
-Unpinning reads the verdict off precomputed pinning sets and uses the animation
+Pinning reads the verdict off precomputed pinning sets and uses the animation
 purely as illustration.
 
 ## Other solutions (optional)

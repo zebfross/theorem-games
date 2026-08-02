@@ -39,7 +39,7 @@ A score cannot create tension where losing is impossible.
 
 **So the test, before building anything: play the losing strategy on paper.**
 Click at random, ignore the goal, and see whether it still wins. It takes
-minutes. Unpinning survives it — a wrong set of pins genuinely fails — and so
+minutes. Pinning survives it — a wrong set of pins genuinely fails — and so
 does max-flow, where a random spend of par separates the network 1.9% of the
 time against untangling's 58%. Where careless play always wins, the game needs
 a different move set, not a different interface, and that is worth knowing
@@ -78,7 +78,7 @@ possible. See `games/maxflow/`.
 
 The polynomial-time answer was the draw and it delivered: networks are
 generated here and their answers computed, so the game carries no third-party
-data and has no ceiling on level size. Unpinning's GPL inheritance simply does
+data and has no ceiling on level size. Pinning's GPL inheritance simply does
 not arise.
 
 Two things worth carrying. The fail-state test was run *before* building — a

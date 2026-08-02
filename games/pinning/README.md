@@ -1,4 +1,4 @@
-# Unpinning
+# Pinning
 
 A web game built on the pinning problem for multiloops. A loop of rope lies
 tangled on a table. Push pins into the table, then pull the rope tight. Pins in

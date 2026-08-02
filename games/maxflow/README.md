@@ -31,14 +31,14 @@ often that happens to separate the network:
 Levels are generated in surplus and the least forgiving kept, which is what
 holds that number down.
 
-The one soft spot, and it is the same as Unpinning's: cutting *everything* wins,
+The one soft spot, and it is the same as Pinning's: cutting *everything* wins,
 just at a ruinous price. That is a scoring question rather than a structural one
 — playing at the level you are actually asked to play at can genuinely fail —
 but it is the thing to check first on any game of this shape.
 
 ### No third-party data
 
-Unlike Unpinning, nothing is catalogued and nothing is looked up. Max flow is
+Unlike Pinning, nothing is catalogued and nothing is looked up. Max flow is
 polynomial, so networks are generated here and their answers computed exactly:
 no licence to inherit, no ceiling on level size, and the pack can be rebuilt at
 any size from `tools/build_pack.py`.
@@ -91,7 +91,7 @@ the current drew nothing at all. Now the water arrives, fills the source side,
 and stops dead at the snips while the sink side stays dry — which is the most
 useful thing the animation does.
 
-There is no scrub bar. The engine offers one, and it is right for Unpinning,
+There is no scrub bar. The engine offers one, and it is right for Pinning,
 but this run has no inspectable middle: the water advances outwards from the
 source and that is all, so stopping partway shows a half-filled network that
 says nothing the finished one does not say better. `replay: false` drops it,
