@@ -106,7 +106,7 @@ export default {
   id: 'untangling',
   title: 'Untangling',
   blurb:
-    'Collapse the lenses out of a tangled loop, in as few moves as you can. A lens is a space the curve closes off with just two crossings.',
+    'Untangle a tangled loop by collapsing its lenses. A lens is a space the curve closes off with exactly two crossings — nothing marks them, and every click counts.',
   credit:
     'A game on <a href="https://arxiv.org/abs/1706.06253"><i>Untangling planar '
     + 'curves</i></a> by Hsien-Chih Chang and Jeff Erickson: a closed curve with '
@@ -117,18 +117,21 @@ export default {
   chip: (m) => `${m.n}·${m.par}`,
   par: (m) => m.par,
 
-  start: (level) => ({ at: level.start, moves: 0, hinted: null }),
+  start: (level) => ({ at: level.start, moves: 0, misses: 0, hinted: null }),
 
   view: (level) => level.view,
 
   describe(level, play) {
     const left = level.counts[play.at];
+    // Scored on clicks, not on collapses. Nothing on the board says where a
+    // lens is, so hunting for one has to cost something or it is not hunting.
+    const clicks = play.moves + play.misses;
+    const spent = `${clicks} ${clicks === 1 ? 'click' : 'clicks'}`;
     return {
-      goal: `Untangle it in <b>${level.par}</b> ${level.par === 1 ? 'move' : 'moves'}`,
+      goal: `Untangle it in <b>${level.par}</b> ${level.par === 1 ? 'click' : 'clicks'}`,
       status: left === 0
-        ? `${play.moves} ${play.moves === 1 ? 'move' : 'moves'} · untangled`
-        : `${play.moves} ${play.moves === 1 ? 'move' : 'moves'} · ${left} `
-          + `${left === 1 ? 'crossing' : 'crossings'} left`,
+        ? `${spent} · untangled`
+        : `${spent} · ${left} ${left === 1 ? 'crossing' : 'crossings'} left`,
     };
   },
 
@@ -145,8 +148,15 @@ export default {
     let pick = available.find((m) => m.lens && pointInPolygon(p.x, p.y, m.lens));
     if (!pick) pick = available.find((m) => m.lens && distToPoly(p.x, p.y, m.lens) < grip);
     if (!pick) pick = available.find((m) => !m.lens && Math.hypot(p.x - m.at[0], p.y - m.at[1]) < 2 * grip);
+    // A wrong click costs the same as a right one. Without that the search is
+    // free, and clicking everywhere in turn finds the lenses for you — which is
+    // exactly what the marked version let you do, only slower.
     if (!pick) {
-      return { message: 'Not a lens. Look for a space closed off by just two crossings.' };
+      play.misses++;
+      return {
+        changed: true,
+        message: 'Not a lens — a lens is closed off by exactly two crossings.',
+      };
     }
 
     play.at = pick.to;
@@ -165,19 +175,21 @@ export default {
     board.replaceChildren();
     const pts = level.states[play.at];
 
-    // The collapsible lenses are laid down but not coloured in: finding them is
-    // the game. Marking them all made the puzzle disappear, since with every
-    // one shown you can click through them in any order and land on par more
-    // often than not. They light on hover, so the shape is confirmed before it
-    // is committed to, and the hint can still point at one.
-    if (phase === 'placing') {
-      for (const m of movesFrom(level, play.at)) {
-        const lit = play.hinted === m.to ? ' hinted' : '';
+    // Nothing marks a collapsible lens, and nothing is put on the board that
+    // could be probed for one. Drawing them invisibly and lighting them on
+    // hover was no better than colouring them in — you sweep the pointer and
+    // they announce themselves one by one — and a shape under the cursor gives
+    // itself away through the cursor too. So clicks are tested against the
+    // stored geometry instead, and the board holds only the curve.
+    //
+    // The single exception is a lens the hint has pointed at, which is the
+    // whole purpose of the hint.
+    if (phase === 'placing' && play.hinted !== null) {
+      const m = movesFrom(level, play.at).find((x) => x.to === play.hinted);
+      if (m) {
         board.appendChild(m.lens
-          ? svgEl('polygon', { points: polyPoints(m.lens), class: 'lens' + lit })
-          // No outline could be traced for this one; a disc round the spot
-          // keeps the move reachable rather than silently missing.
-          : svgEl('circle', { cx: m.at[0], cy: m.at[1], r: 14, class: 'lens' + lit }));
+          ? svgEl('polygon', { points: polyPoints(m.lens), class: 'lens hinted' })
+          : svgEl('circle', { cx: m.at[0], cy: m.at[1], r: 14, class: 'lens hinted' }));
       }
     }
 
@@ -189,6 +201,7 @@ export default {
 
   verdict(level, play) {
     const left = level.counts[play.at];
+    const clicks = play.moves + play.misses;
     if (left > 0) {
       return {
         won: false,
@@ -198,19 +211,26 @@ export default {
           + 'here is closed; start again and collapse a different lens first.',
       };
     }
-    const over = play.moves - level.par;
+    const over = clicks - level.par;
     if (over === 0) {
       return {
-        won: true, perfect: true, score: play.moves,
+        won: true, perfect: true, score: clicks,
         title: 'Perfect.',
-        detail: `Untangled in ${play.moves}, and it cannot be done in fewer.`,
+        detail: `${clicks} clicks, every one a lens, and the shortest way through. `
+          + 'It cannot be done in fewer.',
       };
     }
+    const wasted = play.misses
+      ? `${play.misses} click${play.misses === 1 ? '' : 's'} went somewhere that was not a lens`
+      : null;
+    const detour = play.moves > level.par
+      ? `${play.moves} collapses where ${level.par} would do`
+      : null;
     return {
-      won: true, perfect: false, score: play.moves,
+      won: true, perfect: false, score: clicks,
       title: over === 1 ? 'So close!' : 'Untangled.',
-      detail: `${play.moves} moves — ${over === 1 ? 'one' : over} more than the `
-        + `${level.par} it can be done in.`,
+      detail: `${clicks} clicks against a best of ${level.par}`
+        + (wasted || detour ? ` — ${[wasted, detour].filter(Boolean).join(', and ')}.` : '.'),
     };
   },
 
@@ -220,11 +240,12 @@ export default {
       if (here === null) {
         return { text: 'This position is a dead end — nothing here can be collapsed to the finish.' };
       }
-      const spent = play.moves;
+      const spent = play.moves + play.misses;
       return {
         text: here + spent === level.par
-          ? `Still on track: ${here} more ${here === 1 ? 'move' : 'moves'} from here does it.`
-          : `${here} more from here, which would make ${here + spent} against a best of ${level.par}.`,
+          ? `Still on track: ${here} more ${here === 1 ? 'collapse' : 'collapses'} does it.`
+          : `${here} more from here, which would make ${here + spent} clicks `
+            + `against a best of ${level.par}.`,
       };
     }
     const m = bestMove(level, play.at);

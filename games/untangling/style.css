@@ -1,17 +1,12 @@
 /* Untangling's own look. The engine supplies the page chrome and the colour
    variables; everything here is the curve and the lenses you can collapse. */
 
-/* A bigon the player can collapse — invisible until pointed at. Finding them
-   is the game; colouring them all in gives the whole thing away, because with
-   every one shown you can click through in any order and hit par more often
-   than not. Filled rather than outlined, since the thing being clicked is the
-   enclosed space and a stroke on a sliver would be most of the sliver. */
-.lens {
-  fill: transparent;
-  cursor: pointer;
-  transition: fill 0.15s;
-}
-.lens:hover { fill: #ffffff2b; }
+/* Only ever a lens the hint has pointed at. Collapsible lenses are otherwise
+   not on the board at all — not even invisibly. An invisible shape still
+   answers questions: it lights under the pointer, and it changes the cursor,
+   so sweeping the board finds every one of them without understanding any of
+   it. Clicks are tested against the stored geometry instead. */
+.lens { pointer-events: none; }
 
 /* One the hint has pointed at. Pulses so it is findable at a glance without an
    arrow or a label cluttering the board. */

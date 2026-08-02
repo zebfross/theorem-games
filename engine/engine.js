@@ -133,9 +133,11 @@ board.addEventListener('click', (ev) => {
   pt.y = ev.clientY;
   const p = pt.matrixTransform(board.getScreenCTM().inverse());
   const r = app.game.click(app.level, app.play, p) || {};
-  if (r.message) { say(r.message, false); return; }
+  // A miss can still change something. Where nothing on the board says which
+  // clicks are the right ones, a wrong one has to be counted, so `message` and
+  // `changed` are independent rather than one short-circuiting the other.
+  say(r.message || '', false);
   if (r.changed) {
-    say('');
     draw();
     status();
     // Move by move, a click can be the last one. The game says when, since

@@ -9,7 +9,7 @@
     {
       "id": "untangling",
       "title": "Untangling",
-      "blurb": "Collapse the lenses out of a tangled loop, in as few moves as you can. A lens is a space the curve closes off with just two crossings.",
+      "blurb": "Untangle a tangled loop by collapsing its lenses. A lens is a space the curve closes off with exactly two crossings \u2014 nothing marks them, and every click counts.",
       "theorem": "Chang & Erickson, untangling planar curves (arXiv:1706.06253)"
     }
   ]

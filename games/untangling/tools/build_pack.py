@@ -302,6 +302,10 @@ def main():
     ap.add_argument('--prune', type=float, metavar='RATE',
                     help='delete levels where careless play hits par at least '
                          'this often, then reindex')
+    ap.add_argument('--teach-below', type=int, default=8, metavar='N',
+                    help='never prune levels under N crossings: they are the '
+                         'on-ramp, and are judged on being small rather than '
+                         'on being hard')
     args = ap.parse_args()
 
     if args.index_only or args.prune is not None:
@@ -310,7 +314,14 @@ def main():
         for f in sorted(glob.glob(os.path.join(OUT, 'levels', '*.json'))):
             lv = json.load(open(f))
             rate = careless_rate(lv)
-            if args.prune is not None and rate >= args.prune:
+            # The careless test asks whether the order of collapses matters,
+            # which is the only thing that mattered while every lens was
+            # marked. Nothing is marked now, so finding one is a skill of its
+            # own, and the small curves are where it is learned. Pruning on
+            # order alone took out everything under 8 crossings and left a
+            # first level that is an eight-crossing tangle with no marks on it.
+            teaching = lv['crossings'] < args.teach_below
+            if args.prune is not None and rate >= args.prune and not teaching:
                 os.remove(f)
                 dropped += 1
                 continue

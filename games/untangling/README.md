@@ -14,7 +14,8 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Playable.** Find a lens and click it, and it collapses. The module computes nothing about
+**Playable.** Find a lens and click it, and it collapses. Nothing marks them,
+and every click is scored, so a wrong one costs the same as a right one. The module computes nothing about
 curves: a level file holds every diagram the player can reach, drawn, with the
 moves joining them, so a move at runtime is a lookup. All the geometry was
 settled offline and checked against the combinatorics, which is what makes it
@@ -37,15 +38,31 @@ which happens on 19% of optimal routes. Measured over the whole pack:
 | levels where you can be at most 1 move off | 217 more |
 | worst anyone can ever do | 3 moves above par |
 
-Two changes. The lenses are no longer coloured in — finding them is the game,
-and they light only on hover, so a shape is confirmed before it is committed
-to. And the pack keeps only levels where clicking at random hits par less than
-35% of the time, which is 135 of the 441 that can be drawn. `--prune` does
-that as a separate pass, since building is slow and unchanging while the
-threshold is a judgement worth revisiting.
+Colouring the lenses in was the first thing to go. Drawing them invisibly and
+lighting them on hover was the second, and it was barely an improvement: sweep
+the pointer and they announce themselves one at a time, and a shape under the
+cursor gives itself away through the cursor too. Nothing about a collapsible
+lens is on the board now — clicks are tested against the stored geometry — so
+there is nothing to probe.
 
-That makes it a decent light puzzle, and no more. The ceiling is still three
-moves wide, because collapsing-only play is a greedy descent. The depth in
+That only works if searching costs something, or clicking everywhere in turn
+finds the lenses for you. So the score is **clicks, not collapses**: a click
+that lands on nothing counts the same as one that collapses a lens, and par is
+reachable only by finding every lens first time and picking the right ones.
+
+The pack then keeps levels where clicking at random among the *valid* lenses
+hits par under 35% of the time — 135 of 441. On its own that rule deleted
+every level under 8 crossings and left a first puzzle that is an
+eight-crossing tangle with nothing marked on it, which is no way to learn what
+a lens is. Small curves are kept regardless of that test, since they are
+judged on being an on-ramp rather than on being hard. 157 levels, from 3
+crossings to 10. `--prune` is a separate pass from building, because building
+is slow and always gives the same answer while the threshold is a judgement
+worth revisiting.
+
+That makes it a decent light puzzle, and no more. Finding lenses is now a real
+skill, but the *planning* ceiling is still three moves wide, because
+collapsing-only play is a greedy descent. The depth in
 Chang and Erickson is in the moves this does not have: R3 flips, and R2 in the
 *increasing* direction, where you have to make the curve worse to make it
 better. Those cannot be precomputed — the state space stops being finite — so
