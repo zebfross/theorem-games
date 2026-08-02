@@ -65,15 +65,26 @@ tier 3 the colouring. The help you give is the mathematics.
 It is also the best test of whether the engine really generalises, since it
 shares nothing visually with Unpinning.
 
-## Max-flow min-cut
+## ~~Max-flow min-cut~~ — built
 
-**Menger / Ford–Fulkerson.** Cut edges to stop flow from source to sink, as
-cheaply as possible.
+**Menger / Ford–Fulkerson.** Cut pipes to stop the water, as cheaply as
+possible. See `games/maxflow/`.
 
-The run sends water through and shows it still getting past an insufficient
-cut. Unusual among these because the answer is **polynomial time**: no
-precompute ceiling, levels can be generated freely at any size, and the game
-could ship a real solver instead of a table.
+The polynomial-time answer was the draw and it delivered: networks are
+generated here and their answers computed, so the game carries no third-party
+data and has no ceiling on level size. Unpinning's GPL inheritance simply does
+not arise.
+
+Two things worth carrying. The fail-state test was run *before* building — a
+random spend of par separates the network 1.9% of the time, against
+Untangling's 58% — and it took about twenty minutes to answer. And because the
+win check is exact and cheap (is the sink still reachable), the animation
+cannot disagree with the verdict; that failure mode is designed out rather than
+managed.
+
+The nicest accident: par is the max flow, so turning the water on *before*
+cutting anything tells you what the answer will cost. The theorem is the
+scoreboard.
 
 ## The happy ending problem
 

@@ -67,4 +67,5 @@ much changes rather than even in effort spent.
 The engine and `lib/` are MIT. Individual games carry their own licence, since
 they often embed data from published work. Unpinning is GPL-3.0 because the
 catalogue it derives from is, and Untangling is GPL-3.0 too: its curves are
-Unpinning's, so the same terms follow them.
+Unpinning's, so the same terms follow them. Max-flow min-cut is MIT, having no
+inherited data at all — its networks are generated and its answers computed.

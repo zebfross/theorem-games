@@ -1,0 +1,47 @@
+/* Max-flow min-cut's own look. The engine supplies the page chrome and the
+   colour variables; everything here is pipes, water and junctions. */
+
+.pipe-wall { stroke: #0d1f18; stroke-linecap: round; }
+.pipe {
+  stroke: var(--rope-dark);
+  stroke-linecap: round;
+  cursor: pointer;
+  transition: stroke 0.12s;
+}
+.pipe:hover { stroke: var(--rope); }
+
+/* A cut pipe keeps its place in the picture — you need to see what you spent,
+   and where, without re-reading the whole network. */
+.pipe.cut { stroke: #ffffff10; cursor: pointer; }
+.snip { stroke: #e2765a; stroke-width: 3.5; stroke-linecap: round; pointer-events: none; }
+
+/* One the hint has pointed at. Pulses so it is findable at a glance without an
+   arrow or a label cluttering the board. */
+.pipe.hinted { animation: hint-pulse 1.7s ease-in-out infinite; }
+@keyframes hint-pulse {
+  0%, 100% { stroke: #6fdc9a66; }
+  50%      { stroke: #6fdc9a; }
+}
+
+/* Water is drawn inside the pipe and only as wide as the flow really running
+   through it, so a pipe with spare capacity reads as half empty and the
+   bottleneck is visible rather than worked out. */
+.water { stroke: #58b6e8; stroke-linecap: round; pointer-events: none; opacity: 0.92; }
+
+.cap-disc { fill: #12241d; stroke: #ffffff1f; stroke-width: 1; pointer-events: none; }
+.cap {
+  fill: var(--rope);
+  font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.node { fill: #16302a; stroke: var(--brass-dark); stroke-width: 2; pointer-events: none; }
+.node.source { fill: var(--brass); stroke: var(--brass-dark); }
+.node.sink { fill: #58b6e8; stroke: #2b6d92; }
+.node-label {
+  fill: #0d1f18;
+  font: 700 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-anchor: middle;
+  pointer-events: none;
+}
