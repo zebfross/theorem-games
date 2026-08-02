@@ -16,6 +16,15 @@
  * than from a faster language.
  */
 
+// Where this script was loaded from, so the worker beside it can be found even
+// when the page including it lives in a different directory — which is how the
+// WebAssembly edition reuses all of this without a second copy.
+const HERE = document.currentScript.src;
+const WORKER_URL = new URL('worker.js', HERE).href;
+// Each page picks which kernel it opens with; the switch still moves between
+// them, so either page can be either.
+const DEFAULT_KERNEL = window.MANDEL_KERNEL === 'wasm';
+
 const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
 // almost instantly, so panning and zooming never show a blank canvas.
@@ -60,7 +69,7 @@ const app = {
   started: 0,
   passIters: 0,
   snapAt: null,          // the view `snap` holds, or null if it holds nothing
-  useWasm: false,
+  useWasm: DEFAULT_KERNEL,
 };
 
 function maxIterations() {
@@ -86,11 +95,12 @@ function bulbTestWorthIt() {
 
 function boot() {
   for (let i = 0; i < CORES; i++) {
-    const w = new Worker('worker.js');
+    const w = new Worker(WORKER_URL);
     w.onmessage = onBand;
     app.workers.push(w);
   }
   el('cores').textContent = CORES;
+  el('wasm').checked = app.useWasm;
 }
 
 function resize() {

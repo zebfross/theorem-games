@@ -87,6 +87,18 @@ answer to, and the arbitrary precision needed past the double-precision floor at
 around 10^13, where the hard part is perturbation theory rather than the
 language.
 
+### Two entries, one explorer
+
+The WebAssembly edition is its own card and its own page, so the two can be
+opened side by side and compared. It is not a second copy: it loads this
+directory's `explorer.js` and `worker.js` and sets one global to choose the
+kernel, so there is one renderer and one set of bugs. The script finds its
+worker relative to its own URL rather than the page's, which is what lets it be
+included from elsewhere.
+
+Both pages keep the switch, so either can be either — the separate entries are
+for convenience in comparing, not because the pages differ in what they can do.
+
 ### How the module is built
 
 There is no toolchain here — no wat2wasm, no emscripten, and Apple's clang

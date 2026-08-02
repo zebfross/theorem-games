@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mandelbrot — Theorem games</title>
+<title>Mandelbrot in WebAssembly — Theorem games</title>
 <link rel="stylesheet" href="../../engine/style.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../mandelbrot/style.css">
 </head>
 <body class="explorer">
 
@@ -15,12 +15,11 @@
 
 <header>
   <div class="brand">
-    <h1>Mandelbrot</h1>
-    <p>The set of complex <i>c</i> for which <i>z</i> &rarr; <i>z</i>&sup2; + <i>c</i>,
-       started at zero, never runs away. Drag to move, scroll to zoom, and point
-       at a bulb to be told its period. There is
-       <a href="../mandelbrot-wasm/">a WebAssembly edition</a> to compare it
-       against.</p>
+    <h1>Mandelbrot in WebAssembly</h1>
+    <p>The same explorer, with the escape-time kernel compiled to WebAssembly
+       instead of run as JavaScript. Open it beside
+       <a href="../mandelbrot/">the JavaScript one</a> and compare the timings;
+       the pictures are the same to within one level of one colour channel.</p>
   </div>
 </header>
 
@@ -51,17 +50,20 @@
 
 <footer>
   <p>
-    The escape test is a theorem in itself: if ever |<i>z</i>| &gt; 2 the orbit is
-    certain to run away, which is the only reason a picture can be drawn in
-    finite time. Douady and Hubbard proved the set connected; Shishikura proved
-    its boundary has Hausdorff dimension 2.
+    The module is 692 bytes, assembled byte by byte by
+    <code>tools/build_wasm.py</code> because this machine has no WebAssembly
+    toolchain. It has no logarithm instruction, and the smooth colouring needs
+    two per escaped pixel, so <i>log</i><sub>2</sub> is taken from the float's
+    own bits: the exponent gives the integer part exactly and four terms of the
+    arctanh series cover the mantissa.
   </p>
   <p class="colophon">
-    Plain JavaScript across web workers — no build step.
+    WebAssembly across web workers, and still no build step.
     <a href="../../index.html">Back to the games.</a>
   </p>
 </footer>
 
-<script src="explorer.js"></script>
+<script>window.MANDEL_KERNEL = 'wasm';</script>
+<script src="../mandelbrot/explorer.js"></script>
 </body>
 </html>
