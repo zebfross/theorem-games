@@ -83,6 +83,13 @@ Plain JavaScript, no build step.
   rather than one band each. One band per core leaves whoever draws the middle
   doing nearly all of the work: the top and bottom of a view escape quickly and
   the middle is mostly set.
+- **The previous picture is kept and stretched into place** the instant the
+  view changes, so a zoom slides something sharp rather than flashing up a
+  mosaic of 8-pixel blocks. That blockiness was the first thing anyone
+  complained about, and it was never a speed problem — a faster kernel would
+  only have reached the sharp pass sooner, showing the same blocks on the way.
+  Coarse passes are now drawn only when there is nothing better already on the
+  canvas, which on the first render is the case and afterwards is not.
 - **Three passes**, at 8, 3 and 1 pixels per sample. The coarse pass is sixty-
   four times cheaper and lands immediately, so panning never shows a blank
   canvas, and it is blown up with hard edges rather than blurred so it is

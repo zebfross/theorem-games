@@ -28,6 +28,10 @@ const canvas = document.getElementById('view');
 const ctx = canvas.getContext('2d', { alpha: false });
 const scratch = document.createElement('canvas');
 const sctx = scratch.getContext('2d');
+// The last finished sharp picture, kept so that the next one can be covered by
+// stretching this rather than by showing coarse blocks.
+const snap = document.createElement('canvas');
+const nctx = snap.getContext('2d', { alpha: false });
 
 const el = (id) => document.getElementById(id);
 
@@ -55,6 +59,7 @@ const app = {
   pending: 0,
   started: 0,
   passIters: 0,
+  snapAt: null,          // the view `snap` holds, or null if it holds nothing
 };
 
 function maxIterations() {
@@ -98,8 +103,32 @@ function resize() {
 function render() {
   app.job++;
   app.started = performance.now();
+  // Show the last sharp picture, stretched to where it now belongs, before any
+  // of the new one exists. Zooming then slides and scales something sharp
+  // instead of flashing up a block mosaic — the coarse passes are still what
+  // computes, they just no longer have to be looked at.
+  reproject();
   runPass(0);
   status();
+}
+
+/** Draw the kept picture into the current view. */
+function reproject() {
+  const s = app.snapAt;
+  if (!s) return false;
+  const perPx = app.span / canvas.width;
+  const sH = s.span * canvas.height / canvas.width;
+  const dx = ((s.cx - s.span / 2) - app.cx) / perPx + canvas.width / 2;
+  const dy = ((s.cy - sH / 2) - app.cy) / perPx + canvas.height / 2;
+  const dw = s.span / perPx;
+  const dh = sH / perPx;
+  // Far enough away and the stretch is worse than nothing.
+  if (dw < canvas.width / 24 || dw > canvas.width * 24) return false;
+  ctx.imageSmoothingEnabled = true;
+  ctx.fillStyle = '#0a1512';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(snap, 0, 0, snap.width, snap.height, dx, dy, dw, dh);
+  return true;
 }
 
 /** Draw the whole picture at one coarseness, then queue the next one. */
@@ -167,11 +196,14 @@ function onBand(ev) {
 
 function finishPass() {
   const p = app.pass;
-  // Coarse passes are blown up with hard edges rather than blurred, so it is
-  // obvious the picture is still sharpening rather than looking like a bad
-  // render that has finished.
-  ctx.imageSmoothingEnabled = p.step === 1;
-  ctx.drawImage(scratch, 0, 0, p.w, p.h, 0, 0, canvas.width, canvas.height);
+  // A coarse pass is only worth showing when there is nothing better already on
+  // the canvas. Once a previous picture has been stretched into place, drawing
+  // 8-pixel blocks over it is a step backwards, which is exactly what the
+  // blockiness while zooming was.
+  if (p.step <= 3 || !app.snapAt) {
+    ctx.imageSmoothingEnabled = p.step > 1;
+    ctx.drawImage(scratch, 0, 0, p.w, p.h, 0, 0, canvas.width, canvas.height);
+  }
 
   if (p.passIndex + 1 < PASSES.length) {
     soon(() => {
@@ -182,6 +214,11 @@ function finishPass() {
     // chain. The chain waits for the browser to paint between passes, and a
     // hidden tab clamps that wait to something near a second, which would
     // otherwise swamp the number being reported.
+    // Keep the finished article, and the view it belongs to, for the next move.
+    snap.width = canvas.width;
+    snap.height = canvas.height;
+    nctx.drawImage(canvas, 0, 0);
+    app.snapAt = { cx: app.cx, cy: app.cy, span: app.span };
     status(performance.now() - p.t0);
   }
 }
