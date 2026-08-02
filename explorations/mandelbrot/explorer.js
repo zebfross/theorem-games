@@ -16,14 +16,9 @@
  * than from a faster language.
  */
 
-// Where this script was loaded from, so the worker beside it can be found even
-// when the page including it lives in a different directory — which is how the
-// WebAssembly edition reuses all of this without a second copy.
-const HERE = document.currentScript.src;
-const WORKER_URL = new URL('worker.js', HERE).href;
-// Each page picks which kernel it opens with; the switch still moves between
-// them, so either page can be either.
-const DEFAULT_KERNEL = window.MANDEL_KERNEL === 'wasm';
+// Resolved against this script rather than the page, so the worker is found
+// wherever the page including it happens to live.
+const WORKER_URL = new URL('worker.js', document.currentScript.src).href;
 
 const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
@@ -69,7 +64,6 @@ const app = {
   started: 0,
   passIters: 0,
   snapAt: null,          // the view `snap` holds, or null if it holds nothing
-  useWasm: DEFAULT_KERNEL,
 };
 
 function maxIterations() {
@@ -100,7 +94,6 @@ function boot() {
     app.workers.push(w);
   }
   el('cores').textContent = CORES;
-  el('wasm').checked = app.useWasm;
 }
 
 function resize() {
@@ -185,7 +178,7 @@ function feed(worker) {
   worker.postMessage({
     job: p.job, w: p.w, rows: next.rows, x0: p.x0,
     y0: p.y0 + next.from * p.scale, step: p.scale,
-    maxIter: p.maxIter, useBulb: p.useBulb, useWasm: app.useWasm,
+    maxIter: p.maxIter, useBulb: p.useBulb,
   });
 }
 
@@ -328,12 +321,6 @@ canvas.addEventListener('pointermove', (ev) => {
 });
 canvas.addEventListener('pointerup', () => { drag = null; });
 canvas.addEventListener('pointercancel', () => { drag = null; });
-
-el('wasm').addEventListener('change', (ev) => {
-  app.useWasm = ev.target.checked;
-  app.snapAt = null;      // redraw from scratch so the timing is of this kernel
-  render();
-});
 
 el('reset').addEventListener('click', () => {
   app.cx = -0.6;

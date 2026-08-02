@@ -5,12 +5,6 @@
       "title": "Mandelbrot",
       "blurb": "Zoom into the boundary between the orbits that stay and the orbits that run away.",
       "theorem": "Douady & Hubbard, connected; Shishikura, boundary dimension 2"
-    },
-    {
-      "id": "mandelbrot-wasm",
-      "title": "Mandelbrot in WebAssembly",
-      "blurb": "The same explorer with the kernel compiled to WebAssembly, for comparing against the JavaScript one.",
-      "theorem": "692 bytes, assembled without a toolchain"
     }
   ]
 }

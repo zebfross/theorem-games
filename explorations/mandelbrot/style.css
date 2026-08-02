@@ -62,8 +62,3 @@ body.explorer footer p { max-width: 68ch; }
    alone they come out as the browser's default blue on a dark green field. */
 body.explorer .brand a { color: var(--brass); }
 body.explorer .brand a:hover { color: var(--ink); }
-
-/* The kernel switch. Both kernels draw the same picture, so the only thing to
-   watch when it is flipped is the timing beside it. */
-#kernel { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
-#kernel input { accent-color: var(--brass); cursor: pointer; }

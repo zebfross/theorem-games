@@ -2,14 +2,6 @@
 
 /* One horizontal chunk of the picture, coloured and handed back.
  *
- * Two kernels compute the same thing: one in JavaScript, one in WebAssembly,
- * chosen by the page so the two can be compared honestly. They read the very
- * same palette table out of the same bytes, so any difference in the picture is
- * a difference in the arithmetic and nothing else. Checked: on a 500x320 view
- * they agree on the iteration count exactly and on 159,994 of 160,000 pixels,
- * the rest differing by one in a single channel — that is the hand-rolled log2
- * in the WebAssembly against Math.log2, and it is invisible.
- *
  * Colouring happens here rather than on the main thread, so what goes back is a
  * plain RGBA buffer that can be transferred rather than copied.
  *
@@ -19,8 +11,6 @@
 
 const BAILOUT = 256;
 const STEPS = 1024;              // entries around the palette
-const LUT_AT = 0;                // where the table lives in wasm memory
-const OUT_AT = (STEPS + 1) * 4;  // and where pixels start, just past it
 
 /* A palette that belongs with the rest of the site: deep teal, up through the
    rope brass, to cream, and back. Stops rather than sine waves — sines are
@@ -73,7 +63,7 @@ function inMainBody(cr, ci) {
   return b * b + ci * ci <= 0.0625;
 }
 
-function renderJS(px, w, rows, x0, y0, step, maxIter, useBulb) {
+function render(px, w, rows, x0, y0, step, maxIter, useBulb) {
   let total = 0;
   for (let py = 0; py < rows; py++) {
     const ci = y0 + py * step;
@@ -115,46 +105,10 @@ function renderJS(px, w, rows, x0, y0, step, maxIter, useBulb) {
   return total;
 }
 
-/* ---------- the WebAssembly kernel, loaded on demand ---------- */
-
-let wasm = null;
-
-async function getWasm(bytesNeeded) {
-  if (!wasm) {
-    const pages = Math.ceil((OUT_AT + bytesNeeded) / 65536) + 2;
-    const memory = new WebAssembly.Memory({ initial: pages });
-    const src = await fetch('mandel.wasm');
-    const { instance } = await WebAssembly.instantiate(
-      await src.arrayBuffer(), { env: { mem: memory } });
-    wasm = { memory, render: instance.exports.render, table: false };
-  }
-  const want = OUT_AT + bytesNeeded;
-  if (wasm.memory.buffer.byteLength < want) {
-    wasm.memory.grow(Math.ceil((want - wasm.memory.buffer.byteLength) / 65536) + 1);
-    wasm.table = false;                 // growing detaches the old views
-  }
-  if (!wasm.table) {
-    new Uint32Array(wasm.memory.buffer, LUT_AT, STEPS + 1).set(TABLE);
-    wasm.table = true;
-  }
-  return wasm;
-}
-
-self.onmessage = async (ev) => {
-  const { job, w, rows, x0, y0, step, maxIter, useBulb, useWasm } = ev.data;
-  const bytes = w * rows * 4;
-  const out = new Uint8ClampedArray(bytes);
-  let iterations;
-
-  if (useWasm) {
-    const m = await getWasm(bytes);
-    iterations = m.render(OUT_AT, LUT_AT, w, rows, x0, y0, step, maxIter, useBulb ? 1 : 0);
-    // Wasm memory cannot be handed over, so the pixels are copied out. A couple
-    // of hundred kilobytes per chunk, which does not show against the maths.
-    out.set(new Uint8Array(m.memory.buffer, OUT_AT, bytes));
-  } else {
-    iterations = renderJS(new Uint32Array(out.buffer), w, rows, x0, y0, step, maxIter, useBulb);
-  }
-
+self.onmessage = (ev) => {
+  const { job, w, rows, x0, y0, step, maxIter, useBulb } = ev.data;
+  const out = new Uint8ClampedArray(w * rows * 4);
+  const iterations = render(
+    new Uint32Array(out.buffer), w, rows, x0, y0, step, maxIter, useBulb);
   self.postMessage({ job, rows, out, iterations }, [out.buffer]);
 };
