@@ -200,9 +200,12 @@ function drawNetwork(level, play, opts = {}) {
     const [x, y] = pos[i];
     const end = i === level.source ? ' source' : i === level.sink ? ' sink' : '';
     board.appendChild(svgEl('circle', { cx: x, cy: y, r: NODE_R, class: 'node' + end }));
+    // Named in full rather than lettered. "S" and "T" read as source and sink
+    // only once you already know which is which, and "S" is just as good an
+    // abbreviation for sink — the water then appears to run the wrong way.
     if (end) {
-      const t = svgEl('text', { x, y: y + 5, class: 'node-label' });
-      t.textContent = i === level.source ? 'S' : 'T';
+      const t = svgEl('text', { x, y: y + NODE_R + 19, class: 'node-name' });
+      t.textContent = i === level.source ? 'source' : 'sink';
       board.appendChild(t);
     }
   }

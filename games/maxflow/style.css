@@ -63,9 +63,10 @@
 .node { fill: #16302a; stroke: var(--brass-dark); stroke-width: 2; pointer-events: none; }
 .node.source { fill: var(--brass); stroke: var(--brass-dark); }
 .node.sink { fill: #58b6e8; stroke: #2b6d92; }
-.node-label {
-  fill: #0d1f18;
-  font: 700 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+.node-name {
+  fill: #cfe4da;
+  font: 600 14px/1 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.04em;
   text-anchor: middle;
   pointer-events: none;
 }

@@ -63,6 +63,12 @@ Pipe width is capacity, so a fat pipe is an expensive cut. Cut pipes keep their
 place with a snip mark, so you can see what you spent and where without
 re-reading the network.
 
+The two ends are named in full rather than lettered. They were **S** and **T**,
+and the first person to play it asked whether S was the sink, because the water
+was running away from it — which it should, S being the source. "S" is just as
+good an abbreviation for sink, and a label that has to be decoded before the
+animation makes sense is worse than no label. They read `source` and `sink` now.
+
 Water is in two parts, and the split is the whole reading of a level:
 
 - **Standing water** fills every pipe the source can still reach, whether or
