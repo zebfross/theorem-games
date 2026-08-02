@@ -57,3 +57,8 @@ body.explorer main {
 #places { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
 
 body.explorer footer p { max-width: 68ch; }
+
+/* The kernel switch. Both kernels draw the same picture, so the only thing to
+   watch when it is flipped is the timing beside it. */
+#kernel { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+#kernel input { accent-color: var(--brass); cursor: pointer; }
