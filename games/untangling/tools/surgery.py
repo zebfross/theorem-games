@@ -257,6 +257,50 @@ def _resample(points, spacing):
     return out
 
 
+def lens_outline(points, dia, face):
+    """The bigon itself, as a closed polygon, or None.
+
+    The game highlights the lens the player is about to collapse and hit-tests
+    clicks against it, so the shape has to be worked out somewhere. Here rather
+    than in the browser, because the levels are precomputed anyway and this is
+    the same arc walk the constructions already do.
+
+    Deliberately a separate walk rather than a shared one factored out of the
+    two constructions above: their guards differ, and folding them together to
+    remove the repetition is exactly the tidy-up that halved the success rate
+    once already.
+    """
+    n = len(points)
+    arcs = sorted({pos if side == diagram.OUT else (pos - 1) % dia.length
+                   for pos, side in face})
+    if len(arcs) != 2:
+        return None
+
+    spans = []
+    for start in arcs:
+        a = dia.param[start][0]
+        b = dia.param[(start + 1) % dia.length][0]
+        span = []
+        i = (a + 1) % n
+        while True:
+            span.append(points[i])
+            if i == b:
+                break
+            i = (i + 1) % n
+            if len(span) > n:
+                return None
+        spans.append(span)
+
+    A, B = spans
+    if len(A) < 2 or len(B) < 2:
+        return None
+    # the two arcs run from one crossing to the other; close the loop by
+    # coming back along the second
+    if math.dist(A[-1], B[0]) < math.dist(A[-1], B[-1]):
+        B = B[::-1]
+    return A + B
+
+
 def _accept(cand, want, spacing):
     """The drawing, if it really is the diagram the move predicts, else None.
 

@@ -1,0 +1,26 @@
+/* Untangling's own look. The engine supplies the page chrome and the colour
+   variables; everything here is the curve and the lenses you can collapse. */
+
+/* A bigon the player can collapse. Filled rather than outlined, because the
+   thing being clicked is the enclosed space, and a stroke on a sliver lens
+   would be most of the sliver. */
+.lens {
+  fill: #ffffff14;
+  stroke: #ffffff2e;
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill 0.15s;
+}
+.lens:hover { fill: #ffffff30; }
+
+/* One the hint has pointed at. Pulses so it is findable at a glance without an
+   arrow or a label cluttering the board. */
+.lens.hinted { animation: hint-pulse 1.7s ease-in-out infinite; }
+@keyframes hint-pulse {
+  0%, 100% { fill: #6fdc9a1f; }
+  50%      { fill: #6fdc9a5c; }
+}
+
+.rope-shadow { fill: none; stroke: #00000055; stroke-linejoin: round; stroke-linecap: round; }
+.rope-core { fill: none; stroke: var(--rope-dark); stroke-linejoin: round; stroke-linecap: round; }
+.rope-top { fill: none; stroke: var(--rope); stroke-linejoin: round; stroke-linecap: round; }

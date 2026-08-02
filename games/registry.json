@@ -5,6 +5,12 @@
       "title": "Unpinning",
       "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
       "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)"
+    },
+    {
+      "id": "untangling",
+      "title": "Untangling",
+      "blurb": "Pull a tangled loop straight in as few moves as you can.",
+      "theorem": "Chang & Erickson, untangling planar curves (arXiv:1706.06253)"
     }
   ]
 }

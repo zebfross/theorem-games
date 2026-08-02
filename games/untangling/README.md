@@ -126,7 +126,7 @@ Still to do:
   segments rather than by comparing all pairs took it from 24ms to 0.6ms on a
   370-point curve, 40x, giving identical diagrams on all 498. Still untried:
   ordering the candidates by what usually works.
-- **The R3 flip**, if the 6 curves needing it are ever worth having.
+- **The R3 flip**, if the 8 curves needing it are ever worth having.
 
 ## A note on level data
 

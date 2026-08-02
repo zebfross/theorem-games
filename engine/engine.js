@@ -320,7 +320,11 @@ function resetLevel(keep) {
   app.frames = [];
   app.viewBox = null;
   app.phase = 'placing';
-  if (!keep) app.play = app.game.start(app.level);
+  // Keeping the play across a reset means "leave the arrangement so it can be
+  // run again", which only makes sense for a game that has a run. Played move
+  // by move the moves are already spent, and honouring `keep` would put the
+  // player back on the dead end they just lost on with nothing to click.
+  if (!keep || !app.game.sim) app.play = app.game.start(app.level);
   el('verdict').hidden = true;
   el('scrub').hidden = true;
   el('controls').hidden = false;
