@@ -1,0 +1,59 @@
+/* The explorer's own look. It borrows the site's chrome and palette but is not
+   a game, so it does not use the engine's board layout at all. */
+
+body.explorer main {
+  display: block;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.5rem 1.25rem 2rem;
+}
+
+#stage { position: relative; }
+
+#view {
+  display: block;
+  width: 100%;
+  height: min(66vh, 640px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1512;
+  cursor: grab;
+  touch-action: none;
+}
+#view:active { cursor: grabbing; }
+
+/* Sits over the picture rather than pushing it about, since it appears only at
+   the point where zooming has to stop. */
+#limit {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: #2a1a12dd;
+  border: 1px solid #e2765a55;
+  color: #f0c9ba;
+  font-size: 0.82rem;
+}
+
+#readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.3rem;
+  margin: 0.7rem 0.2rem 0;
+  color: var(--ink-dim);
+  font-size: 0.84rem;
+}
+#readout b {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+#readout #period { color: var(--brass); }
+#readout #centre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
+
+#places { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+
+body.explorer footer p { max-width: 68ch; }

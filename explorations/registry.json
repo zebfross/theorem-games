@@ -1,0 +1,10 @@
+{
+  "explorations": [
+    {
+      "id": "mandelbrot",
+      "title": "Mandelbrot",
+      "blurb": "Zoom into the boundary between the orbits that stay and the orbits that run away.",
+      "theorem": "Douady & Hubbard, connected; Shishikura, boundary dimension 2"
+    }
+  ]
+}

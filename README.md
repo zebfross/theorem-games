@@ -18,6 +18,13 @@ No build step, no dependencies, no server-side anything. Static files.
 | [Max-flow min-cut](games/maxflow/) | The greatest flow equals the cheapest cut — Menger; Ford & Fulkerson |
 | [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 
+And one thing that is not a game, because it has nothing to arrange and no way
+to lose:
+
+| Exploration | About |
+| --- | --- |
+| [Mandelbrot](explorations/mandelbrot/) | The escape-radius theorem that makes it drawable, and the period of every bulb |
+
 ## Layout
 
 ```

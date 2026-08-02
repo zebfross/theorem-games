@@ -31,15 +31,19 @@ function progress(id) {
   return solved;
 }
 
-function card(game) {
+function card(game, kind = 'game') {
   const a = document.createElement('a');
   a.className = 'game-card';
-  a.href = `play.html?game=${encodeURIComponent(game.id)}`;
+  a.href = kind === 'game'
+    ? `play.html?game=${encodeURIComponent(game.id)}`
+    : `explorations/${encodeURIComponent(game.id)}/`;
 
   const art = document.createElement('div');
   art.className = 'game-art';
   const img = document.createElement('img');
-  img.src = `games/${game.id}/poster.svg`;
+  img.src = kind === 'game'
+    ? `games/${game.id}/poster.svg`
+    : `explorations/${game.id}/poster.svg`;
   img.alt = '';
   // A game without a poster still gets a card; the frame just stays empty
   // rather than showing a broken image.
@@ -111,6 +115,21 @@ async function boot() {
     return;
   }
   for (const g of games) grid.appendChild(card(g));
+
+  // Explorations are not games: nothing to arrange, no par, no way to lose.
+  // They get their own section rather than being dressed up as puzzles with an
+  // empty score, and the file is optional so the page works without it.
+  try {
+    const more = await (await fetch('explorations/registry.json')).json();
+    const list = more.explorations || [];
+    if (list.length) {
+      document.getElementById('explorations').hidden = false;
+      const shelf = document.getElementById('exploration-grid');
+      for (const e of list) shelf.appendChild(card(e, 'exploration'));
+    }
+  } catch {
+    /* no explorations registered; the games stand on their own */
+  }
 }
 
 boot();

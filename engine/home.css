@@ -86,3 +86,20 @@ body.home header .brand p {
   .game-card { transition: none; }
   .game-card:hover, .game-card:focus-visible { transform: none; }
 }
+
+/* The second shelf: explorations rather than games. */
+.shelf-title {
+  margin: 2.2rem 0 0;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+.shelf-note { margin: 0.3rem 0 0; color: var(--ink-dim); max-width: 52ch; }
+/* A shelf holding one card should not stretch it across the whole page: with
+   auto-fit an only child takes every column. Capping the track keeps it the
+   size of the game cards above it. */
+#explorations .game-grid {
+  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 23rem));
+}
