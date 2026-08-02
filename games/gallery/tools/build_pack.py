@@ -30,19 +30,15 @@ SCALE = 62
 MARGIN = 46
 
 
-def grow(rng, w, h, squares):
-    """A blob of grid squares, outlined into a simple rectilinear polygon."""
-    grid = {(w // 2, h // 2)}
-    tries = 0
-    while len(grid) < squares and tries < 400:
-        tries += 1
-        x, y = rng.choice(list(grid))
-        n = rng.choice([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
-        if 0 <= n[0] < w and 0 <= n[1] < h:
-            grid.add(n)
+def outline(grid):
+    """The boundary of a blob of grid squares, as a simple polygon.
 
-    # Walk the boundary. Each square contributes its outward edges, directed so
-    # the interior stays on one side; following them returns the outline.
+    Each square contributes its outward edges, directed so the interior stays
+    on one side; following them round returns the outline. A blob pinched at a
+    corner produces two loops rather than one and is rejected — and the walk has
+    to be bounded, because at such a pinch one corner starts two outward edges
+    and only one survives in the map, so following it can circle forever.
+    """
     edges = {}
     for (x, y) in grid:
         for a, b, nb in (((x, y), (x + 1, y), (x, y - 1)),
@@ -56,17 +52,13 @@ def grow(rng, w, h, squares):
     start = next(iter(edges))
     poly = [start]
     cur = edges[start]
-    # The walk has to be bounded. Where two squares meet only at a corner, that
-    # corner starts two outward edges and only one of them survives in the map,
-    # so following it can drop into a loop that never comes back to the start —
-    # and without a bound that spins forever, growing the list as it goes.
     while cur != start:
         if cur not in edges or len(poly) > len(edges):
             return None
         poly.append(cur)
         cur = edges[cur]
     if len(poly) != len(edges):
-        return None            # pinched at a corner: the outline is two loops
+        return None
 
     corners = []
     for i, p in enumerate(poly):
@@ -74,6 +66,65 @@ def grow(rng, w, h, squares):
         if abs(room._cross(a, p, b)) > 1e-9:
             corners.append(p)
     return [(float(x), float(y)) for x, y in corners] if len(corners) >= 6 else None
+
+
+def grow(rng, w, h, squares):
+    """A random blob of grid squares."""
+    grid = {(w // 2, h // 2)}
+    tries = 0
+    while len(grid) < squares and tries < 400:
+        tries += 1
+        x, y = rng.choice(list(grid))
+        n = rng.choice([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
+        if 0 <= n[0] < w and 0 <= n[1] < h:
+            grid.add(n)
+    return outline(grid)
+
+
+def comb(prongs, depth, base=1):
+    """A corridor with prongs off it.
+
+    The shape that makes the theorem bite. A blob grown at random is too nearly
+    convex — two well-placed corners tend to see all of it — so the packs built
+    that way came out almost entirely par 2. Each prong here is a dead end that
+    nothing outside it can see all the way into, so the guards cannot be shared.
+    """
+    grid = set()
+    width = prongs * 2 - 1
+    for x in range(width):
+        for y in range(base):
+            grid.add((x, y))
+    for i in range(prongs):
+        for y in range(base, base + depth):
+            grid.add((2 * i, y))
+    return outline(grid)
+
+
+def ragged_comb(rng, prongs, depth, base=1, both=False):
+    """A comb knocked about a bit.
+
+    A plain comb forces one guard per prong, but it forces it so obviously that
+    there is nothing to work out — at five prongs there are nearly a thousand
+    equally good answers and every one of them is "one per prong". Varying the
+    prong depths, letting some hang off the other side of the corridor, and
+    stirring a few squares into the walls keeps the guards from being shared
+    while making it much less clear which corner covers what.
+    """
+    grid = set()
+    width = prongs * 2 - 1 + rng.randint(0, 2)
+    for x in range(width):
+        for y in range(base):
+            grid.add((x, y))
+    for i in range(prongs):
+        x = min(width - 1, 2 * i + rng.randint(0, 1))
+        d = depth + rng.randint(0, 1)
+        up = (not both) or rng.random() < 0.6
+        for k in range(1, d + 1):
+            grid.add((x, base - 1 + k) if up else (x, -k))
+    for _ in range(rng.randint(0, 3)):
+        x, y = rng.choice(sorted(grid))
+        grid.add(rng.choice([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]))
+    return outline(grid)
 
 
 def careless_rate(poly, par, masks, trials=3000, seed=7):
@@ -98,8 +149,8 @@ def build_level(poly):
     par, best = room.min_guards(poly, masks)
     if par is None or par < 2:
         return None                       # one guard is not a decision
-    if par > 4:
-        return None                       # too fiddly to read at this size
+    if par > 6:
+        return None                       # more guards than a room this size reads
 
     guards, tris, colour = room.fisk_guards(poly)
     if colour is None:
@@ -148,20 +199,37 @@ def main():
     # and each one is analysed afresh — which is where all the time went.
     tried = set()
     dropped = 0
-    sizes = [(4, 4, 6, 9), (5, 5, 8, 12), (5, 5, 10, 15), (6, 6, 12, 18)]
-    per = max(1, args.count // len(sizes))
 
-    for w, h, lo, hi in sizes:
+    # Plain rooms are the way in, and they are almost all par 2: a blob grown at
+    # random is close enough to convex that two well-placed corners see it all.
+    # The combs are what make the theorem bite, one guard per wing that cannot
+    # be shared with any other.
+    recipes = [
+        ('room', lambda: grow(rng, 4, 4, rng.randint(6, 9)), 8),
+        ('room', lambda: grow(rng, 5, 5, rng.randint(9, 14)), 10),
+        ('room', lambda: grow(rng, 6, 6, rng.randint(13, 19)), 10),
+        ('wings', lambda: ragged_comb(rng, 2, rng.randint(1, 3),
+                                      rng.randint(1, 2), rng.random() < 0.4), 10),
+        ('wings', lambda: ragged_comb(rng, 3, rng.randint(1, 3),
+                                      rng.randint(1, 2), rng.random() < 0.5), 20),
+        ('wings', lambda: ragged_comb(rng, 4, rng.randint(1, 3),
+                                      rng.randint(1, 2), rng.random() < 0.5), 22),
+        ('wings', lambda: ragged_comb(rng, 5, rng.randint(1, 3),
+                                      rng.randint(1, 2), rng.random() < 0.5), 20),
+        ('wings', lambda: ragged_comb(rng, 6, rng.randint(1, 3),
+                                      rng.randint(1, 2), rng.random() < 0.5), 14),
+    ]
+
+    for _name, make, want in recipes:
         made = 0
-        for _ in range(2500):
-            if made >= per:
+        for _ in range(4000):
+            if made >= want:
                 break
-            poly = grow(rng, w, h, rng.randint(lo, hi))
-            if poly is None or not 6 <= len(poly) <= 16:
+            poly = make()
+            if poly is None or not 6 <= len(poly) <= 26:
                 continue
             # Same room, different starting corner, is the same room.
-            rots = [tuple(poly[k:] + poly[:k]) for k in range(len(poly))]
-            key = min(rots)
+            key = min(tuple(poly[k:] + poly[:k]) for k in range(len(poly)))
             if key in tried:
                 continue
             tried.add(key)
@@ -173,10 +241,10 @@ def main():
                 dropped += 1
                 continue
             made += 1
-            # Numbered across the whole pack, not within a size group. Two
-            # groups can each produce a room with the same corner count, and
-            # numbering per group made them collide — one file overwriting the
-            # other while both stayed in the index.
+            # Numbered across the whole pack, not within a group: two groups can
+            # each produce a room with the same corner count, and numbering per
+            # group made them collide, one file overwriting the other while both
+            # stayed in the index.
             lid = f'{len(poly)}c_{len(index) + 1}'
             level['id'] = lid
             with open(os.path.join(OUT, 'levels', f'{lid}.json'), 'w') as fh:
@@ -195,6 +263,9 @@ def main():
                     'exhaustive search, so every level ships with an exact answer.',
             'levels': index,
         }, fh, separators=(',', ':'))
+    import collections
+    spread = dict(sorted(collections.Counter(e['par'] for e in index).items()))
+    print(f'par spread: {spread}')
     worst = max((e['careless'] for e in index), default=0)
     print(f'{len(index)} levels, {dropped} dropped as too guessable; '
           f'guessing works {100 * sum(e["careless"] for e in index) / max(1, len(index)):.1f}% '

@@ -7,7 +7,8 @@ using as few as you can.
 
 ## Status
 
-**Playable.** 96 rooms, from six corners up to sixteen.
+**Playable.** 114 rooms, from six corners up to twenty-six, needing two to six
+guards.
 
 ### The hint is the proof
 
@@ -33,8 +34,8 @@ a dark patch you can see. Measured by putting par guards on random corners:
 
 | | |
 | --- | --- |
-| guessing works | 18% of the time |
-| worst room | 35% |
+| guessing works | 11% of the time |
+| worst room | 31% |
 
 Rooms above 35% are dropped. The soft spot is the familiar one — guard every
 corner and you always win, at a ruinous score.
@@ -78,7 +79,18 @@ Both were wrong at first in ways only a cross-check found:
 
 ### Rooms
 
-Grown as a blob of grid squares and outlined, which makes them read as floor
+Two kinds, because one was not enough. A blob grown at random is close enough
+to convex that two well-placed corners tend to see all of it: the first pack
+came out 95 rooms of par 2 out of 96, which is a theorem about ⌊n/3⌋ guards
+illustrated entirely by rooms needing two. Those blobs are still the way in,
+but most of the pack is now **combs** — a corridor with wings off it, where
+each wing is a dead end nothing outside can see into, so the guards cannot be
+shared. A plain comb forces exactly one guard per wing and is duller for it,
+with a thousand equally good answers all of the form "one per wing", so the
+wings vary in depth, some hang off the other side of the corridor, and a few
+squares are stirred into the walls. Par now runs 2 to 6.
+
+Both kinds are grown as a blob of grid squares and outlined, which makes them read as floor
 plans and makes it easy to keep them simple: a blob pinched at a corner
 produces two boundary loops rather than one, and those are thrown away. The
 outline walk has to be bounded, because at such a pinch one corner starts two
@@ -91,9 +103,6 @@ the floor-plan look is worth more than the tightness.
 
 ### Still to do
 
-- **Rooms where ⌊n/3⌋ bites.** The comb — a row of prongs — is the standard
-  example forcing exactly ⌊n/3⌋, and generating those deliberately would let a
-  level exist where Fisk's guard set *is* the answer.
 - **Guards anywhere, not only on corners.** Fewer guards suffice in general,
   and the minimum stops being a finite search, which is the whole reason it is
   not done here.

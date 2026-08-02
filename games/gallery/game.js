@@ -149,17 +149,20 @@ export default {
     create(level, play) {
       // Guards light up one after another rather than all at once, so you can
       // see which part of the room each of them is responsible for.
-      const order = [...play.guards].map((i, k) => ({ i, at: k * 0.85 }));
+      const order = [...play.guards].map((i, k) => ({ i, at: k * 0.5 }));
       const sim = {
         level, play, order, reveal: 0,
-        span: order.length * 0.85 + 0.6,
+        // Paced for the biggest rooms. Every frame redraws the whole board, so
+        // frames are dearer than the usual sixtieth of a second, and a stagger
+        // that felt right for two guards had five of them taking eight seconds.
+        span: order.length * 0.5 + 0.4,
         dark: darkMasks(level, play.guards).length,
       };
       play.sim = sim;
       return sim;
     },
     step(sim) {
-      sim.reveal += 0.05;
+      sim.reveal += 0.12;
       return sim.reveal >= sim.span;
     },
     perFrame: () => 1,
