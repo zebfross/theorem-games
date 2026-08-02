@@ -101,9 +101,10 @@ def wanted(net):
 def careless_rate(net, par, trials=2000, seed=5):
     """How often spending par at random on pipes happens to separate them.
 
-    The measure that Untangling was built without: what a player gets for not
-    thinking. Here it should be near zero — a random handful of pipes almost
-    never disconnects anything — which is what makes the level worth playing.
+    What a player gets for not thinking, and the measure a previous game in
+    this repo was built without — it turned out to be unloseable, and was
+    removed. Here it should be near zero: a random handful of pipes almost
+    never disconnects anything, which is what makes a level worth playing.
     """
     rng = random.Random(seed)
     order = list(range(len(net.edges)))

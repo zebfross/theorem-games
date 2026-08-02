@@ -20,33 +20,37 @@ happen, be told whether it worked.** Beyond that, the ones worth building have:
 
 ---
 
-## ~~Untangling planar curves~~ — built, and not worth playing
+## ~~Untangling planar curves~~ — built, and removed
 
 **Chang & Erickson** — a closed curve with *n* self-crossings needs
-Θ(n^{3/2}) homotopy moves to become simple. See `games/untangling/`.
+Θ(n^{3/2}) homotopy moves to become simple.
 
-It was billed here as by far the cheapest to build, on the grounds that it
-shares Unpinning's rope rendering and can reuse the very same level geometry.
-Both were true and neither was the work. Reusing the curves was free; making a
-move *look* like a move was not. The combinatorics of a collapse is a deletion
-from the Gauss code and took an afternoon. Redrawing the curve afterwards so
-the player sees the same puzzle changed rather than a different puzzle took
-most of the effort, and still succeeds only 84% of the time, which is why 441
-of 498 curves ship rather than all of them.
+Built to completion and then taken back out, because it was not enjoyable to
+play. The code is not gone: it is in the history, whole and working, at commit
+`8e1c615`, along with a README explaining the whole thing.
 
-**The lesson worth carrying, ahead of any of that: check that the game can be
-lost before building it.** Untangling cannot be. Every move strictly reduces
-the crossing count, so any sequence of clicks wins and the only question is
-how many. That was true from the first commit and none of the work that
-followed could have changed it. Before building one of these, play the losing
-strategy on paper — click at random, ignore the goal — and see whether it
-still wins. Unpinning survives that test: a wrong set of pins genuinely fails.
+**Why it failed, which is the reason this entry is still here: there was no way
+to lose.** Every move strictly reduces the crossing count, so any sequence of
+clicks eventually wins and the only question is how many. That was true from
+the first commit, and three rounds of fixes — marking every lens, then marking
+none but lighting them on hover, then charging for wrong clicks — could not
+touch it, because all three treated a structural problem as a presentation one.
+A score cannot create tension where losing is impossible.
 
-Worth carrying too: the drawing does not have to be argued into
-correctness if it can be checked. Every edit is accepted only when rebuilding
-the diagram from it gives back exactly what the move predicts, which is what
-makes approximate geometry safe to attempt at all. Be careful that the thing
-returned is the thing checked — see that game's README for how much that cost.
+**So the test, before building anything: play the losing strategy on paper.**
+Click at random, ignore the goal, and see whether it still wins. It takes
+minutes. Unpinning survives it — a wrong set of pins genuinely fails — and so
+does max-flow, where a random spend of par separates the network 1.9% of the
+time against untangling's 58%. Where careless play always wins, the game needs
+a different move set, not a different interface, and that is worth knowing
+before the level format is designed rather than after the pack is built.
+
+Two things from it worth reusing if anyone returns to the idea. Approximate
+geometry is safe when it is checked rather than argued: every edit was accepted
+only if rebuilding the diagram from it gave back exactly what the move
+predicted. And be careful that the thing returned is the thing checked — that
+gap flattered the success rate and quietly corrupted the search that ran on
+top of it.
 
 ## The art gallery theorem
 

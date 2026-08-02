@@ -26,7 +26,7 @@ often that happens to separate the network:
 | --- | --- |
 | random spend of par separates the network | 1.9% of attempts |
 | worst level | 11.5% |
-| (Untangling, for comparison) | 58% |
+| (a previous game, since removed, for comparison) | 58% |
 
 Levels are generated in surplus and the least forgiving kept, which is what
 holds that number down.
