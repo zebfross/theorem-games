@@ -77,6 +77,12 @@ Water is in two parts, and the split is the whole reading of a level:
   that pipe and moving faster the fuller the pipe is. A pipe with spare
   capacity shows a thin stream inside a full pipe, so the bottleneck is watched
   rather than deduced.
+- **Water going nowhere still moves**, slowly and faintly. A holding cut takes
+  the flow to zero everywhere, so without this the run that proves a *right*
+  answer was the only one that froze — exactly backwards. The source never
+  stops pushing; this is water under pressure with nowhere to go, and watching
+  it die at the snip is the point. It is kept slow and pale so it cannot be
+  mistaken for water getting through.
 
 Getting the first of those wrong made the run that *proves* a correct answer a
 still picture: with a holding cut the flow is zero everywhere, so drawing only

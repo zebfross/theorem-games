@@ -48,6 +48,15 @@
   to   { stroke-dashoffset: -26; }   /* one dash plus one gap, so it loops seamlessly */
 }
 
+/* Water pressing against a cut it cannot pass. Faint and slow, so it never
+   reads as water getting through — and it stops at the snip, which is the
+   whole point of watching it. */
+.current.idle {
+  stroke: #7cb8d8;
+  opacity: 0.4;
+  stroke-dasharray: 7 19;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .current { animation: none; }
 }

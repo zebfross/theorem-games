@@ -156,17 +156,25 @@ function drawNetwork(level, play, opts = {}) {
         // The current itself: a moving stream as wide as the flow really
         // running through the pipe, so a pipe with spare capacity reads as
         // barely trickling and the bottleneck is watched rather than deduced.
-        if (moving) {
-          pipes.appendChild(svgEl('line', {
-            x1: run[0], y1: run[1], x2: run[2], y2: run[3],
-            'stroke-width': Math.max(3, pipeWidth(moving) - 9),
-            class: 'current',
-            // Fuller pipes run faster. Speed is the second reading of the same
-            // number, which is what makes a slow trickle next to a torrent
-            // legible at a glance.
-            style: `animation-duration:${(1.5 - 0.1 * Math.min(9, moving)).toFixed(2)}s`,
-          }));
-        }
+        //
+        // Water that is going nowhere gets a current too, slower and fainter.
+        // Without it a holding cut froze the moment the pipes filled, so the
+        // run that proves a right answer was the only one that stopped moving —
+        // exactly backwards. The source never stops pushing; this is water
+        // under pressure with nowhere to go, and it dies at the snip, which is
+        // the thing worth watching.
+        pipes.appendChild(svgEl('line', {
+          x1: run[0], y1: run[1], x2: run[2], y2: run[3],
+          'stroke-width': Math.max(3, pipeWidth(moving || 1) - (moving ? 9 : 13)),
+          class: 'current' + (moving ? '' : ' idle'),
+          // Fuller pipes run faster. Speed is the second reading of the same
+          // number, which is what makes a slow trickle next to a torrent
+          // legible at a glance, and what keeps dammed water from being
+          // mistaken for water getting through.
+          style: `animation-duration:${moving
+            ? (1.5 - 0.1 * Math.min(9, moving)).toFixed(2)
+            : '3.4'}s`,
+        }));
       }
     }
     if (!isCut) {
