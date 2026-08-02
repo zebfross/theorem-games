@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A dark L-shaped gallery lit by two guards on its corners, with one nook still dark">
+  <!-- A room with two guards on its corners. What they can see is painted in
+       light over the dark floor; the nook on the left is what neither of them
+       can, which is the whole game in one picture. -->
+  <defs>
+    <clipPath id="floor">
+      <polygon points="40,32 190,32 190,86 280,86 280,150 40,150"/>
+    </clipPath>
+  </defs>
+
+  <polygon points="40,32 190,32 190,86 280,86 280,150 40,150" fill="#0b1512"/>
+
+  <g clip-path="url(#floor)" fill="#f0d9a3" fill-opacity="0.5">
+    <!-- what the guard on the top-right corner sees -->
+    <polygon points="190,32 40,32 40,150 128,150 190,86"/>
+    <!-- what the guard on the far-right corner sees -->
+    <polygon points="280,86 190,86 128,150 280,150"/>
+  </g>
+
+  <polygon points="40,32 190,32 190,86 280,86 280,150 40,150"
+           fill="none" stroke="#6b4a12" stroke-width="7" stroke-linejoin="round"/>
+
+  <g>
+    <circle cx="190" cy="32" r="13" fill="#e8c37a" stroke="#4a3208" stroke-width="2"/>
+    <circle cx="190" cy="32" r="4.5" fill="#3a2705"/>
+    <circle cx="280" cy="86" r="13" fill="#e8c37a" stroke="#4a3208" stroke-width="2"/>
+    <circle cx="280" cy="86" r="4.5" fill="#3a2705"/>
+    <circle cx="40" cy="32" r="13" fill="#1d3a30" stroke="#6b4a12" stroke-width="2"/>
+    <circle cx="40" cy="150" r="13" fill="#1d3a30" stroke="#6b4a12" stroke-width="2"/>
+    <circle cx="190" cy="86" r="13" fill="#1d3a30" stroke="#6b4a12" stroke-width="2"/>
+    <circle cx="280" cy="150" r="13" fill="#1d3a30" stroke="#6b4a12" stroke-width="2"/>
+  </g>
+</svg>

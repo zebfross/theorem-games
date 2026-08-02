@@ -16,6 +16,7 @@ No build step, no dependencies, no server-side anything. Static files.
 | --- | --- |
 | [Unpinning](games/unpinning/) | The pinning number of a multiloop — Simon & Stucky, [arXiv:2405.16216](https://arxiv.org/abs/2405.16216) |
 | [Max-flow min-cut](games/maxflow/) | The greatest flow equals the cheapest cut — Menger; Ford & Fulkerson |
+| [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 
 ## Layout
 
@@ -68,5 +69,5 @@ much changes rather than even in effort spent.
 
 The engine and `lib/` are MIT. Individual games carry their own licence, since
 they often embed data from published work. Unpinning is GPL-3.0 because the
-catalogue it derives from is. Max-flow min-cut is MIT, having no inherited data
-at all — its networks are generated and its answers computed.
+catalogue it derives from is. Max-flow min-cut and Art gallery are MIT, having no inherited data at all —
+their networks and rooms are generated here and their answers computed.

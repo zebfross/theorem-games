@@ -52,22 +52,24 @@ predicted. And be careful that the thing returned is the thing checked — that
 gap flattered the success rate and quietly corrupted the search that ran on
 top of it.
 
-## The art gallery theorem
+## ~~The art gallery theorem~~ — built
 
 **Chvátal**, with **Fisk's** proof — ⌊n/3⌋ guards always suffice for a simple
-polygon with *n* vertices.
+polygon with *n* vertices. See `games/gallery/`.
 
-Place guards so every point of the room is visible, using as few as possible.
-The run floods the room with light and leaves the unseen parts dark. Finding
-the true minimum is NP-hard, so precompute.
+It was picked for the hint ladder and the hint ladder is what it delivered: the
+second hint draws the triangulation and its three-colouring, which is the proof
+itself and gives away no particular answer. Often it is not even optimal, which
+turned out to be the better lesson — the theorem is a guarantee, not a recipe.
 
-The reason to pick this one: **the hint ladder is Fisk's proof.** Triangulate,
-three-colour the triangulation, take the least-used colour class — that is
-always a valid guard set of size at most ⌊n/3⌋. Tier 2 shows the triangulation,
-tier 3 the colouring. The help you give is the mathematics.
-
-It is also the best test of whether the engine really generalises, since it
-shares nothing visually with Unpinning.
+What it actually cost was exactness. Deciding whether a guard can see a spot,
+and whether a room is fully covered, both had to be right in the *unsafe*
+direction — a coverage test that is too generous marks wrong answers correct —
+and both were wrong on the first attempt in ways no amount of reading would
+have found. Each was caught by computing the same quantity a second way and
+comparing: sampling the room against the bitmasks, and the area of a sight
+polygon against the area of the pieces that corner can see. Worth doing for any
+game where the win condition is geometric rather than combinatorial.
 
 ## ~~Max-flow min-cut~~ — built
 

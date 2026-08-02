@@ -13,6 +13,13 @@
       "blurb": "Cut pipes until no water reaches the sink, spending as little as you can.",
       "theorem": "Menger; Ford & Fulkerson, max-flow min-cut",
       "levels": 117
+    },
+    {
+      "id": "gallery",
+      "title": "Art gallery",
+      "blurb": "Station guards on the corners of a room until every part of it is watched.",
+      "theorem": "Chv\u00e1tal, with Fisk's proof \u2014 \u230an/3\u230b guards always suffice",
+      "levels": 96
     }
   ]
 }

@@ -1,0 +1,65 @@
+/* The art gallery's own look. The engine supplies the page chrome and the
+   colour variables; everything here is the room, the light and the corners. */
+
+/* An unlit room. Everything a guard can see gets painted back over this, so
+   what stays dark is exactly what nobody is watching — the failure draws
+   itself instead of being described. */
+.room { fill: #0b1512; }
+
+/* What one guard can see. Drawn one polygon per guard and simply laid over the
+   others: they are all the same colour, so overlapping costs nothing and no
+   union has to be computed. Slightly transparent so two guards watching the
+   same spot shows as a brighter patch, which is a nice tell that you have
+   spent a guard on somewhere already covered. */
+.light {
+  fill: #f0d9a3;
+  fill-opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Fisk's triangulation, shown by the second hint. */
+.tri {
+  fill: none;
+  stroke: #ffffff2e;
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+.wall {
+  fill: none;
+  stroke: var(--brass-dark);
+  stroke-width: 7;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.corner {
+  fill: #1d3a30;
+  stroke: var(--brass-dark);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: fill 0.12s;
+}
+.corner:hover { fill: #2c574a; }
+.corner.on { fill: var(--brass); stroke: #4a3208; }
+.eye { fill: #3a2705; pointer-events: none; }
+
+/* The three colour classes of the triangulation, while the proof is on show.
+   A guard standing on a corner still reads as a guard: the tint sits under the
+   brass rather than replacing it. */
+.corner.c0:not(.on) { fill: #4a3a6b; }
+.corner.c1:not(.on) { fill: #1f5148; }
+.corner.c2:not(.on) { fill: #6b4230; }
+
+/* One the hint has pointed at. Pulses so it is findable at a glance without an
+   arrow or a label cluttering the board. */
+.corner.hinted { animation: hint-pulse 1.7s ease-in-out infinite; }
+@keyframes hint-pulse {
+  0%, 100% { fill: #6fdc9a33; }
+  50%      { fill: #6fdc9a; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .corner.hinted { animation: none; fill: #6fdc9a; }
+}
