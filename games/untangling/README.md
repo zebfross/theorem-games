@@ -14,11 +14,44 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Playable.** Click a lens and it collapses. The module computes nothing about
+**Playable.** Find a lens and click it, and it collapses. The module computes nothing about
 curves: a level file holds every diagram the player can reach, drawn, with the
 moves joining them, so a move at runtime is a lookup. All the geometry was
 settled offline and checked against the combinatorics, which is what makes it
 safe to be approximate.
+
+### Why the pack is 135 and not 441
+
+The first version marked every collapsible lens on the board, and it was not a
+puzzle: you clicked through the highlights in any order and usually landed on
+par. That is not a presentation problem, it is arithmetic. Every bigon collapse
+takes out exactly two crossings and every monogon one, so the number of moves
+is nearly fixed by the crossing count before the player touches anything; the
+only way to spend an extra move is to be forced into a single-crossing loop,
+which happens on 19% of optimal routes. Measured over the whole pack:
+
+| | |
+| --- | --- |
+| random clicking hits par | 58% of playthroughs |
+| levels where every route is optimal | 58 of 441 |
+| levels where you can be at most 1 move off | 217 more |
+| worst anyone can ever do | 3 moves above par |
+
+Two changes. The lenses are no longer coloured in — finding them is the game,
+and they light only on hover, so a shape is confirmed before it is committed
+to. And the pack keeps only levels where clicking at random hits par less than
+35% of the time, which is 135 of the 441 that can be drawn. `--prune` does
+that as a separate pass, since building is slow and unchanging while the
+threshold is a judgement worth revisiting.
+
+That makes it a decent light puzzle, and no more. The ceiling is still three
+moves wide, because collapsing-only play is a greedy descent. The depth in
+Chang and Erickson is in the moves this does not have: R3 flips, and R2 in the
+*increasing* direction, where you have to make the curve worse to make it
+better. Those cannot be precomputed — the state space stops being finite — so
+having them would mean live geometry in the browser and par by search rather
+than by breadth-first. The architecture that made this cheap to build is the
+same one that keeps it shallow.
 
 ### How much of it works
 

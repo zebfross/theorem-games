@@ -12,7 +12,15 @@ time, so some moves are missing from some graphs; a level survives that as long
 as another best-possible route is still there. Levels that do not survive it
 are dropped rather than shipped short of par.
 
+Building and curating are separate on purpose. Building is slow and the same
+every time; deciding which levels are worth shipping is a cheap judgement you
+will want to change your mind about. So build once, then prune:
+
+    python3 build_pack.py                 # every level that can be drawn
+    python3 build_pack.py --prune 0.35    # keep the ones that punish carelessness
+
 Usage:  python3 build_pack.py [--limit N] [--spacing S]
+                             [--index-only | --prune RATE]
 """
 
 import argparse
@@ -20,6 +28,7 @@ import glob
 import json
 import math
 import os
+import random
 import sys
 import time
 from collections import deque
@@ -242,6 +251,34 @@ def pack_level(lid, rope, spacing):
     }
 
 
+def careless_rate(level, trials=400, seed=1234):
+    """How often clicking any available lens at random still hits par.
+
+    This is the measure of whether a level is a puzzle. Every bigon collapse
+    removes exactly two crossings and every monogon one, so the number of moves
+    is nearly fixed by the crossing count before the player touches anything;
+    the only way to lose a move is to be forced into a single-crossing loop.
+    On the full pack careless play hits par 58% of the time, which is what
+    makes it feel like clicking through highlights rather than solving
+    anything. Levels where that succeeds are not worth shipping.
+
+    Seeded, so a level's rating never changes between runs.
+    """
+    rng = random.Random(seed)
+    hits = 0
+    for _ in range(trials):
+        s, n = level['start'], 0
+        while level['counts'][s] != 0:
+            outs = level['moves'].get(str(s), [])
+            if not outs:
+                n = -1
+                break
+            s = rng.choice(outs)['to']
+            n += 1
+        hits += n == level['par']
+    return hits / trials
+
+
 def write_index(index):
     """The picker's list. Everything in it is derived, nothing is authored."""
     # Number each level within its group, because that is what the picker puts
@@ -262,16 +299,27 @@ def main():
     ap.add_argument('--spacing', type=float, default=9.0)
     ap.add_argument('--index-only', action='store_true',
                     help='rebuild index.json from the level files already built')
+    ap.add_argument('--prune', type=float, metavar='RATE',
+                    help='delete levels where careless play hits par at least '
+                         'this often, then reindex')
     args = ap.parse_args()
 
-    if args.index_only:
+    if args.index_only or args.prune is not None:
         index = []
+        dropped = 0
         for f in sorted(glob.glob(os.path.join(OUT, 'levels', '*.json'))):
             lv = json.load(open(f))
+            rate = careless_rate(lv)
+            if args.prune is not None and rate >= args.prune:
+                os.remove(f)
+                dropped += 1
+                continue
             index.append({'id': lv['id'], 'crossings': lv['crossings'],
-                          'par': lv['par'], 'states': len(lv['states'])})
+                          'par': lv['par'], 'states': len(lv['states']),
+                          'careless': round(rate, 3)})
         write_index(index)
-        print(f'{len(index)} levels indexed')
+        print(f'{len(index)} levels indexed'
+              + (f', {dropped} dropped as too forgiving' if dropped else ''))
         return
 
     sources = []
@@ -302,7 +350,8 @@ def main():
             # good puzzles — par is worked out from the curve that is actually
             # drawn — but the picker must group them by what is on screen.
             index.append({'id': lid, 'crossings': level['crossings'],
-                          'par': level['par'], 'states': len(level['states'])})
+                          'par': level['par'], 'states': len(level['states']),
+                          'careless': round(careless_rate(level), 3)})
         if n % 25 == 0:
             print(f'  {n}/{len(sources)}  kept {len(index)}  dropped {dropped}'
                   f'  {time.time() - t0:.0f}s', flush=True)

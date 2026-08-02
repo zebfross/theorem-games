@@ -105,7 +105,8 @@ function bestMove(level, from) {
 export default {
   id: 'untangling',
   title: 'Untangling',
-  blurb: 'Pull a tangled loop straight in as few moves as you can.',
+  blurb:
+    'Collapse the lenses out of a tangled loop, in as few moves as you can. A lens is a space the curve closes off with just two crossings.',
   credit:
     'A game on <a href="https://arxiv.org/abs/1706.06253"><i>Untangling planar '
     + 'curves</i></a> by Hsien-Chih Chang and Jeff Erickson: a closed curve with '
@@ -135,20 +136,17 @@ export default {
     const available = movesFrom(level, play.at);
     if (!available.length) return {};
 
-    // Inside a lens first, then nearest click point. Lenses can be slivers, so
-    // requiring a hit inside one would make the thin ones nearly unclickable.
+    // The click has to land on a lens. It used to snap to the nearest one
+    // anywhere on the board, which was fine while every lens was outlined and
+    // wrong once they are not: it turns finding them into clicking vaguely.
+    // The only latitude is for slivers, which are genuinely hard to hit, and
+    // for the few moves that have no outline to hit at all.
+    const grip = 0.02 * Math.max(level.view[2], level.view[3]);
     let pick = available.find((m) => m.lens && pointInPolygon(p.x, p.y, m.lens));
+    if (!pick) pick = available.find((m) => m.lens && distToPoly(p.x, p.y, m.lens) < grip);
+    if (!pick) pick = available.find((m) => !m.lens && Math.hypot(p.x - m.at[0], p.y - m.at[1]) < 2 * grip);
     if (!pick) {
-      let best = Infinity;
-      for (const m of available) {
-        const d = m.lens
-          ? Math.min(Math.hypot(p.x - m.at[0], p.y - m.at[1]), distToPoly(p.x, p.y, m.lens))
-          : Math.hypot(p.x - m.at[0], p.y - m.at[1]);
-        if (d < best) { best = d; pick = m; }
-      }
-      if (best > 0.09 * Math.max(level.view[2], level.view[3])) {
-        return { message: 'Click one of the marked lenses.' };
-      }
+      return { message: 'Not a lens. Look for a space closed off by just two crossings.' };
     }
 
     play.at = pick.to;
@@ -167,21 +165,19 @@ export default {
     board.replaceChildren();
     const pts = level.states[play.at];
 
+    // The collapsible lenses are laid down but not coloured in: finding them is
+    // the game. Marking them all made the puzzle disappear, since with every
+    // one shown you can click through them in any order and land on par more
+    // often than not. They light on hover, so the shape is confirmed before it
+    // is committed to, and the hint can still point at one.
     if (phase === 'placing') {
       for (const m of movesFrom(level, play.at)) {
-        const lit = play.hinted === m.to;
-        if (m.lens) {
-          board.appendChild(svgEl('polygon', {
-            points: polyPoints(m.lens),
-            class: 'lens' + (lit ? ' hinted' : ''),
-          }));
-        } else {
-          // No outline could be traced for this one; mark the spot instead so
-          // the move is still offered rather than silently missing.
-          board.appendChild(svgEl('circle', {
-            cx: m.at[0], cy: m.at[1], r: 14, class: 'lens' + (lit ? ' hinted' : ''),
-          }));
-        }
+        const lit = play.hinted === m.to ? ' hinted' : '';
+        board.appendChild(m.lens
+          ? svgEl('polygon', { points: polyPoints(m.lens), class: 'lens' + lit })
+          // No outline could be traced for this one; a disc round the spot
+          // keeps the move reachable rather than silently missing.
+          : svgEl('circle', { cx: m.at[0], cy: m.at[1], r: 14, class: 'lens' + lit }));
       }
     }
 
