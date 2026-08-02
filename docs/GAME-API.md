@@ -2,7 +2,7 @@
 
 A game is one directory under `games/`, listed in `games/registry.json`. It
 supplies a level pack and a module default-exporting the object described here.
-The engine owns everything else: the page, the level picker, saved progress, the
+The engine owns everything else: the page, level select, saved progress, the
 placing → running → result flow, the replay scrubber and the staged hint button.
 It also owns the homepage, which builds itself from the registry.
 

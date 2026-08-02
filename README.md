@@ -30,7 +30,7 @@ lib/geometry/       shared maths used by more than one game
 docs/               the game API and the level format
 ```
 
-The engine owns the page, the level pack, saved progress, the level picker, the
+The engine owns the page, the level pack, saved progress, level select, the
 placing → running → result flow, the replay scrubber and the staged hint button.
 A game supplies a board, a rule for whether an attempt worked, and the words to
 explain it. That split is the whole architecture.

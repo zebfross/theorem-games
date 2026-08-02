@@ -35,16 +35,35 @@ header {
   max-width: 1180px;
   margin: 0 auto;
 }
-/* Back to the gallery. Lives here rather than in the homepage stylesheet
-   because it is worn by the game page, which does not load that one. */
+/* On the game page the nav bar above already supplies the top spacing. */
+#site-nav + header { padding-top: 0.55rem; }
+/* The way back to the gallery, as a bar of its own above the game.
+   It used to be a line of text tucked over the title, one word away from the
+   level picker on the same row — "All games" beside "All puzzles" — which read
+   as two halves of one control. Site navigation and navigation within a game
+   are different things and now look it: this sits outside the game's header
+   entirely, and the picker is named for levels rather than for everything. */
+#site-nav {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.6rem 1.25rem 0;
+}
 .home-link {
   display: inline-block;
-  margin-bottom: 0.15rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
   color: var(--ink-dim);
   font-size: 0.85rem;
   text-decoration: none;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.home-link:hover { color: var(--ink); text-decoration: underline; }
+.home-link:hover,
+.home-link:focus-visible {
+  color: var(--ink);
+  border-color: #ffffff40;
+  background: #ffffff0d;
+}
 
 .brand p {
   margin: 0.25rem 0 0;
@@ -52,16 +71,6 @@ header {
   font-size: 0.86rem;
 }
 .header-actions { display: flex; gap: 0.5rem; align-items: center; }
-#game-switch {
-  font: inherit;
-  font-size: 0.9rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: 9px;
-  border: 1px solid var(--line);
-  background: #ffffff12;
-  color: var(--ink);
-}
-
 h1 {
   margin: 0;
   font-size: 1.15rem;
