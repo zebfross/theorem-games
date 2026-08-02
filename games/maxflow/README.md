@@ -84,6 +84,12 @@ the current drew nothing at all. Now the water arrives, fills the source side,
 and stops dead at the snips while the sink side stays dry — which is the most
 useful thing the animation does.
 
+There is no scrub bar. The engine offers one, and it is right for Unpinning,
+but this run has no inspectable middle: the water advances outwards from the
+source and that is all, so stopping partway shows a half-filled network that
+says nothing the finished one does not say better. `replay: false` drops it,
+and the frame recording with it.
+
 Two details worth keeping. The current runs from whichever end the flow says,
 not the end the search happened to reach first; those disagree often enough
 that taking the search order draws water visibly running uphill. And the

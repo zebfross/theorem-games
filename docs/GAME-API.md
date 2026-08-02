@@ -91,6 +91,7 @@ comparison most of the time, and a real one (`apart`) between scenes.
 
 ```js
 sim: {
+  replay: true          // optional; false to drop the scrub bar entirely
   create(level, play)   // -> sim
   step(sim)             // advance once; -> true when settled
   perFrame(sim)         // steps to run per animation frame
@@ -103,6 +104,16 @@ sim: {
   paint(sim)            // cheap repaint during the run
 }
 ```
+
+**Not every run is worth scrubbing.** The bar earns its place when the middle
+of the run holds something you would want to stop on — Unpinning's rope
+contracting past its pins, where the interesting moment is halfway. It does not
+when the run merely fills in an answer already decided: stopping partway then
+shows a half-drawn picture that says less than the finished one. Set
+`replay: false` and the bar goes, along with the frame recording that feeds it,
+which is the expensive part of running at all. `motion`, `scene`, `apart`,
+`show` and `sceneView` exist only for that recorder, so a game that opts out
+can leave all five out too.
 
 Two things learned the hard way, worth honouring:
 

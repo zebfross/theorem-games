@@ -265,6 +265,12 @@ export default {
   },
 
   sim: {
+    // No scrub bar. The run has no inspectable middle: water advances outwards
+    // from the source and that is all, so stopping partway shows a half-filled
+    // network, which says nothing the finished one does not say better. The
+    // engine then records no frames either, which is the expensive part.
+    replay: false,
+
     create(level, play) {
       const { total, flow } = maxFlow(level, play.cut);
       // How far each junction is from the source, so the flood advances
@@ -324,14 +330,8 @@ export default {
       return sim.front >= sim.span;
     },
     perFrame: () => 1,
-    motion: () => 0.06,
-    scene: (sim) => sim.front,
-    apart: (a, b) => Math.abs(a - b),
-    show(sim, scene) {
-      sim.front = scene;
-      drawNetwork(sim.level, sim.play, sim.paintArgs());
-    },
-    sceneView: () => null,
+    // motion, scene, apart, show and sceneView all exist only to feed the
+    // frame recorder, and with replay off the engine never calls them.
     readout(sim) {
       return sim.total === 0
         ? 'nothing getting through'
@@ -350,8 +350,10 @@ export default {
         won: false,
         readout: `${through} getting through`,
         title: 'The water still gets through.',
-        detail: `${through} still reaches the sink, and you have spent ${spent}. `
-          + 'Follow a route the water can still take and cut something on it.',
+        detail: (spent
+          ? `${through} still reaches the sink, and you have spent ${spent}. `
+          : `${through} still reaches the sink. `)
+          + 'Follow a route it can still take and cut something on it.',
       };
     }
     if (spent === level.par) {
@@ -363,12 +365,17 @@ export default {
           + `${spent} is exactly what this network could carry. That is the theorem.`,
       };
     }
+    // Just the two numbers. This used to add that par is also what the network
+    // carried untouched, and that the two are always equal — true, and the
+    // whole theorem, but as a consolation message it buried the one thing the
+    // player wants to know under a fact about a network they had already cut
+    // up, with "the two" left to guess at. The theorem is stated where it
+    // actually bites, on a perfect answer, and in the first hint.
     return {
       won: true, perfect: false, score: spent,
       readout: 'nothing getting through',
       title: spent <= level.par + 2 ? 'So close!' : 'Stopped it.',
-      detail: `Stopped for ${spent}, against ${level.par} — which is also what the `
-        + 'network carried before you touched it. The two are always equal.',
+      detail: `Stopped for ${spent}, when it could have been stopped for ${level.par}.`,
     };
   },
 
@@ -391,10 +398,11 @@ export default {
     if (tier === 1) {
       return {
         text: through === 0
-          ? `Already stopped, for ${spent}; the cheapest possible is ${level.par}.`
-          : `${through} still gets through, and you have spent ${spent} of a possible `
-            + `${level.par}. Whatever you do, stopping it will cost at least ${level.par} — `
-            + 'that is what the network carries.',
+          ? `Already stopped, for ${spent}. The cheapest possible is ${level.par}.`
+          // Not "spent X of a possible Y", which reads as a budget being filled
+          // rather than as a target being missed.
+          : `${through} still gets through. You have spent ${spent}, and no cut `
+            + `can cost less than ${level.par} — that is what the network carries.`,
       };
     }
     if (tier === 2) {

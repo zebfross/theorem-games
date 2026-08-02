@@ -175,7 +175,11 @@ function advance(maxSteps) {
   let done = false;
   for (let k = 0; k < maxSteps && !done; k++) {
     done = g.step(app.sim);
-    if (done) { record(); break; }
+    if (done) { if (app.replay) record(); break; }
+    // A game whose run has no inspectable middle records nothing at all: the
+    // frames would only feed a scrub bar it does not want, and the scene
+    // comparison below is the expensive part of running at all.
+    if (!app.replay) continue;
     // Comparing scenes every step is far too costly, so gate it on a cheap
     // upper bound: while the most anything could have moved is under a frame's
     // worth, no frame can be due and the real comparison is skipped.
@@ -196,10 +200,16 @@ function startRun() {
   app.lastScene = null;
   app.travel = 0;
   app.recordDrift = RECORD_DRIFT;
+  // Whether the run is worth scrubbing through. It is when the middle of it
+  // holds something you would want to stop on — Unpinning's rope contracting
+  // past its pins. It is not when the run only fills in an answer already
+  // decided, where the back half of the bar shows a half-finished picture and
+  // the front half shows nothing at all.
+  app.replay = app.game.sim.replay !== false;
   say('');
   draw();
   status();
-  record();
+  if (app.replay) record();
 
   const started = performance.now();
   let n = 0;
@@ -251,7 +261,7 @@ function finishRun() {
   const range = el('scrub-range');
   range.max = String(Math.max(0, app.frames.length - 1));
   range.value = range.max;
-  el('scrub').hidden = app.frames.length < 2;
+  el('scrub').hidden = !app.replay || app.frames.length < 2;
   el('controls').hidden = true;
 }
 
