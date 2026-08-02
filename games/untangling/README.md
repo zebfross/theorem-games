@@ -14,8 +14,25 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Playable.** Find a lens and click it, and it collapses. Nothing marks them,
-and every click is scored, so a wrong one costs the same as a right one. The module computes nothing about
+**Playable, and tabled.** It works and it is not a good game. Leaving it here
+complete rather than deleting it, because the diagram layer, the solver and the
+checked-geometry approach are all sound and worth reusing; it is the game on
+top of them that does not stand up.
+
+**Why it does not stand up: there is no way to lose.** A collapse only ever
+removes crossings, so the curve strictly simplifies with every successful
+click and *any* sequence of clicks eventually wins. Three rounds were spent
+treating that as a presentation problem — marking every lens, then marking
+none but lighting them on hover, then charging for wrong clicks — and none of
+it worked, because none of it touched the structure. Clicking at random still
+solves the puzzle; it only earns a worse number next to a win that was never
+in doubt. A score cannot create tension where losing is impossible.
+
+What would fix it is the part of the theorem this leaves out: R3 flips and R2
+in the *increasing* direction, where the curve has to get worse before it gets
+better and a wrong choice can strand you. That is not a tweak — the state
+space stops being finite, so the precomputed graph that makes this cheap goes
+away with it. Anyone picking this up should start there, not from the UI. The module computes nothing about
 curves: a level file holds every diagram the player can reach, drawn, with the
 moves joining them, so a move at runtime is a lookup. All the geometry was
 settled offline and checked against the combinatorics, which is what makes it

@@ -20,7 +20,7 @@ happen, be told whether it worked.** Beyond that, the ones worth building have:
 
 ---
 
-## ~~Untangling planar curves~~ — built
+## ~~Untangling planar curves~~ — built, and not worth playing
 
 **Chang & Erickson** — a closed curve with *n* self-crossings needs
 Θ(n^{3/2}) homotopy moves to become simple. See `games/untangling/`.
@@ -34,7 +34,15 @@ the player sees the same puzzle changed rather than a different puzzle took
 most of the effort, and still succeeds only 84% of the time, which is why 441
 of 498 curves ship rather than all of them.
 
-Worth carrying to the next one: the drawing does not have to be argued into
+**The lesson worth carrying, ahead of any of that: check that the game can be
+lost before building it.** Untangling cannot be. Every move strictly reduces
+the crossing count, so any sequence of clicks wins and the only question is
+how many. That was true from the first commit and none of the work that
+followed could have changed it. Before building one of these, play the losing
+strategy on paper — click at random, ignore the goal — and see whether it
+still wins. Unpinning survives that test: a wrong set of pins genuinely fails.
+
+Worth carrying too: the drawing does not have to be argued into
 correctness if it can be checked. Every edit is accepted only when rebuilding
 the diagram from it gives back exactly what the move predicts, which is what
 makes approximate geometry safe to attempt at all. Be careful that the thing
