@@ -294,11 +294,14 @@ def lens_outline(points, dia, face):
     A, B = spans
     if len(A) < 2 or len(B) < 2:
         return None
-    # the two arcs run from one crossing to the other; close the loop by
-    # coming back along the second
-    if math.dist(A[-1], B[0]) < math.dist(A[-1], B[-1]):
-        B = B[::-1]
-    return A + B
+    # The two arcs meet at the two crossings, so in the right orientation both
+    # joins are short. Pick whichever way round makes them so, rather than
+    # reasoning about which direction each arc was walked in: get it wrong and
+    # the polygon closes across the middle of the lens, which draws as a
+    # diagonal slashing over the shape.
+    fwd = math.dist(A[-1], B[0]) + math.dist(B[-1], A[0])
+    rev = math.dist(A[-1], B[-1]) + math.dist(B[0], A[0])
+    return A + (B[::-1] if rev < fwd else B)
 
 
 def _accept(cand, want, spacing):

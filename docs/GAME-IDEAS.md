@@ -20,18 +20,25 @@ happen, be told whether it worked.** Beyond that, the ones worth building have:
 
 ---
 
-## Untangling planar curves
+## ~~Untangling planar curves~~ — built
 
 **Chang & Erickson** — a closed curve with *n* self-crossings needs
-Θ(n^{3/2}) homotopy moves to become simple.
+Θ(n^{3/2}) homotopy moves to become simple. See `games/untangling/`.
 
-The player does the untangling themselves: collapse a monogon or a bigon, use
-an R3 to expose new ones, in as few moves as possible.
+It was billed here as by far the cheapest to build, on the grounds that it
+shares Unpinning's rope rendering and can reuse the very same level geometry.
+Both were true and neither was the work. Reusing the curves was free; making a
+move *look* like a move was not. The combinatorics of a collapse is a deletion
+from the Gauss code and took an afternoon. Redrawing the curve afterwards so
+the player sees the same puzzle changed rather than a different puzzle took
+most of the effort, and still succeeds only 84% of the time, which is why 441
+of 498 curves ship rather than all of them.
 
-This is Unpinning's sibling and by far the cheapest to build — same rope
-rendering, same `lib/geometry/arrangement.py`, and it can reuse the very same
-level geometry. Where Unpinning is *stop it coming apart*, this is *take it
-apart*. Par from breadth-first search over move sequences on small curves.
+Worth carrying to the next one: the drawing does not have to be argued into
+correctness if it can be checked. Every edit is accepted only when rebuilding
+the diagram from it gives back exactly what the move predicts, which is what
+makes approximate geometry safe to attempt at all. Be careful that the thing
+returned is the thing checked — see that game's README for how much that cost.
 
 ## The art gallery theorem
 

@@ -200,11 +200,16 @@ def pack_level(lid, rope, spacing):
     links = {}
     for k, outs in moves.items():
         if outs:
-            # The lens is only a click target and a highlight, so nothing
-            # depends on its fidelity; a couple of dozen points is plenty.
+            # The lens is only a click target and a highlight, so it can be
+            # shed hard — but not by resampling it evenly. These outlines have
+            # long straight sides meeting at sharp corners, and even spacing
+            # lands points along the sides and misses the corners, so each
+            # corner becomes a diagonal chord slashing across the shape. It
+            # looks exactly like a rendering fault. Douglas-Peucker keeps the
+            # corners, which is the whole shape here.
             links[order[k]] = [
                 dict(at=[int(round(v)) for v in at], to=order[to],
-                     **({'lens': _flat(surgery._along(lens, min(len(lens), 20)))}
+                     **({'lens': _flat(_douglas_peucker(list(lens), 1.5))}
                         if lens else {}))
                 for at, lens, to in outs]
 
@@ -237,11 +242,37 @@ def pack_level(lid, rope, spacing):
     }
 
 
+def write_index(index):
+    """The picker's list. Everything in it is derived, nothing is authored."""
+    # Number each level within its group, because that is what the picker puts
+    # on the button. The source ids cannot: 10^1_10 and 9^1_10 both end in 10,
+    # so two different puzzles would sit side by side wearing the same label.
+    index.sort(key=lambda e: (e['crossings'], e['id']))
+    seen = {}
+    for e in index:
+        seen[e['crossings']] = seen.get(e['crossings'], 0) + 1
+        e['n'] = seen[e['crossings']]
+    with open(os.path.join(OUT, 'index.json'), 'w') as fh:
+        json.dump({'count': len(index), 'levels': index}, fh, separators=(',', ':'))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--spacing', type=float, default=9.0)
+    ap.add_argument('--index-only', action='store_true',
+                    help='rebuild index.json from the level files already built')
     args = ap.parse_args()
+
+    if args.index_only:
+        index = []
+        for f in sorted(glob.glob(os.path.join(OUT, 'levels', '*.json'))):
+            lv = json.load(open(f))
+            index.append({'id': lv['id'], 'crossings': lv['crossings'],
+                          'par': lv['par'], 'states': len(lv['states'])})
+        write_index(index)
+        print(f'{len(index)} levels indexed')
+        return
 
     sources = []
     for f in sorted(glob.glob(os.path.join(SOURCE, '*.json'))):
@@ -263,15 +294,20 @@ def main():
         else:
             with open(os.path.join(OUT, 'levels', f'{lid}.json'), 'w') as fh:
                 json.dump(level, fh, separators=(',', ':'))
-            index.append({'id': lid, 'crossings': cr, 'par': level['par'],
-                          'states': len(level['states'])})
+            # Count the crossings from the curve that was built, not from the
+            # catalogue entry it came from. Evening the source drawing out to a
+            # regular spacing can lose a crossing where two strands pass within
+            # a point of each other, so 35 of these curves are genuinely a
+            # little simpler than the catalogue says. They are still perfectly
+            # good puzzles — par is worked out from the curve that is actually
+            # drawn — but the picker must group them by what is on screen.
+            index.append({'id': lid, 'crossings': level['crossings'],
+                          'par': level['par'], 'states': len(level['states'])})
         if n % 25 == 0:
             print(f'  {n}/{len(sources)}  kept {len(index)}  dropped {dropped}'
                   f'  {time.time() - t0:.0f}s', flush=True)
 
-    index.sort(key=lambda e: (e['crossings'], e['id']))
-    with open(os.path.join(OUT, 'index.json'), 'w') as fh:
-        json.dump({'count': len(index), 'levels': index}, fh, separators=(',', ':'))
+    write_index(index)
     print(f'\n{len(index)} levels, {dropped} dropped, {time.time() - t0:.0f}s')
 
 

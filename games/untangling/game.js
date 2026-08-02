@@ -113,7 +113,7 @@ export default {
     + 'moves to become simple.',
 
   group: (m) => `${m.crossings} crossings`,
-  chip: (m) => `${m.id.split('_').pop()}·${m.par}`,
+  chip: (m) => `${m.n}·${m.par}`,
   par: (m) => m.par,
 
   start: (level) => ({ at: level.start, moves: 0, hinted: null }),
@@ -126,7 +126,8 @@ export default {
       goal: `Untangle it in <b>${level.par}</b> ${level.par === 1 ? 'move' : 'moves'}`,
       status: left === 0
         ? `${play.moves} ${play.moves === 1 ? 'move' : 'moves'} · untangled`
-        : `${play.moves} ${play.moves === 1 ? 'move' : 'moves'} · ${left} crossings left`,
+        : `${play.moves} ${play.moves === 1 ? 'move' : 'moves'} · ${left} `
+          + `${left === 1 ? 'crossing' : 'crossings'} left`,
     };
   },
 
@@ -196,8 +197,9 @@ export default {
       return {
         won: false,
         title: 'Nothing left to collapse.',
-        detail: `Stuck at ${left} crossings after ${play.moves} moves. `
-          + 'Every route from here is closed; start again and collapse a different lens first.',
+        detail: `Stuck at ${left} ${left === 1 ? 'crossing' : 'crossings'} after `
+          + `${play.moves} ${play.moves === 1 ? 'move' : 'moves'}. Every route from `
+          + 'here is closed; start again and collapse a different lens first.',
       };
     }
     const over = play.moves - level.par;
@@ -211,7 +213,8 @@ export default {
     return {
       won: true, perfect: false, score: play.moves,
       title: over === 1 ? 'So close!' : 'Untangled.',
-      detail: `${play.moves} moves — ${over} more than the ${level.par} it can be done in.`,
+      detail: `${play.moves} moves — ${over === 1 ? 'one' : over} more than the `
+        + `${level.par} it can be done in.`,
     };
   },
 

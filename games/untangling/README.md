@@ -1,4 +1,4 @@
-# Untangling — in progress
+# Untangling
 
 A game on Chang and Erickson's result that a closed curve with *n* self
 crossings needs Θ(n^{3/2}) homotopy moves to become simple. You are given a
@@ -14,9 +14,11 @@ The moves are the usual three, read off the faces of the drawing:
 
 ## Status
 
-**Not playable yet.** The combinatorial layer, the collapsing moves, the solver
-and the drawing are built and checked, and the engine can now be played move by
-move. What is missing is the level pack and the game module itself.
+**Playable.** Click a lens and it collapses. The module computes nothing about
+curves: a level file holds every diagram the player can reach, drawn, with the
+moves joining them, so a move at runtime is a lookup. All the geometry was
+settled offline and checked against the combinatorics, which is what makes it
+safe to be approximate.
 
 ### How much of it works
 
@@ -112,14 +114,28 @@ What works and what does not:
   move was then drawn on top of a diagram the maths never sanctioned — one
   seven-crossing curve wandered into 301 states when only 5 are reachable.
   Resampling now happens inside the check.
+- The lens outline the player clicks had its two arcs joined the wrong way
+  round — every one of 465, though only the fat ones showed it, as a diagonal
+  slashing across the shape. Worth the note because the fix is not to reason
+  harder about which way each arc was walked: the two arcs meet at the two
+  crossings, so the right orientation is simply the one where both joins are
+  short, and that can be measured. It was caught by looking at the screen, not
+  by any check, which is the argument for looking at the screen.
+- Evening the source drawing out to a regular spacing loses a crossing on 35 of
+  the 441, where two strands pass within a point of each other. Those levels
+  are a shade simpler than the catalogue entry they came from. They are still
+  sound puzzles, since par is worked out from the curve actually drawn, but the
+  picker groups them by what is on screen rather than by what the source said.
 
 Still to do:
 
-- **The level pack and the game module.** Nothing blocks these now: 441 levels
-  verify, and the engine takes a move-by-move game.
-- **Closing the gaps**, or shipping around them. The 57 levels that fall short
-  are almost all 10 crossings. Shipping only the 441 that verify is a perfectly
-  good first pack; the alternative is a third construction.
+- **Showing the move happening.** A collapse currently swaps one drawing for
+  the next with no motion, and because surgery keeps the edit local the two
+  look alike — the change can be easy to miss. Tweening between consecutive
+  drawings needs a correspondence between them that the pack does not record.
+- **Closing the gaps**, or living with them. The levels that fall short are
+  almost all 10 crossings, and they are simply not shipped; the alternative is
+  a third construction.
 - **Speed**, partly. Each collapse tries about eighty candidate drawings and
   checks each by rebuilding the whole arrangement, so that rebuild is the
   entire cost of building a pack. Finding the crossings by a grid over the
@@ -130,6 +146,9 @@ Still to do:
 
 ## A note on level data
 
-The curves used to check the diagram layer are Unpinning's, which come from a
-GPL-3.0 catalogue. Shipping this game should use curves generated here instead;
-the drawings above are for testing only.
+The curves are Unpinning's, which come from the GPL-3.0 LooPindex catalogue, so
+this game is GPL-3.0 as well — the terms follow the data. Generating curves
+here instead would cut that tie, and would also lift the two limits the source
+imposes: it holds nothing above 10 crossings, and nothing reducible, which is
+why across all 498 there are 1912 bigons and not one monogon. Nobody ever plays
+an R1 in this pack.

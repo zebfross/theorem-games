@@ -65,5 +65,6 @@ much changes rather than even in effort spent.
 ## Licence
 
 The engine and `lib/` are MIT. Individual games carry their own licence, since
-they often embed data from published work; Unpinning is GPL-3.0 because the
-catalog it derives from is.
+they often embed data from published work. Unpinning is GPL-3.0 because the
+catalogue it derives from is, and Untangling is GPL-3.0 too: its curves are
+Unpinning's, so the same terms follow them.

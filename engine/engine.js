@@ -308,6 +308,9 @@ function nudge() {
   say(r.text || '');
   draw();
   status();
+  // A hint that plays a move can play the last one, and then there is nothing
+  // left to click to end the level with.
+  if (app.game.over && app.game.over(app.level, app.play)) finishRun();
 }
 
 /* ---------- level lifecycle ---------- */
