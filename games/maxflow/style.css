@@ -23,13 +23,14 @@
   50%      { stroke: #6fdc9a; }
 }
 
-/* Water fills any pipe the source can reach. Where it is going nowhere it sits
-   there dimmed and still, which is what a holding cut looks like. */
+/* Water fills any pipe the source can reach, whether or not it is going
+   anywhere — which is what a holding cut looks like, since the flow is then
+   zero everywhere and this is all there is to see. */
 .water { stroke: #3f8fbe; stroke-linecap: round; pointer-events: none; opacity: 0.9; }
 /* Standing water still has to read as water. Much below this it turns grey
    against the brown of the pipe and looks like an unlit pipe rather than a
    full one, which is the opposite of what it means. */
-.water.still { stroke: #4f9ec9; opacity: 0.62; }
+.water.still { stroke: #4f9ec9; opacity: 0.75; }
 
 /* The current: a moving stream inside the standing water, as wide as the flow
    really running through that pipe. Drawn as dashes rather than particles
@@ -46,15 +47,6 @@
 @keyframes current {
   from { stroke-dashoffset: 0; }
   to   { stroke-dashoffset: -26; }   /* one dash plus one gap, so it loops seamlessly */
-}
-
-/* Water pressing against a cut it cannot pass. Faint and slow, so it never
-   reads as water getting through — and it stops at the snip, which is the
-   whole point of watching it. */
-.current.idle {
-  stroke: #7cb8d8;
-  opacity: 0.4;
-  stroke-dasharray: 7 19;
 }
 
 @media (prefers-reduced-motion: reduce) {

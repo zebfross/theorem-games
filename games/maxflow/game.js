@@ -165,15 +165,21 @@ function drawNetwork(level, play, opts = {}) {
         // the thing worth watching.
         pipes.appendChild(svgEl('line', {
           x1: run[0], y1: run[1], x2: run[2], y2: run[3],
-          'stroke-width': Math.max(3, pipeWidth(moving || 1) - (moving ? 9 : 13)),
-          class: 'current' + (moving ? '' : ' idle'),
-          // Fuller pipes run faster. Speed is the second reading of the same
-          // number, which is what makes a slow trickle next to a torrent
-          // legible at a glance, and what keeps dammed water from being
-          // mistaken for water getting through.
-          style: `animation-duration:${moving
-            ? (1.5 - 0.1 * Math.min(9, moving)).toFixed(2)
-            : '3.4'}s`,
+          // Width is the only thing that reports throughput, and that is on
+          // purpose. Dimming and slowing the dammed water as well was three
+          // signals saying one thing, and it made a held cut look like a
+          // stalled game rather than like water hammering against it. Water
+          // with nowhere to go still churns, so it churns at full brightness;
+          // it is simply a narrower stream than one actually carrying nine.
+          'stroke-width': moving
+            ? Math.max(4, pipeWidth(moving) - 9)
+            : Math.max(4, w - 14),
+          class: 'current',
+          // Fuller pipes run faster, which is the second reading of the same
+          // number and makes a trickle beside a torrent legible at a glance.
+          style: `animation-duration:${(moving
+            ? 1.5 - 0.1 * Math.min(9, moving)
+            : 1.15).toFixed(2)}s`,
         }));
       }
     }
