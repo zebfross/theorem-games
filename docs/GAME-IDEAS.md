@@ -201,3 +201,40 @@ achievable everywhere.
   need over/under strands and a 3D reading, which is a real step up in
   rendering before any of the mathematics starts.
 - **Pick's theorem.** Closer to an exercise than a puzzle.
+
+---
+
+## Notes toward the happy ending game (in progress)
+
+Par is the Erdos-Szekeres number minus one: 4 points with no convex
+quadrilateral, 8 with no convex pentagon, 16 with no convex hexagon. The first
+two are classical, the third was settled by Szekeres and Peters in 2006 by
+computer, and nothing past it is known — so the last level of the game sits on
+the edge of an open problem, which is a nice place for a game to end.
+
+**The fail-state question has an unusual answer here, and it is the reason to
+build it.** Every other game in this repo can be lost by playing badly. This one
+cannot be won past par *by anybody*, because the theorem says so. The tension is
+not "did I find the answer" but "how far can I get before the mathematics stops
+me", and the stopping is guaranteed. That is a genuinely different temperature
+from the other three, and it is the whole appeal.
+
+**Design so far.** Free placement rather than a grid: the constraints are open
+conditions, so every valid next point has a whole region to land in and the
+player is never asked to hit a pixel. General position is enforced with a real
+area threshold, since a set only just in general position is one where convexity
+comes down to rounding.
+
+**Levels** come from revealing a prefix of a known extremal configuration: seed
+j of the par points, and the player places the rest. Completability is then
+guaranteed by construction rather than by search, and the size of the seed is
+the difficulty dial.
+
+**Verified so far** (tools/points.py): the convexity test is checked against the
+theorem in both directions — 4000 random 5-point sets all contain a convex
+quadrilateral and 300 random 9-point sets all contain a convex pentagon, which
+would fail if the test were too strict; and the 4-point and 8-point extremal
+configurations are both found, which would fail if it were too eager. The
+16-point configuration for k=6 is a much smaller needle and randomised growth
+may not reach it — the fallback is the Erdos-Szekeres cups-and-caps
+construction, which builds 2^(k-2) points with no convex k-gon directly.
