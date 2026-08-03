@@ -32,25 +32,25 @@
    full one, which is the opposite of what it means. */
 .water.still { stroke: #4f9ec9; opacity: 0.75; }
 
-/* The current: a moving stream inside the standing water, as wide as the flow
+/* The flowing water: a moving stream inside the standing water, as wide as the flow
    really running through that pipe. Drawn as dashes rather than particles
    because it is one element per pipe and the browser animates it without
    waking the main loop; the run itself is only twenty-odd frames long. */
-.current {
+#board .flowing {
   stroke: #a9e2ff;
   stroke-linecap: butt;
   pointer-events: none;
   opacity: 0.85;
   stroke-dasharray: 11 15;
-  animation: current 1s linear infinite;
+  animation: flowing 1s linear infinite;
 }
-@keyframes current {
+@keyframes flowing {
   from { stroke-dashoffset: 0; }
   to   { stroke-dashoffset: -26; }   /* one dash plus one gap, so it loops seamlessly */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .current { animation: none; }
+  #board .flowing { animation: none; }
 }
 
 .cap-disc { fill: #12241d; stroke: #ffffff1f; stroke-width: 1; pointer-events: none; }

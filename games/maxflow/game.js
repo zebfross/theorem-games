@@ -174,7 +174,7 @@ function drawNetwork(level, play, opts = {}) {
           'stroke-width': moving
             ? Math.max(4, pipeWidth(moving) - 9)
             : Math.max(4, w - 14),
-          class: 'current',
+          class: 'flowing',
           // Fuller pipes run faster, which is the second reading of the same
           // number and makes a trickle beside a torrent legible at a glance.
           style: `animation-duration:${(moving

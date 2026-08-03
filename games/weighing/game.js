@@ -229,7 +229,7 @@ function drawRow(level, play, j, tip) {
       board.appendChild(svgEl('circle', {
         cx: x + w / 2 + (side === LEFT ? -w / 5 : w / 5),
         cy: y + ROW_H / 2, r: 7,
-        class: 'chip ' + (side === LEFT ? 'left' : 'right'),
+        class: 'pan-mark ' + (side === LEFT ? 'left' : 'right'),
       }));
     }
   }

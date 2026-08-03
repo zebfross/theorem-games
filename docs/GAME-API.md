@@ -64,6 +64,28 @@ click(level, play, point) // -> {changed} or {message} for a miss
 you can import along with `svgEl` from the engine. Redraws happen whenever the
 engine thinks state changed; keep it cheap enough to call freely.
 
+### Scope your stylesheet to `#board`
+
+Your `style.css` is loaded into the **whole page**, not into the board. So a
+class name you pick for your own shapes also matches anything around it that
+shares the name, and quietly restyles it.
+
+```css
+#board .slot { ... }      /* yes */
+.slot { ... }             /* reaches the page around the board */
+```
+
+This has bitten twice, and neither was visible by reading either file alone.
+Coin weighing called the disc in each cell a `.chip` and gave it
+`pointer-events: none`; the engine's level buttons are `.chip` too, so **every
+level in the picker became unclickable**. Max-flow called its moving water
+`.current`, which the engine uses for the selected level's button, and did the
+same to it. Both class names are perfectly reasonable in isolation — the
+collision exists only because the two stylesheets share a page.
+
+`python3 tools/check_styles.py` fails on any game class the engine also styles,
+and reports unscoped selectors as advice. Run it after adding a stylesheet.
+
 ## Games without a run
 
 The summary above — arrange, run, watch — is the common shape, not the only
