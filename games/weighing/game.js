@@ -3,11 +3,11 @@
 /* Coin weighing — one coin among n is fake, and you have a balance.
  *
  * Every weighing comes out one of three ways: left pan down, right pan down,
- * or level. So k weighings can tell at most 3^k stories apart, and there are
- * 2n stories to tell — which coin, and whether it is heavy or light. No scheme
+ * or level. So k weighings can tell at most 3^k cases apart, and there are
+ * 2n cases to tell — which coin, and whether it is heavy or light. No scheme
  * can beat log_3(2n). That counting argument is the whole theorem, and the
  * board is built to show it: the rack along the bottom holds one slot per
- * outcome, every story drops into its slot, and two in the same slot means you
+ * outcome, every case drops into its slot, and two in the same slot means you
  * cannot tell them apart.
  *
  * Every weighing is chosen in advance rather than one after another. That is a
@@ -43,7 +43,7 @@ const COIN_Y = 38;
 const COIN_R = 16;
 const GRID_TOP = 72;
 const ROW_H = 46;
-const RACK_GAP = 36;
+const RACK_GAP = 56;        // room above the rack for its two lines of label
 const SLOT_MAX = 40;        // a slot at its most generous
 const RACK_DEEP = 3;        // rows of slots; the rack grows sideways, not down
 
@@ -61,7 +61,7 @@ function text(attrs, str) {
 
 /** How many weighings the player is actually using.
  *
- *  An untouched row costs nothing and tells nothing: it leaves every story's
+ *  An untouched row costs nothing and tells nothing: it leaves every case's
  *  outcome unchanged at "level", so it neither separates anything nor merges
  *  anything. It simply does not count as a weighing. That is what lets a level
  *  hand out a spare row without making par meaningless. */
@@ -84,7 +84,7 @@ function pans(level, play, j) {
   return [l, r];
 }
 
-/** Which slot a story falls into, as an index into the rack.
+/** Which slot a case falls into, as an index into the rack.
  *
  *  The outcome of weighing `used[d]` is the coin's entry there, negated when
  *  the coin is light. Read as a base-three numeral so every distinct outcome
@@ -111,8 +111,8 @@ function bound(n) {
   return k;
 }
 
-/** Every story this arrangement can produce, in the order the run tells them. */
-function stories(level, play) {
+/** Every case this arrangement can produce, in the order the run tells them. */
+function cases(level, play) {
   const used = usedRows(level, play);
   const out = [];
   for (let i = 0; i < level.n; i++) {
@@ -128,7 +128,7 @@ function stories(level, play) {
  *  This is what the verdict is read from — never the animation, which exists
  *  only to show the player why. */
 function faults(level, play) {
-  const { used, list } = stories(level, play);
+  const { used, list } = cases(level, play);
   const bad = [];
 
   for (const j of used) {
@@ -147,9 +147,9 @@ function faults(level, play) {
   return bad;
 }
 
-/** The slots holding more than one story, for the rack to paint red. */
+/** The slots holding more than one case, for the rack to paint red. */
 function clashedSlots(level, play, upto) {
-  const { list } = stories(level, play);
+  const { list } = cases(level, play);
   const count = new Map();
   for (const s of list.slice(0, upto)) {
     count.set(s.slot, (count.get(s.slot) || 0) + 1);
@@ -241,7 +241,7 @@ function drawRow(level, play, j, tip) {
  *
  *  While placing, it leans by however far the pans are from matching, so an
  *  uneven weighing is visible as a thing rather than described as a mistake.
- *  During the run it leans the way that weighing actually tips for the story
+ *  During the run it leans the way that weighing actually tips for the case
  *  being told. */
 function drawBalance(level, j, l, r, tip, idle) {
   const cx = GUTTER + gridW(level) + SCALES / 2;
@@ -279,10 +279,20 @@ function drawRack(level, play, used, filled) {
   const stride = plan.size + plan.gap;
   const left = GUTTER + (gridW(level) + SCALES - plan.across * stride) / 2;
 
+  // The whole theorem, in one line, doing its own arithmetic. Saying "6 cases"
+  // means nothing beside three coins; saying where the 6 came from means
+  // everything, and it is the number the slot count has to be weighed against.
   board.appendChild(text({
-    x: GUTTER, y: plan.top - 14, class: 'rack-label',
-  }, `${2 * level.n} stories to tell · ${plan.slots} `
-     + `${plan.slots === 1 ? 'slot' : 'slots'} to tell them apart`));
+    x: GUTTER, y: plan.top - 30, class: 'rack-label',
+  }, `Any of the ${level.n} coins could be the fake, and it could be heavy or `
+     + `light: ${2 * level.n} cases to tell apart.`));
+  board.appendChild(text({
+    x: GUTTER, y: plan.top - 11, class: 'rack-label',
+  }, plan.k === 0
+    ? 'One slot to sort them into: with nothing on the scales, every case '
+      + 'looks exactly the same.'
+    : `${plan.slots} slots to sort them into — one for each way your `
+      + `${plan.k === 1 ? 'weighing' : `${plan.k} weighings`} can come out.`));
 
   for (let s = 0; s < plan.slots; s++) {
     const x = left + (s % plan.across) * stride;
@@ -304,18 +314,18 @@ function render(level, play, phase) {
   board.replaceChildren();
   const used = usedRows(level, play);
 
-  // While the run is going, the board follows the story being told: one coin
+  // While the run is going, the board follows the case being told: one coin
   // lit as heavy or light, and every balance leaning the way that weighing
   // actually tips for it. Once it is over the board goes back to reporting the
   // arrangement, because the answer is now the whole rack rather than any one
-  // story — the last one told is not special.
+  // case — the last one told is not special.
   const live = phase === 'running' && play.sim ? play.sim.current() : null;
   const filled = phase === 'placing' || !play.sim ? 0
     : phase === 'running' ? play.sim.placed : play.sim.list.length;
 
   drawCoins(level, play, live);
   for (let j = 0; j < level.rows; j++) {
-    // A row nobody is using stays level whatever the story.
+    // A row nobody is using stays level whatever the case.
     const tip = !live || !used.includes(j) ? (live ? 0 : null)
       : (live.heavy ? 1 : -1) * play.cells[live.coin][j];
     drawRow(level, play, j, tip);
@@ -436,11 +446,16 @@ export default {
     const used = usedRows(level, play).length;
     const slots = 3 ** used;
     return {
-      goal: `Tell all <b>${2 * level.n}</b> stories apart in `
-            + `<b>${level.par}</b> weighings`,
+      // The task in the words of the puzzle, not in the words of the counting
+      // argument. Leading with "tell all 6 cases apart" asked the player to
+      // take an unexplained 6 on trust, when there are only three coins in
+      // front of them; where the 6 comes from belongs on the rack, next to the
+      // slots it is being compared against.
+      goal: `Find the fake coin — and say whether it is heavy or light — `
+            + `in <b>${level.par}</b> weighings`,
       status: `${used} ${used === 1 ? 'weighing' : 'weighings'} · `
               + `${slots} ${slots === 1 ? 'slot' : 'slots'} for `
-              + `${2 * level.n} stories`,
+              + `${2 * level.n} cases`,
     };
   },
 
@@ -461,13 +476,13 @@ export default {
 
   sim: {
     // No scrub bar. The run does not develop — it reads out an answer the
-    // arrangement already fixed, one story at a time — so stopping partway
+    // arrangement already fixed, one case at a time — so stopping partway
     // shows a half-filled rack, which says strictly less than the full one.
     replay: false,
 
     create(level, play) {
-      const { list, used } = stories(level, play);
-      // Slow enough to watch a story land, quick enough that thirty-nine coins
+      const { list, used } = cases(level, play);
+      // Slow enough to watch a case land, quick enough that thirty-nine coins
       // do not outstay their welcome: the whole run is about the same length
       // whatever the size of the level.
       const per = Math.max(2, Math.round(150 / list.length));
@@ -491,7 +506,7 @@ export default {
     readout(sim) {
       const at = sim.current();
       return (at ? `coin ${at.coin + 1} ${at.heavy ? 'heavy' : 'light'} · ` : '')
-        + `${sim.placed} of ${sim.list.length} stories told`;
+        + `${sim.placed} of ${sim.list.length} cases tried`;
     },
   },
 
@@ -505,7 +520,7 @@ export default {
         won: true,
         perfect,
         score: used,
-        title: perfect ? 'Every story has its own slot.'
+        title: perfect ? 'Every case has its own slot.'
                        : 'It works.',
         detail: perfect
           ? `Told apart in ${used} ${used === 1 ? 'weighing' : 'weighings'}, `
@@ -536,9 +551,9 @@ export default {
         + 'every weighing exactly alike, so you could not say which it was.';
     return {
       won: false,
-      title: 'Two stories, one slot.',
+      title: 'Two cases, one slot.',
       detail,
-      readout: 'two stories landed together',
+      readout: 'two cases landed together',
     };
   },
 
@@ -561,7 +576,7 @@ export default {
         }
         if (clashes) {
           parts.push(`${clashes} ${clashes === 1 ? 'slot has' : 'slots have'} `
-                     + 'more than one story in it');
+                     + 'more than one case in it');
         }
         where = parts.length ? `Right now ${parts.join(', and ')}.`
                              : 'Your arrangement already works.';
@@ -575,14 +590,14 @@ export default {
           + `${level.par} is the fewest that can work.`
         : `Counting alone would let you off with ${lo}: `
           + `3^${lo} = ${3 ** lo} outcomes is enough room for ${2 * n} `
-          + `stories. But it cannot be done in ${lo} here — every way of `
+          + `cases. But it cannot be done in ${lo} here — every way of `
           + 'sorting the coins leaves some weighing with an odd number of '
           + `them, and odd will not split between two pans. It takes `
           + `${level.par}.`;
       return {
         text: `Each weighing comes out one of three ways — left down, right `
               + `down, or level — so ${level.par} of them can tell at most `
-              + `3^${level.par} = ${3 ** level.par} stories apart. You have `
+              + `3^${level.par} = ${3 ** level.par} cases apart. You have `
               + `${2 * n} to tell: ${n} coins, and either could be the heavy `
               + `fake or the light one. ${why} ${where}`,
       };
@@ -617,7 +632,7 @@ export default {
     play.cells = answer;
     return {
       text: 'Here is an arrangement that works, turned to match yours as '
-            + 'closely as it can. Press run and watch every story land in a '
+            + 'closely as it can. Press run and watch every case land in a '
             + 'slot of its own.',
     };
   },

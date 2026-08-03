@@ -84,7 +84,7 @@
 }
 
 /* The rack: one slot per outcome the weighings can produce. Empty while you
-   arrange, so the count of slots against the count of stories is there to be
+   arrange, so the count of slots against the count of cases is there to be
    read before anything is committed. */
 #board .rack-label {
   fill: var(--ink-dim);

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
      aria-label="A balance with coins in both pans, above a rack of slots in which two coins share one slot">
   <!-- A balance tipping, and below it the rack the game is really about: one
-       slot per outcome, and two stories that have landed in the same one. That
+       slot per outcome, and two cases that have landed in the same one. That
        collision is the whole failure state, so it is what the card shows. -->
   <defs>
     <style>
@@ -32,7 +32,7 @@
   <circle class="cool" cx="217" cy="38" r="7"/>
   <circle class="cool" cx="231" cy="38" r="7"/>
 
-  <!-- the rack: nine outcomes, one of them holding two stories at once -->
+  <!-- the rack: nine outcomes, one of them holding two cases at once -->
   <g>
     <rect class="full" x="40"  y="126" width="24" height="24" rx="4"/>
     <rect class="slot" x="70"  y="126" width="24" height="24" rx="4"/>

@@ -84,7 +84,7 @@ The first two levels are tutorials and are meant to fall over. Everything from
 about seven coins upward has to be reasoned about.
 
 The board deliberately does **not** fill the rack while you arrange. It shows
-the slots, empty, so the count of slots against the count of stories is there to
+the slots, empty, so the count of slots against the count of cases is there to
 read before you commit — but what lands where is only revealed by running. With
 live collision feedback a blind hill-climber solves twelve coins in a median of
 360 nudges, which is not a game so much as a fidget.

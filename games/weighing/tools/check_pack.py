@@ -1,7 +1,7 @@
 """Check the shipped pack against the rules, without trusting what built it.
 
 Every claim a level makes is re-derived here from the level file alone: that its
-worked answer really does tell all 2n stories apart, that par is the counting
+worked answer really does tell all 2n cases apart, that par is the counting
 bound or is one more with a proof that the bound is out of reach, and that the
 ids are distinct — a collision silently overwrites a level file, which has
 happened in this repo before and is invisible afterwards.

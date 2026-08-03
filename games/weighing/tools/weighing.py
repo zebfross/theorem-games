@@ -1,7 +1,7 @@
 """Balance puzzles: one fake coin among n, found in as few weighings as possible.
 
 Every weighing has three outcomes — left down, right down, level — so k of them
-can tell at most 3^k stories apart. There are 2n stories to tell (which coin,
+can tell at most 3^k cases apart. There are 2n cases to tell (which coin,
 and whether it is heavy or light), so no scheme can work with fewer than
 log_3(2n) weighings. That counting argument is the whole theorem, and it is
 visible in the game: 3^k slots, 2n coins to drop into them, and if two land in
@@ -33,7 +33,7 @@ import random
 
 
 def outcomes(design, n, k):
-    """Every story this scheme can produce, as (coin, heavy?, outcome vector)."""
+    """Every case this scheme can produce, as (coin, heavy?, outcome vector)."""
     out = []
     for i in range(n):
         v = tuple(design[i])

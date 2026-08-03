@@ -107,7 +107,7 @@ the 2*n* outcomes agree.
 
 **The board is the proof.** A rack of 3<sup>k</sup> slots sits under the grid,
 one per outcome, and it triples each time you bring in another weighing. Every
-story drops into its slot when you run. Two in one slot is precisely what the
+case drops into its slot when you run. Two in one slot is precisely what the
 counting argument counts, so the failure is a picture rather than a message —
 and on twelve coins the win is 24 slots filled out of 27, the bound visibly
 almost tight.
