@@ -18,7 +18,7 @@
 
 // Resolved against this script rather than the page, so the worker is found
 // wherever the page including it happens to live.
-const WORKER_URL = new URL('worker.js?v=6', document.currentScript.src).href;
+const WORKER_URL = new URL('worker.js?v=9', document.currentScript.src).href;
 
 const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
@@ -65,6 +65,7 @@ const app = {
   started: 0,
   passIters: 0,
   snapAt: null,          // the view `snap` holds, or null if it holds nothing
+  covered: false,        // did the kept picture actually get drawn this time?
   deep: false,           // perturbing against a reference orbit?
   ref: null,
 };
@@ -144,7 +145,11 @@ function render() {
   // of the new one exists. Zooming then slides and scales something sharp
   // instead of flashing up a block mosaic — the coarse passes are still what
   // computes, they just no longer have to be looked at.
-  reproject();
+  // Whether the kept picture could be stretched over the new view at all. On a
+  // long jump it cannot — it would scale to millions of pixels wide — and then
+  // the coarse passes are the only thing standing between the viewer and a
+  // blank canvas, which at depth is twenty seconds of black.
+  app.covered = reproject();
   runPass(0);
   status();
 }
@@ -245,7 +250,7 @@ function finishPass() {
   // the canvas. Once a previous picture has been stretched into place, drawing
   // 8-pixel blocks over it is a step backwards, which is exactly what the
   // blockiness while zooming was.
-  if (p.step <= 3 || !app.snapAt) {
+  if (p.step <= 3 || !app.covered) {
     ctx.imageSmoothingEnabled = p.step > 1;
     ctx.drawImage(scratch, 0, 0, p.w, p.h, 0, 0, canvas.width, canvas.height);
   }

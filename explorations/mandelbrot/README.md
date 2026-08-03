@@ -115,13 +115,24 @@ Plain JavaScript, no build step.
   rather than one band each. One band per core leaves whoever draws the middle
   doing nearly all of the work: the top and bottom of a view escape quickly and
   the middle is mostly set.
+- **Presets are measured, not guessed.** Two of the first ones were duds — one
+  99% interior, one entirely black — because they were picked by writing down
+  coordinates that sounded right. They are now found by walking inwards, at each
+  step re-centring on a patch that never escapes but is small enough that a few
+  pixels away everything does, which is what a minibrot is. Scoring by the
+  *variety* of escape counts was tried first and is a trap: noise maximises it,
+  and the view it chose was static.
 - **The previous picture is kept and stretched into place** the instant the
   view changes, so a zoom slides something sharp rather than flashing up a
   mosaic of 8-pixel blocks. That blockiness was the first thing anyone
   complained about, and it was never a speed problem — a faster kernel would
   only have reached the sharp pass sooner, showing the same blocks on the way.
-  Coarse passes are now drawn only when there is nothing better already on the
-  canvas, which on the first render is the case and afterwards is not.
+  Coarse passes are drawn only when the stretch could not cover the new view —
+  which is the case on the first render, and on any jump long enough that the
+  kept picture would scale to millions of pixels wide. Gating that on merely
+  *having* a previous picture rather than on having drawn it was a real bug: a
+  jump to a deep preset then showed nothing at all until the sharp pass landed,
+  twenty seconds of black that read as the location being empty.
 - **Three passes**, at 8, 3 and 1 pixels per sample. The coarse pass is sixty-
   four times cheaper and lands immediately, so panning never shows a blank
   canvas, and it is blown up with hard edges rather than blurred so it is

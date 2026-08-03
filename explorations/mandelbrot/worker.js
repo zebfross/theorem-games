@@ -1,6 +1,6 @@
 'use strict';
 
-importScripts('deep.js?v=6');
+importScripts('deep.js?v=9');
 
 /* One horizontal chunk of the picture, coloured and handed back.
  *
