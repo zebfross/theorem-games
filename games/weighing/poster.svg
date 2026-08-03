@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A balance with coins in both pans, above a rack of slots in which two coins share one slot">
+  <!-- A balance tipping, and below it the rack the game is really about: one
+       slot per outcome, and two stories that have landed in the same one. That
+       collision is the whole failure state, so it is what the card shows. -->
+  <defs>
+    <style>
+      .beam { stroke: #e8c37a; stroke-width: 4; stroke-linecap: round; }
+      .post { stroke: #8a5a1c; stroke-width: 4; stroke-linecap: round; }
+      .hang { stroke: #ffffff55; stroke-width: 2; }
+      .pan  { fill: none; stroke: #e8c37a; stroke-width: 3; stroke-linecap: round; }
+      .coin { fill: #d9a441; stroke: #6b4a12; stroke-width: 1.5; }
+      .cool { fill: #7cb8e2; stroke: #2f5d7d; stroke-width: 1.5; }
+      .slot { fill: #ffffff0f; stroke: #ffffff26; stroke-width: 1.5; }
+      .full { fill: #d9a44166; stroke: #d9a441; stroke-width: 1.5; }
+      .bang { fill: #ef7a6a; stroke: #ffb9ad; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <!-- the balance, leaning left -->
+  <path class="post" d="M160 96 L160 62"/>
+  <path class="post" d="M144 100 L160 96 L176 100"/>
+  <line class="beam" x1="96" y1="46" x2="224" y2="26"/>
+
+  <line class="hang" x1="96" y1="46" x2="96" y2="62"/>
+  <path class="pan" d="M79 62 q17 15 34 0"/>
+  <circle class="coin" cx="89" cy="58" r="7"/>
+  <circle class="coin" cx="103" cy="58" r="7"/>
+
+  <line class="hang" x1="224" y1="26" x2="224" y2="42"/>
+  <path class="pan" d="M207 42 q17 15 34 0"/>
+  <circle class="cool" cx="217" cy="38" r="7"/>
+  <circle class="cool" cx="231" cy="38" r="7"/>
+
+  <!-- the rack: nine outcomes, one of them holding two stories at once -->
+  <g>
+    <rect class="full" x="40"  y="126" width="24" height="24" rx="4"/>
+    <rect class="slot" x="70"  y="126" width="24" height="24" rx="4"/>
+    <rect class="full" x="100" y="126" width="24" height="24" rx="4"/>
+    <rect class="bang" x="130" y="126" width="24" height="24" rx="4"/>
+    <rect class="full" x="160" y="126" width="24" height="24" rx="4"/>
+    <rect class="full" x="190" y="126" width="24" height="24" rx="4"/>
+    <rect class="slot" x="220" y="126" width="24" height="24" rx="4"/>
+    <rect class="full" x="250" y="126" width="24" height="24" rx="4"/>
+  </g>
+</svg>

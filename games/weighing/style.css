@@ -1,0 +1,101 @@
+/* Coin weighing's own look. The engine supplies the page chrome and the colour
+   variables; everything here is coins, pans and the rack of slots. */
+
+/* The coins. Dark discs until the run supposes one of them is the fake, when
+   it lights up — and grows or shrinks, because that is the supposition being
+   tested. Weight is shown by size rather than by colour: colour on this board
+   already means which pan something is in, and a heavy coin tinted like the
+   left pan would read as being in it. */
+.coin {
+  fill: #2a2118;
+  stroke: var(--brass-dark);
+  stroke-width: 2;
+  transition: r 0.12s ease;
+}
+.coin.live { fill: var(--brass); stroke: var(--ink); }
+.coin.hinted { stroke: var(--brass); stroke-dasharray: 4 3; }
+
+.coin-label {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.coin-label.live { fill: #2a1c08; }
+
+.row-label {
+  fill: var(--ink-dim);
+  font-size: 14px;
+  text-anchor: end;
+}
+.row-label.idle { fill: #ffffff33; font-style: italic; }
+
+/* One coin's place in one weighing. Empty means set aside, which is a real
+   choice rather than an unfilled blank, so it gets a visible square of its
+   own rather than nothing at all. */
+.cell {
+  fill: #ffffff08;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.cell.left { fill: #d9a4411f; stroke: #d9a44166; }
+.cell.right { fill: #6fb0dc1f; stroke: #6fb0dc66; }
+
+/* Which pan, said twice: by colour, and by which side of the square the disc
+   sits on. The second one is what you actually read at a glance down a column. */
+.chip { pointer-events: none; }
+.chip.left { fill: var(--rope); }
+.chip.right { fill: #7cb8e2; }
+
+/* The balance at the end of each row. While placing it leans by however far
+   the pans are from matching, so an uneven weighing is a thing you can see
+   rather than a mistake you get told about afterwards. */
+.beam {
+  stroke: var(--brass);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.beam.uneven { stroke: var(--bad); }
+.beam.idle { stroke: #ffffff26; }
+
+.fulcrum { fill: #ffffff30; }
+.hanger { stroke: #ffffff40; stroke-width: 1.5; }
+.pan {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.pan.idle { stroke: #ffffff26; }
+
+.pan-count {
+  fill: var(--ink-dim);
+  font-size: 12px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rack: one slot per outcome the weighings can produce. Empty while you
+   arrange, so the count of slots against the count of stories is there to be
+   read before anything is committed. */
+.rack-label {
+  fill: var(--ink-dim);
+  font-size: 14px;
+}
+
+.slot {
+  fill: #ffffff0a;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.slot.taken { fill: #d9a44166; stroke: var(--rope); }
+.slot.clash { fill: var(--bad); stroke: #ffb9ad; stroke-width: 2; }
+
+.slot-count {
+  fill: #2a1512;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}

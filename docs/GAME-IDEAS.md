@@ -92,6 +92,40 @@ The nicest accident: par is the max flow, so turning the water on *before*
 cutting anything tells you what the answer will cost. The theorem is the
 scoreboard.
 
+## ~~Coin weighing~~ — built
+
+**The counting bound.** A weighing comes out one of three ways, so *k* of them
+separate at most 3<sup>k</sup> cases. One fake coin among *n*, heavy or light
+unknown, is 2*n* cases, so *k* ≥ log₃ 2*n* — the argument behind the classic
+twelve-coin puzzle.
+
+Played non-adaptively: choose every weighing up front, then run. That
+restriction is what makes it fit the engine — a thing you arrange rather than a
+dialogue — and it turns the puzzle into a clean combinatorial object. Each coin
+gets the pattern of pans it sits in, and a scheme works exactly when no two of
+the 2*n* outcomes agree.
+
+**The board is the proof.** A rack of 3<sup>k</sup> slots sits under the grid,
+one per outcome, and it triples each time you bring in another weighing. Every
+story drops into its slot when you run. Two in one slot is precisely what the
+counting argument counts, so the failure is a picture rather than a message —
+and on twelve coins the win is 24 slots filled out of 27, the bound visibly
+almost tight.
+
+Careless play (even up the pans, then assign at random) wins 0.007% of the time
+at twelve coins, against Untangling's fatal 58%. But the first version of the
+design nearly repeated Untangling's mistake in a subtler form: showing the slots
+filling *live* would have let a blind hill-climber solve it by nudging, in a
+median of 360 tweaks. Measuring that before building is what kept the rack empty
+until you press run. **The fail-state test has to be run against the interface,
+not only against the mathematics.**
+
+The other thing worth keeping: par is not always the counting bound. Four coins
+and thirteen coins both need one weighing more, because every arrangement that
+would fit leaves a weighing holding an odd number of coins, and odd will not
+split between two pans. Those are the two best levels in the pack, and the first
+hint says so — a claim the pack checker verifies rather than takes on trust.
+
 ## The happy ending problem
 
 **Erdős–Szekeres.** Any 5 points in general position contain a convex
@@ -112,6 +146,35 @@ theorem wearing a disguise. Weakest fit for the scoring model — there is no
 minimum — but a good short interlude.
 
 ---
+
+## The Chinese postman
+
+**Euler; Edmonds & Johnson.** A connected graph has a closed walk using every
+edge exactly once iff every vertex has even degree. When it does not, the
+cheapest route repeats exactly a minimum-weight perfect matching on the
+odd-degree vertices.
+
+The game: a street map, and you must drive down every street and come back to
+the depot, repeating as little as you can. The odd junctions are the whole
+answer, they are countable by eye, and there are always an even number of them —
+a fact that feels like a trick the first time. Par comes from the matching,
+which is exact and cheap at these sizes.
+
+Failure is watchable: run the route and the streets you never reached stay dark,
+which is the art gallery's trick again. The risk is that it is close to
+max-flow — another weighted graph with pipes and junctions — so it would want to
+look quite different to earn its place.
+
+## A known-good coin
+
+The natural extension of the coin weighing game rather than a new one, noted
+here because it is a genuinely different puzzle. Give the player one coin they
+*know* is honest, to be used as ballast. The balance requirement relaxes from
+"the pans hold equal numbers" to "within one", which is exactly the obstruction
+that makes thirteen coins impossible in three weighings — so thirteen becomes
+possible, and so does four in two. A second dimension of levels at the same
+sizes, where the interesting thing is that the counting bound suddenly becomes
+achievable everywhere.
 
 ## Also considered
 
