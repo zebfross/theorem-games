@@ -135,10 +135,55 @@ Plain JavaScript, no build step.
   of 256 rather than 2 — the fractional part that smooths the bands is only
   accurate well past the threshold, so the extra iterations are paid gladly.
 
-## Still to do
+## Going deeper than a double
 
-- **Perturbation theory**, for zooms past about 10^13 where double precision
-  runs out and the picture goes blocky. The page says so when you reach it
-  rather than quietly degrading.
+A double holds about sixteen significant digits, so once a pixel is narrower
+than roughly 1e-15 the whole view rounds to the same number and the picture
+goes blocky. That is about ten trillion times in — which sounds like plenty
+until you get there, and it was the first thing anyone hit.
+
+**Perturbation** gets past it, and the trick is that the *differences* stay
+small even when the coordinates cannot. Take one reference point *C* near the
+middle and compute its orbit *Z* in as much precision as you like. Any other
+point is *c* = *C* + d*c*, with orbit *z* = *Z* + d*z*, and
+
+    dz -> 2*Z*dz + dz² + dc
+
+Every term there is tiny — d*c* is at most half a screen wide — so it all fits
+in ordinary doubles. Only the reference needs the extra precision, and there is
+one of those per frame rather than one per pixel. The explorer switches over on
+its own and says which mode it is in.
+
+The reference is a fixed-point BigInt: an integer counting units of 2^-220,
+about 66 digits. No general big-float is needed, because every number here
+lives within a few units of the origin. That puts the new floor around a zoom
+of 1e60; the readout prints as many digits as the view can actually resolve,
+straight from the fixed point rather than through a double.
+
+**Rebasing** is what keeps it honest. If a point wanders far from the reference,
+or the reference escapes first and runs out, d*z* stops being small and the
+premise fails — which shows up as speckle. Zhuoran's fix: when |*z*| has become
+smaller than |d*z*|, the point *z* is a better offset from the *start* of the
+orbit than d*z* is from where we are, so restart there. One comparison, and no
+hunting for glitched regions to re-render.
+
+Checked rather than assumed. Against an arbiter that iterates wholly in fixed
+point, at the same coordinates:
+
+| | agreement |
+| --- | --- |
+| double spiral | 8100/8100 |
+| antenna | 8100/8100 |
+| seahorse valley | 8087/8100 |
+
+The thirteen are boundary pixels whose true escape count needs more than the 53
+bits the reference orbit is stored in — a limit of double arithmetic itself,
+not of the perturbation, and adding Pauldelbrot's glitch criterion as a second
+rebase trigger changed none of them.
+
+## Still to do
 - **SIMD**, the one place WebAssembly would clearly pay, and the reason to
   revisit it — see above for why the plain port did not.
+- **Series approximation**, which skips the early iterations of a deep zoom
+  wholesale. The deepest views now take seconds rather than a moment, and that
+  is where the time goes.

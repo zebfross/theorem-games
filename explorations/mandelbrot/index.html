@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mandelbrot — Theorem games</title>
 <link rel="stylesheet" href="../../engine/style.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body class="explorer">
 
@@ -25,8 +25,9 @@
 <main>
   <div id="stage">
     <canvas id="view"></canvas>
-    <p id="limit" hidden>At the limit of double precision — past here neighbouring
-       pixels round to the same number and the picture goes blocky.</p>
+    <p id="limit" hidden>At the limit of the fixed-point arithmetic, around
+       2<sup>−220</sup>. Past here even the reference orbit cannot separate one
+       pixel from the next.</p>
   </div>
 
   <div id="readout">
@@ -36,6 +37,7 @@
     <span>depth <b id="iter"></b></span>
     <span id="timing"></span>
     <span><b id="cores"></b> cores</span>
+    <span><b id="mode"></b></span>
   </div>
 
   <div id="places">
@@ -43,6 +45,9 @@
     <button class="ghost" data-goto="-0.7436438870371587,0.1318259042053119,3e-5">Seahorse valley</button>
     <button class="ghost" data-goto="-0.10109636384562,0.95628651080914,4e-4">Double spiral</button>
     <button class="ghost" data-goto="-1.7687774,0,1.4e-3">Antenna</button>
+    <button class="ghost"
+            data-goto="-1.7693831791955150242398,0.0025889566925614909749025548819185,1e-18">Past
+      the double limit</button>
   </div>
 </main>
 
@@ -59,6 +64,7 @@
   </p>
 </footer>
 
-<script src="explorer.js"></script>
+<script src="deep.js?v=4"></script>
+<script src="explorer.js?v=4"></script>
 </body>
 </html>

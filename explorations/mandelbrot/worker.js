@@ -1,5 +1,7 @@
 'use strict';
 
+importScripts('deep.js?v=4');
+
 /* One horizontal chunk of the picture, coloured and handed back.
  *
  * Colouring happens here rather than on the main thread, so what goes back is a
@@ -63,6 +65,29 @@ function inMainBody(cr, ci) {
   return b * b + ci * ci <= 0.0625;
 }
 
+/** The same picture, computed as offsets from a reference orbit.
+ *
+ *  Used once the view is narrower than a double can address. x0 and y0 are then
+ *  offsets from the reference point rather than absolute coordinates, which is
+ *  the whole point: they stay small however deep the view is.
+ */
+function renderDeep(px, w, rows, x0, y0, step, maxIter, ref) {
+  let total = 0;
+  for (let py = 0; py < rows; py++) {
+    const dci = y0 + py * step;
+    for (let x = 0; x < w; x++) {
+      const o = py * w + x;
+      const { n, mag } = escapePerturbed(x0 + x * step, dci, ref, maxIter, BAILOUT);
+      total += n;
+      if (n >= maxIter) { px[o] = TABLE[STEPS]; continue; }
+      const mu = n + 1 - Math.log2(Math.log2(mag) * 0.5);
+      const t = Math.sqrt(mu) * 0.19;
+      px[o] = TABLE[Math.trunc((t - Math.floor(t)) * STEPS) & (STEPS - 1)];
+    }
+  }
+  return total;
+}
+
 function render(px, w, rows, x0, y0, step, maxIter, useBulb) {
   let total = 0;
   for (let py = 0; py < rows; py++) {
@@ -105,10 +130,23 @@ function render(px, w, rows, x0, y0, step, maxIter, useBulb) {
   return total;
 }
 
+// The reference orbit arrives once per frame rather than with every chunk: it
+// is the same for all of them and can run to tens of thousands of entries.
+let reference = null;
+
 self.onmessage = (ev) => {
-  const { job, w, rows, x0, y0, step, maxIter, useBulb } = ev.data;
+  const d = ev.data;
+  if (d.setRef) {
+    reference = { Zr: d.Zr, Zi: d.Zi, len: d.len };
+    return;
+  }
+  const { job, w, rows, x0, y0, step, maxIter, useBulb, deep, cx, cy } = d;
   const out = new Uint8ClampedArray(w * rows * 4);
-  const iterations = render(
-    new Uint32Array(out.buffer), w, rows, x0, y0, step, maxIter, useBulb);
+  const px = new Uint32Array(out.buffer);
+  const iterations = deep && reference
+    ? renderDeep(px, w, rows, x0, y0, step, maxIter, reference)
+    // Shallow: the offsets are added back onto the centre, which a double can
+    // still hold at these widths.
+    : render(px, w, rows, cx + x0, cy + y0, step, maxIter, useBulb);
   self.postMessage({ job, rows, out, iterations }, [out.buffer]);
 };

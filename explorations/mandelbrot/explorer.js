@@ -18,15 +18,12 @@
 
 // Resolved against this script rather than the page, so the worker is found
 // wherever the page including it happens to live.
-const WORKER_URL = new URL('worker.js', document.currentScript.src).href;
+const WORKER_URL = new URL('worker.js?v=4', document.currentScript.src).href;
 
 const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
 // almost instantly, so panning and zooming never show a blank canvas.
 const PASSES = [8, 3, 1];
-// Double precision runs out at roughly this many units per pixel: past it the
-// picture goes blocky because neighbouring pixels round to the same c.
-const PRECISION_FLOOR = 1e-15;
 
 const canvas = document.getElementById('view');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -54,9 +51,13 @@ function soon(fn) {
   setTimeout(once, 120);
 }
 
+// The centre is fixed-point, not a double: past about ten trillion times in, a
+// double no longer has the digits to tell one pixel from the next. Everything
+// else — the width of the view, every offset from the centre — stays a double,
+// because those stay small however far in you go.
 const app = {
-  cx: -0.6,
-  cy: 0,
+  cx: fromNumber(-0.6),
+  cy: 0n,
   span: 3.2,            // width of the view in complex units
   job: 0,
   workers: [],
@@ -64,13 +65,28 @@ const app = {
   started: 0,
   passIters: 0,
   snapAt: null,          // the view `snap` holds, or null if it holds nothing
+  deep: false,           // perturbing against a reference orbit?
+  ref: null,
 };
+
+/** Below this many units per pixel a double cannot separate one pixel from its
+ *  neighbour, and the picture has to be computed as offsets from a reference
+ *  instead. Set an order of magnitude above the true floor, so the change
+ *  happens before anything is visibly wrong. */
+const DOUBLE_FLOOR = 2e-14;
+
+/** Pixel offsets from the centre, which is what the workers actually need. */
+function offsetOf(px, py) {
+  const scale = app.span / canvas.width;
+  return [(px - canvas.width / 2) * scale, (py - canvas.height / 2) * scale];
+}
 
 function maxIterations() {
   // More depth as the view narrows: shallow zooms do not need it, and deep ones
   // are all boundary, where the count is what separates one filament from the
   // next.
-  return Math.round(120 + 140 * Math.max(0, Math.log10(3.2 / app.span)) ** 1.25);
+  return Math.min(12000,
+    Math.round(120 + 140 * Math.max(0, Math.log10(3.2 / app.span)) ** 1.25));
 }
 
 /** Does the view still contain the cardioid or the period-2 bulb?
@@ -81,10 +97,13 @@ function maxIterations() {
  *  zoomed in. So it is switched off when it cannot pay.
  */
 function bulbTestWorthIt() {
+  if (app.deep) return false;          // nowhere near them at that depth
+  const cx = toNumber(app.cx);
+  const cy = toNumber(app.cy);
   const halfW = app.span / 2;
   const halfH = (app.span * canvas.height / canvas.width) / 2;
-  return app.cx - halfW < 0.4 && app.cx + halfW > -1.3
-    && app.cy - halfH < 0.7 && app.cy + halfH > -0.7;
+  return cx - halfW < 0.4 && cx + halfW > -1.3
+    && cy - halfH < 0.7 && cy + halfH > -0.7;
 }
 
 function boot() {
@@ -107,6 +126,20 @@ function resize() {
 function render() {
   app.job++;
   app.started = performance.now();
+
+  // One reference orbit per frame, computed in full precision, shared by every
+  // worker. This is the only arbitrary-precision work in the whole renderer.
+  app.deep = app.span / canvas.width < DOUBLE_FLOOR;
+  if (app.deep) {
+    app.ref = referenceOrbit(app.cx, app.cy, maxIterations());
+    for (const w of app.workers) {
+      w.postMessage({ setRef: true, job: app.job, len: app.ref.len,
+                      Zr: app.ref.Zr, Zi: app.ref.Zi });
+    }
+  } else {
+    app.ref = null;
+  }
+
   // Show the last sharp picture, stretched to where it now belongs, before any
   // of the new one exists. Zooming then slides and scales something sharp
   // instead of flashing up a block mosaic — the coarse passes are still what
@@ -122,8 +155,12 @@ function reproject() {
   if (!s) return false;
   const perPx = app.span / canvas.width;
   const sH = s.span * canvas.height / canvas.width;
-  const dx = ((s.cx - s.span / 2) - app.cx) / perPx + canvas.width / 2;
-  const dy = ((s.cy - sH / 2) - app.cy) / perPx + canvas.height / 2;
+  // The gap between two centres is small even when the centres themselves are
+  // long numbers, so it is taken in fixed point and only then made a double.
+  const gx = toNumber(s.cx - app.cx);
+  const gy = toNumber(s.cy - app.cy);
+  const dx = (gx - s.span / 2) / perPx + canvas.width / 2;
+  const dy = (gy - sH / 2) / perPx + canvas.height / 2;
   const dw = s.span / perPx;
   const dh = sH / perPx;
   // Far enough away and the stretch is worse than nothing.
@@ -142,8 +179,10 @@ function runPass(passIndex) {
   const w = Math.max(1, Math.ceil(canvas.width / step));
   const h = Math.max(1, Math.ceil(canvas.height / step));
   const scale = app.span / canvas.width * step;
-  const x0 = app.cx - (w / 2) * scale;
-  const y0 = app.cy - (h / 2) * scale;
+  // Offsets from the centre rather than absolute coordinates, which is what
+  // lets the deep path work at all — these stay small however far in you are.
+  const x0 = -(w / 2) * scale;
+  const y0 = -(h / 2) * scale;
   const maxIter = maxIterations();
   const useBulb = bulbTestWorthIt();
 
@@ -162,6 +201,7 @@ function runPass(passIndex) {
   app.pending = 0;
   app.passIters = 0;
   app.pass = { job, passIndex, w, h, step, x0, y0, scale, maxIter, useBulb,
+               deep: app.deep, cxd: toNumber(app.cx), cyd: toNumber(app.cy),
                t0: performance.now() };
 
   for (const worker of app.workers) feed(worker);
@@ -179,6 +219,7 @@ function feed(worker) {
     job: p.job, w: p.w, rows: next.rows, x0: p.x0,
     y0: p.y0 + next.from * p.scale, step: p.scale,
     maxIter: p.maxIter, useBulb: p.useBulb,
+    deep: p.deep, cx: p.cxd, cy: p.cyd,
   });
 }
 
@@ -232,13 +273,19 @@ function finishPass() {
 function status(ms) {
   const perPixel = app.span / canvas.width;
   el('zoom').textContent = fmtZoom(3.2 / app.span);
-  const digits = Math.min(17, Math.max(4, Math.ceil(-Math.log10(perPixel)) + 1));
-  el('centre').textContent = `${app.cx.toFixed(digits)} ${app.cy >= 0 ? '+' : '−'} ${Math.abs(app.cy).toFixed(digits)}i`;
+  // As many digits as the view can actually resolve, printed from the fixed
+  // point rather than through a double, which would stop at sixteen.
+  const digits = Math.min(64, Math.max(4, Math.ceil(-Math.log10(perPixel)) + 1));
+  const im = toDecimalString(app.cy < 0n ? -app.cy : app.cy, digits);
+  el('centre').textContent =
+    `${toDecimalString(app.cx, digits)} ${app.cy < 0n ? '−' : '+'} ${im}i`;
   el('iter').textContent = maxIterations();
   el('timing').textContent = ms === undefined ? 'drawing…'
     : `${ms.toFixed(0)} ms · ${(app.passIters / 1e6).toFixed(0)}M iterations · `
       + `${(app.passIters / ms / 1000).toFixed(0)} Miter/s`;
-  el('limit').hidden = perPixel > PRECISION_FLOOR * 40;
+  // Only a real limit now: the fixed point runs out around 2^-220.
+  el('limit').hidden = perPixel > 1e-60;
+  el('mode').textContent = app.deep ? 'perturbed' : 'direct';
 }
 
 function fmtZoom(z) {
@@ -277,45 +324,49 @@ function periodAt(cr, ci) {
 
 /* ---------- getting about ---------- */
 
-function toComplex(ev) {
+/** Where the pointer is, as an offset from the centre. Never absolute: at
+ *  depth the absolute coordinate does not fit in a double, but the offset
+ *  always does. */
+function pointerOffset(ev) {
   const rect = canvas.getBoundingClientRect();
   const dpr = canvas.width / rect.width;
-  const px = (ev.clientX - rect.left) * dpr;
-  const py = (ev.clientY - rect.top) * dpr;
-  const scale = app.span / canvas.width;
-  return [app.cx + (px - canvas.width / 2) * scale,
-          app.cy + (py - canvas.height / 2) * scale];
+  return offsetOf((ev.clientX - rect.left) * dpr, (ev.clientY - rect.top) * dpr);
 }
 
 canvas.addEventListener('wheel', (ev) => {
   ev.preventDefault();
-  const [mx, my] = toComplex(ev);
+  const [ox, oy] = pointerOffset(ev);
   const k = Math.exp(ev.deltaY * 0.0016);
   const span = Math.min(6, app.span * k);
-  // Zoom about the pointer: the point under it stays put.
-  app.cx = mx + (app.cx - mx) * (span / app.span);
-  app.cy = my + (app.cy - my) * (span / app.span);
+  // Zoom about the pointer, so the point under it stays put. Written as a shift
+  // of the centre by a small amount rather than as a formula in absolute
+  // coordinates, which is what keeps it exact at depth.
+  const move = 1 - span / app.span;
+  app.cx += fromNumber(ox * move);
+  app.cy += fromNumber(oy * move);
   app.span = span;
   render();
 }, { passive: false });
 
 let drag = null;
 canvas.addEventListener('pointerdown', (ev) => {
-  drag = { x: ev.clientX, y: ev.clientY, cx: app.cx, cy: app.cy, moved: false };
+  drag = { x: ev.clientX, y: ev.clientY, cx: app.cx, cy: app.cy };
   canvas.setPointerCapture(ev.pointerId);
 });
 canvas.addEventListener('pointermove', (ev) => {
   if (drag) {
     const rect = canvas.getBoundingClientRect();
     const scale = app.span / rect.width;
-    app.cx = drag.cx - (ev.clientX - drag.x) * scale;
-    app.cy = drag.cy - (ev.clientY - drag.y) * scale;
-    if (Math.hypot(ev.clientX - drag.x, ev.clientY - drag.y) > 3) drag.moved = true;
+    app.cx = drag.cx - fromNumber((ev.clientX - drag.x) * scale);
+    app.cy = drag.cy - fromNumber((ev.clientY - drag.y) * scale);
     render();
     return;
   }
-  const [cr, ci] = toComplex(ev);
-  const q = periodAt(cr, ci);
+  // The period is worked out in plain doubles, so it is only meaningful while
+  // the coordinates still fit in them.
+  if (app.deep) { el('period').textContent = 'too deep to name'; return; }
+  const [ox, oy] = pointerOffset(ev);
+  const q = periodAt(toNumber(app.cx) + ox, toNumber(app.cy) + oy);
   el('period').textContent = q > 0 ? `period ${q}`
     : q === 0 ? 'outside the set' : 'inside';
 });
@@ -323,18 +374,21 @@ canvas.addEventListener('pointerup', () => { drag = null; });
 canvas.addEventListener('pointercancel', () => { drag = null; });
 
 el('reset').addEventListener('click', () => {
-  app.cx = -0.6;
-  app.cy = 0;
+  app.cx = fromNumber(-0.6);
+  app.cy = 0n;
   app.span = 3.2;
   render();
 });
 
 for (const btn of document.querySelectorAll('[data-goto]')) {
   btn.addEventListener('click', () => {
-    const [x, y, s] = btn.dataset.goto.split(',').map(Number);
-    app.cx = x;
-    app.cy = y;
-    app.span = s;
+    // Coordinates stay text all the way into fixed point: routing them through
+    // a double would round away everything past the sixteenth digit, which is
+    // most of a deep address.
+    const [x, y, s] = btn.dataset.goto.split(',');
+    app.cx = fromDecimalString(x);
+    app.cy = fromDecimalString(y);
+    app.span = Number(s);
     render();
   });
 }
