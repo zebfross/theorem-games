@@ -1,10 +1,20 @@
 """Check the shipped pack against the rules, without trusting what built it.
 
-Every claim a level makes is re-derived here from the level file alone: that its
-worked answer really does tell all 2n cases apart, that par is the counting
-bound or is one more with a proof that the bound is out of reach, and that the
-ids are distinct — a collision silently overwrites a level file, which has
-happened in this repo before and is invisible afterwards.
+The levels carry a value for every position that can arise — how many weighings
+it still costs against a balance answering as unhelpfully as honesty allows —
+and the game reads those numbers to answer weighings and to offer hints. If they
+are wrong, the game lies to the player about whether they are still on the
+fastest line, and par is a fiction. So they are checked here rather than assumed.
+
+The check is not "run the solver again and compare", which would only prove the
+solver agrees with itself. It is that the shipped numbers satisfy the equation
+that defines them:
+
+    value(position) = 1 + min over weighings of max over outcomes of value(next)
+
+with value 0 exactly when one case remains. A table satisfying that everywhere,
+with the recursion bottoming out, is correct whatever produced it. Verifying is
+cheap where solving was not.
 
 Usage:  python3 tools/check_pack.py
 """
@@ -13,10 +23,87 @@ import json
 import os
 import sys
 
-import weighing as W
+import adaptive
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(os.path.dirname(HERE), 'data')
+
+
+def check_level(lv):
+    """Every complaint about one level, in words."""
+    bad = []
+    n, par = lv['n'], lv['par']
+    both = lv['value']['both']
+    split = lv['value']['split']
+
+    if len(both) != n + 1:
+        bad.append(f'both table is {len(both)} long, expected {n + 1}')
+        return bad
+    if len(split) != n + 1 or any(len(r) != n + 1 for r in split):
+        bad.append('split table is not square over 0..n')
+        return bad
+
+    # Ballast beyond the least that evens the pans is a no-op, so the only
+    # weighings worth considering are those where it is forced. That is what
+    # makes this check affordable.
+    def check_split(h, l):
+        g = n - h - l
+        live = h + l
+        if live <= 1:
+            return 0
+        best = adaptive.INF
+        for hl in range(h + 1):
+            for hr in range(h - hl + 1):
+                for ll in range(l + 1):
+                    for lr in range(l - ll + 1):
+                        nl, nr = hl + ll, hr + lr
+                        if nl + nr == 0 or abs(nl - nr) > g:
+                            continue
+                        kids = [(hl, lr), (hr, ll), (h - hl - hr, l - ll - lr)]
+                        kids = [k for k in kids if k[0] + k[1]]
+                        if any(k == (h, l) for k in kids):
+                            continue           # learns nothing in that case
+                        worst = max(split[a][c] for a, c in kids)
+                        best = min(best, 1 + worst)
+        return best
+
+    def check_both(b):
+        g = n - b
+        if 2 * b <= 1:
+            return 0
+        best = adaptive.INF
+        for bl in range(b + 1):
+            for br in range(b - bl + 1):
+                if bl + br == 0 or abs(bl - br) > g:
+                    continue
+                worst = max(split[bl][br], split[br][bl])
+                rest = b - bl - br
+                if rest:
+                    worst = max(worst, both[rest])
+                best = min(best, 1 + worst)
+        return best
+
+    for h in range(n + 1):
+        for l in range(n + 1 - h):
+            want = check_split(h, l)
+            if split[h][l] != want:
+                bad.append(f'split[{h}][{l}] is {split[h][l]}, '
+                           f'but its own successors make it {want}')
+                return bad          # one is enough; they cascade
+
+    for b in range(n + 1):
+        want = check_both(b)
+        if both[b] != want:
+            bad.append(f'both[{b}] is {both[b]}, '
+                       f'but its own successors make it {want}')
+            return bad
+
+    if both[n] != par:
+        bad.append(f'par is {par}, but the table says the opening '
+                   f'position costs {both[n]}')
+    if lv['rows'] <= par:
+        bad.append(f'{lv["rows"]} weighings allowed leaves no room for par {par}')
+    return bad
 
 
 def main():
@@ -29,55 +116,15 @@ def main():
             bad.append(f'{lid}: duplicate id')
         seen.add(lid)
         lv = json.load(open(os.path.join(DATA, 'levels', lid + '.json')))
-
         for key in ('n', 'par', 'rows'):
             if lv[key] != meta[key]:
-                bad.append(f'{lid}: index says {key}={meta[key]}, level says {lv[key]}')
+                bad.append(f'{lid}: index says {key}={meta[key]}, '
+                           f'level says {lv[key]}')
+        for complaint in check_level(lv):
+            bad.append(f'{lid}: {complaint}')
 
-        n, par = lv['n'], lv['par']
-        design = [tuple(v) for v in lv['solution']]
-
-        if len(design) != n:
-            bad.append(f'{lid}: {len(design)} patterns for {n} coins')
-            continue
-        if any(len(v) != par for v in design):
-            bad.append(f'{lid}: a pattern is not {par} weighings long')
-            continue
-
-        faults = W.faults(design, n, par)
-        if faults:
-            bad.append(f'{lid}: the shipped answer does not work: {faults[:2]}')
-
-        if par < W.bound(n):
-            bad.append(f'{lid}: par {par} is below the counting bound {W.bound(n)}')
-        elif par > W.bound(n):
-            # Claiming more than the counting bound needs the exhaustive search
-            # to have ruled the bound out. Only affordable for small n, which is
-            # the only place the pack makes the claim.
-            if n > W.EXACT_UPTO:
-                bad.append(f'{lid}: par {par} exceeds the bound {W.bound(n)} '
-                           f'with no proof available at this size')
-            elif W.solve_exact(n, W.bound(n)):
-                bad.append(f'{lid}: par is {par}, but {W.bound(n)} weighings do work')
-            else:
-                # The first hint tells the player *why* the counting bound is
-                # out of reach here: the pans cannot come out even. That is a
-                # claim about the level, so check it rather than trust it.
-                # It holds when there are only just enough patterns to go
-                # round, so every one must be used and the coins on each
-                # weighing are counted rather than chosen.
-                lo = W.bound(n)
-                reps = W.classes(lo)
-                odd = [j for j in range(lo)
-                       if sum(1 for v in reps if v[j]) % 2]
-                if len(reps) != n or not odd:
-                    bad.append(f'{lid}: the hint blames the pans for needing '
-                               f'{par} weighings, but that is not the reason')
-
-        if lv['rows'] <= par:
-            bad.append(f'{lid}: {lv["rows"]} rows leaves no room for par {par}')
-
-    print(f'checked {len(index["levels"])} levels')
+    print(f'checked {len(index["levels"])} levels, '
+          'every position re-derived from its own successors')
     for b in bad:
         print('  ' + b)
     if bad:

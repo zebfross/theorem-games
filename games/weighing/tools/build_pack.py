@@ -2,22 +2,23 @@
 
 A level is just a number of coins: everything else follows from it. So there is
 nothing to generate and nothing to search for variety in — the pack is a choice
-of which sizes to ship, plus one worked answer per size for the last hint to
-hand over.
+of which sizes to ship, plus the tables the game reads at runtime.
 
 The sizes worth having are the small ones in full, because two of them are
 surprises — four coins and thirteen coins both need one weighing more than the
-counting argument asks for, and thirteen is exactly where three weighings run
-out — and then a spread upwards to thirty-nine, which is as far as four
-weighings reach.
+counting argument asks for — and then a spread upwards to thirty-nine, which is
+as far as four weighings reach.
 
 Usage:  python3 tools/build_pack.py
 """
 
 import json
 import os
+import sys
 
-import weighing as W
+import adaptive
+
+sys.setrecursionlimit(20000)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(os.path.dirname(HERE), 'data')
@@ -28,21 +29,20 @@ SIZES = list(range(3, 14)) + [14, 15, 16, 17, 18, 20, 22, 24, 27, 30, 33, 36, 39
 def build():
     levels = []
     for n in SIZES:
-        par, design = W.minimum(n)
-        if not par:
-            print(f'  skipped n={n}: the fewest weighings is not settled')
+        par = adaptive.minimum(n)
+        if par >= adaptive.INF:
+            print(f'  skipped n={n}: no strategy found')
             continue
-        if not W.works(design, n, par):
-            raise SystemExit(f'n={n}: built a scheme that does not work')
         levels.append({
             'id': f'n{n}',
             'n': n,
             'par': par,
-            # One spare weighing, so a player who cannot find the tight answer
-            # can still finish the level — they just do not match par.
+            # One spare weighing, so a player who cannot find the tight line can
+            # still finish the level — they just do not match par.
             'rows': par + 1,
-            'solution': [list(v) for v in design],
+            'value': adaptive.tables(n),
         })
+        print(f'  n={n}: par {par}')
     return levels
 
 

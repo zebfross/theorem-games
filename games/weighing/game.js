@@ -3,30 +3,34 @@
 /* Coin weighing — one coin among n is fake, and you have a balance.
  *
  * Every weighing comes out one of three ways: left pan down, right pan down,
- * or level. So k weighings can tell at most 3^k cases apart, and there are
- * 2n cases to tell — which coin, and whether it is heavy or light. No scheme
- * can beat log_3(2n). That counting argument is the whole theorem, and the
- * board is built to show it: the rack along the bottom holds one slot per
- * outcome, every case drops into its slot, and two in the same slot means you
- * cannot tell them apart.
+ * or level. So k weighings can tell at most 3^k cases apart, and there are 2n
+ * cases to tell — which coin, and whether it is heavy or light. No strategy can
+ * beat log_3(2n).
  *
- * Every weighing is chosen in advance rather than one after another. That is a
- * real restriction — the classic twelve-coin puzzle is usually solved
- * adaptively — but it is what turns this into something you *arrange* and then
- * run, and at these sizes the minimum comes out the same either way.
+ * You weigh, you see which way it tips, and only then choose what to weigh
+ * next. Then you name the culprit. You win only if your weighings actually
+ * pinned it down: naming while two cases still fit what you saw is a guess, and
+ * a guess loses even when it happens to be right.
  *
- * A coin's pattern is one entry per weighing: LEFT, RIGHT, or ASIDE. If it is
- * the heavy one, each weighing tips towards the pan holding it, so the outcome
- * is the pattern itself; if light, the scales tip the other way and the outcome
- * is the pattern reversed. So a scheme works exactly when no two of those 2n
- * outcomes agree — which bars a coin that is set aside every time (it looks the
- * same heavy or light) and bars two coins with mirrored patterns.
+ * THE SCALES ARE AN ADVERSARY. There is no fake coin hidden at the start.
+ * Every answer is consistent with at least one fake — the balance never lies —
+ * but among the honest answers it gives whichever leaves you worst off. That is
+ * what makes par mean something: you cannot get lucky, and a lazy weighing is
+ * punished the moment you make it. It is also the theorem wearing a costume,
+ * since the adversary's whole power is that three outcomes cannot separate more
+ * than three groups.
  *
- * And the pans have to hold the same number of coins, or a weighing tips for
- * reasons that have nothing to do with the fake.
+ * WHAT THE BOARD WILL NOT DO FOR YOU. It shows every weighing you have made and
+ * how it came out, and it counts how many cases still fit. It does not say
+ * *which* cases those are. Working that out from the record in front of you is
+ * the puzzle — an earlier version of this game computed all of it and asked
+ * only for an arrangement, which left the player with bookkeeping rather than
+ * deduction. The first hint gives the live cases up to anyone who has lost the
+ * thread.
  *
- * Nothing here searches. Par and one worked answer per level were settled
- * offline; see tools/weighing.py.
+ * Nothing here searches. Every position a level can reach was valued offline
+ * and ships with it, so the adversary's choice and the last hint's weighing are
+ * both lookups; see tools/adaptive.py.
  */
 
 import { board, svgEl } from '../../engine/engine.js';
@@ -35,370 +39,371 @@ const ASIDE = 0;
 const LEFT = 1;
 const RIGHT = -1;
 
+/* What is known about a coin. These are the only four things there are to
+   know, and a coin's whole history is summed up by which one it is in. */
+const BOTH = 'both';          // might be the fake, heavy or light
+const HEAVY = 'heavy';        // might be the fake, and could only be heavy
+const LIGHT = 'light';        // might be the fake, and could only be light
+const GENUINE = 'genuine';    // cleared
+
 /* Board geometry, in the SVG's own units. */
-const COL = 46;             // width of one coin's column
-const GUTTER = 138;         // room for the row labels on the left
-const SCALES = 160;         // room for the balance beam on the right
-const COIN_Y = 38;
-const COIN_R = 16;
-const GRID_TOP = 72;
-const ROW_H = 46;
-const RACK_GAP = 56;        // room above the rack for its two lines of label
-const SLOT_MAX = 40;        // a slot at its most generous
-const RACK_DEEP = 3;        // rows of slots; the rack grows sideways, not down
+const COL = 52;
+const COIN_R = 17;
+const MARGIN = 26;
+const COIN_Y = 74;
+const PAN_TOP = 118;
+const PAN_H = 112;
+const PLATE_Y = 250;
+const PLATE_H = 34;
+const LOG_TOP = 312;
+const LOG_H = 26;
 
-const gridW = (level) => level.n * COL;
-const rowY = (j) => GRID_TOP + j * ROW_H;
-const colX = (i) => GUTTER + i * COL;
+const rowWidth = (level) => Math.max(560, level.n * COL);
+const colX = (level, i) => MARGIN + (rowWidth(level) - level.n * COL) / 2
+  + i * COL + COL / 2;
 
-/** A labelled <text>. The engine's svgEl only sets attributes, and this board
- *  is mostly counting, so it says almost everything in words. */
 function text(attrs, str) {
   const node = svgEl('text', attrs);
   node.textContent = str;
   return node;
 }
 
-/** How many weighings the player is actually using.
- *
- *  An untouched row costs nothing and tells nothing: it leaves every case's
- *  outcome unchanged at "level", so it neither separates anything nor merges
- *  anything. It simply does not count as a weighing. That is what lets a level
- *  hand out a spare row without making par meaningless. */
-function usedRows(level, play) {
-  const out = [];
-  for (let j = 0; j < level.rows; j++) {
-    if (play.cells.some((row) => row[j] !== ASIDE)) out.push(j);
+/* ------------------------------------------------------------ the position */
+
+/** How many cases still fit everything the player has seen. */
+function alive(play) {
+  let n = 0;
+  for (const s of play.status) {
+    if (s === BOTH) n += 2;
+    else if (s === HEAVY || s === LIGHT) n += 1;
   }
+  return n;
+}
+
+/** The live cases themselves, as {coin, heavy} — what the first hint reveals
+ *  and what the verdict names. */
+function liveCases(play) {
+  const out = [];
+  play.status.forEach((s, i) => {
+    if (s === BOTH || s === HEAVY) out.push({ coin: i, heavy: true });
+    if (s === BOTH || s === LIGHT) out.push({ coin: i, heavy: false });
+  });
   return out;
 }
 
-/** The pans in weighing j, as [left count, right count]. */
-function pans(level, play, j) {
+/** The position as counts, which is all its value depends on. */
+function shape(play) {
+  let b = 0;
+  let h = 0;
+  let l = 0;
+  for (const s of play.status) {
+    if (s === BOTH) b++;
+    else if (s === HEAVY) h++;
+    else if (s === LIGHT) l++;
+  }
+  return { b, h, l };
+}
+
+/** Weighings still needed from here, played perfectly against the adversary.
+ *
+ *  Read straight out of the level's shipped table. A position either still has
+ *  wholly unknown coins in it, or it does not — the two cannot mix, because a
+ *  coin stops being unknown only when the scales tip, and a tip settles every
+ *  coin at once. */
+function cost(level, play) {
+  const { b, h, l } = shape(play);
+  return b ? level.value.both[b] : level.value.split[h][l];
+}
+
+/** What the coins would be known to be, if this weighing came out `tip`.
+ *
+ *  Tipping left means the fake is a possibly-heavy coin on the left pan or a
+ *  possibly-light one on the right; everything else is thereby cleared. Level
+ *  means the fake is none of the coins weighed. */
+function after(play, pending, tip) {
+  return play.status.map((s, i) => {
+    const side = pending[i];
+    if (tip === 0) return side === ASIDE ? s : GENUINE;
+    const heavySide = tip === LEFT ? LEFT : RIGHT;
+    const lightSide = tip === LEFT ? RIGHT : LEFT;
+    if (side === heavySide) return (s === BOTH || s === HEAVY) ? HEAVY : GENUINE;
+    if (side === lightSide) return (s === BOTH || s === LIGHT) ? LIGHT : GENUINE;
+    return GENUINE;
+  });
+}
+
+const casesIn = (status) => status.reduce(
+  (a, s) => a + (s === BOTH ? 2 : s === GENUINE ? 0 : 1), 0);
+
+/** The pans of the weighing being built, as [left count, right count]. */
+function pans(play) {
   let l = 0;
   let r = 0;
-  for (const row of play.cells) {
-    if (row[j] === LEFT) l++;
-    else if (row[j] === RIGHT) r++;
+  for (const side of play.pending) {
+    if (side === LEFT) l++;
+    else if (side === RIGHT) r++;
   }
   return [l, r];
 }
 
-/** Which slot a case falls into, as an index into the rack.
+/** How the balance answers: honestly, and as unhelpfully as honesty allows.
  *
- *  The outcome of weighing `used[d]` is the coin's entry there, negated when
- *  the coin is light. Read as a base-three numeral so every distinct outcome
- *  gets a distinct slot, which is the whole point of the rack. */
-function slotOf(play, used, coin, heavy) {
-  let at = 0;
-  for (let d = used.length - 1; d >= 0; d--) {
-    const tip = (heavy ? 1 : -1) * play.cells[coin][used[d]];
-    at = at * 3 + (tip + 1);
-  }
-  return at;
-}
-
-/** The fewest weighings counting alone allows: the least k with 3^k >= 2n.
- *
- *  This is a floor, not always the answer. Twice it is beaten by the pans: with
- *  four coins, and again with thirteen, every arrangement that would fit inside
- *  the outcomes leaves a weighing with an odd number of coins on it, and par is
- *  one higher. Worth saying out loud when it happens, so the first hint does
- *  not claim a proof it does not have. */
-function bound(n) {
-  let k = 0;
-  while (3 ** k < 2 * n) k++;
-  return k;
-}
-
-/** Every case this arrangement can produce, in the order the run tells them. */
-function cases(level, play) {
-  const used = usedRows(level, play);
-  const out = [];
-  for (let i = 0; i < level.n; i++) {
-    for (const heavy of [true, false]) {
-      out.push({ coin: i, heavy, slot: slotOf(play, used, i, heavy) });
+ *  Every outcome offered here is consistent with at least one fake still in
+ *  play, so nothing the player is told is ever false. Among those, the one
+ *  chosen is the one that leaves the most work to do — measured in weighings
+ *  rather than in cases, so it cannot be fooled by a branch that is large but
+ *  easy. Ties go to the branch with more cases alive, and then to a fixed
+ *  order, so the same play always produces the same game. */
+function answer(level, play) {
+  let best = null;
+  for (const tip of [LEFT, RIGHT, 0]) {
+    const status = after(play, play.pending, tip);
+    const cases = casesIn(status);
+    if (!cases) continue;              // that outcome cannot happen
+    const probe = { status };
+    const need = cost(level, probe);
+    if (!best || need > best.need
+        || (need === best.need && cases > best.cases)) {
+      best = { tip, status, cases, need };
     }
   }
-  return { used, list: out, slots: 3 ** used.length };
+  return best;
 }
 
-/** Everything wrong with the arrangement, worst first.
+/** A weighing that keeps the player on the fastest line, or null.
  *
- *  This is what the verdict is read from — never the animation, which exists
- *  only to show the player why. */
-function faults(level, play) {
-  const { used, list } = cases(level, play);
-  const bad = [];
+ *  Searched over counts rather than over choices of coin, because coins in the
+ *  same condition are interchangeable and only the counts change the value of a
+ *  weighing. Two observations keep this small enough to run while the player
+ *  waits, even at thirty-nine coins:
+ *
+ *  Ballast is forced. Genuine coins are there only to even the pans up, and
+ *  adding one to *each* pan changes nothing at all — so the only amount worth
+ *  considering is the least that makes the counts match.
+ *
+ *  Wholly unknown coins never share a position with half-known ones, so one of
+ *  the two loops below always applies and never both.
+ */
+function bestWeighing(level, play) {
+  const byKind = { [BOTH]: [], [HEAVY]: [], [LIGHT]: [], [GENUINE]: [] };
+  play.status.forEach((s, i) => byKind[s].push(i));
+  const b = byKind[BOTH].length;
+  const h = byKind[HEAVY].length;
+  const l = byKind[LIGHT].length;
+  const g = byKind[GENUINE].length;
+  const val = level.value;
+  const target = cost(level, play) - 1;      // the best any weighing can leave
 
-  for (const j of used) {
-    const [l, r] = pans(level, play, j);
-    if (l !== r) bad.push({ kind: 'pans', row: j, left: l, right: r });
-  }
+  let best = null;
+  const offer = (bl, br, hl, hr, ll, lr, worst) => {
+    if (!best || worst < best.worst) best = { bl, br, hl, hr, ll, lr, worst };
+  };
 
-  const bySlot = new Map();
-  for (const s of list) {
-    if (!bySlot.has(s.slot)) bySlot.set(s.slot, []);
-    bySlot.get(s.slot).push(s);
+  if (b) {
+    for (let bl = 0; bl <= b; bl++) {
+      for (let br = 0; bl + br <= b; br++) {
+        if (bl + br === 0) continue;
+        // The pans must match, so the shorter one takes genuine coins.
+        if (Math.abs(bl - br) > g) continue;
+        let worst = Math.max(val.split[bl][br], val.split[br][bl]);
+        const rest = b - bl - br;
+        if (rest) worst = Math.max(worst, val.both[rest]);
+        offer(bl, br, 0, 0, 0, 0, worst);
+        if (worst <= target) return materialise(level, byKind, best);
+      }
+    }
+  } else {
+    for (let hl = 0; hl <= h; hl++) {
+      for (let hr = 0; hl + hr <= h; hr++) {
+        for (let ll = 0; ll <= l; ll++) {
+          for (let lr = 0; ll + lr <= l; lr++) {
+            const nl = hl + ll;
+            const nr = hr + lr;
+            if (nl + nr === 0) continue;
+            if (Math.abs(nl - nr) > g) continue;
+            let worst = 0;
+            for (const [a, c] of [[hl, lr], [hr, ll],
+                                  [h - hl - hr, l - ll - lr]]) {
+              if (a + c) worst = Math.max(worst, val.split[a][c]);
+            }
+            offer(0, 0, hl, hr, ll, lr, worst);
+            if (worst <= target) return materialise(level, byKind, best);
+          }
+        }
+      }
+    }
   }
-  for (const group of bySlot.values()) {
-    if (group.length > 1) bad.push({ kind: 'clash', group });
-  }
-  return bad;
+  return best && materialise(level, byKind, best);
 }
 
-/** The slots holding more than one case, for the rack to paint red. */
-function clashedSlots(level, play, upto) {
-  const { list } = cases(level, play);
-  const count = new Map();
-  for (const s of list.slice(0, upto)) {
-    count.set(s.slot, (count.get(s.slot) || 0) + 1);
-  }
-  return count;
+/** Turn a choice of counts into a choice of actual coins. */
+function materialise(level, byKind, pick) {
+  const pending = new Array(level.n).fill(ASIDE);
+  const take = (pool, from, count, side) => {
+    for (let i = 0; i < count; i++) pending[pool[from + i]] = side;
+    return from + count;
+  };
+  take(byKind[BOTH], take(byKind[BOTH], 0, pick.bl, LEFT), pick.br, RIGHT);
+  take(byKind[HEAVY], take(byKind[HEAVY], 0, pick.hl, LEFT), pick.hr, RIGHT);
+  take(byKind[LIGHT], take(byKind[LIGHT], 0, pick.ll, LEFT), pick.lr, RIGHT);
+  // Ballast: the least that evens the pans.
+  const count = (side) => pending.reduce((a, s) => a + (s === side ? 1 : 0), 0);
+  const gap = count(LEFT) - count(RIGHT);
+  take(byKind[GENUINE], 0, Math.abs(gap), gap > 0 ? RIGHT : LEFT);
+  return pending;
 }
 
 /* ---------------------------------------------------------------- drawing */
 
-/** Where the rack sits and how its slots are laid out.
- *
- *  The rack holds one slot per outcome the weighings can produce, so it triples
- *  every time the player brings in another weighing — which is the theorem
- *  happening in front of them.
- *
- *  It grows sideways rather than downwards, never more than a few slots deep,
- *  so the board stays wide and short like the space it is drawn in, and its
- *  height is the same whatever is on it — nothing below the rack shifts as the
- *  player works. Past the point where that band is full the slots start
- *  shrinking instead, which is the honest picture anyway: the outcomes are
- *  being divided ever finer, not given more room. */
-function rackPlan(level, k) {
-  const room = gridW(level) + SCALES - 20;
-  const down = k <= 2 ? 1 : RACK_DEEP;
-  const across = 3 ** k / down;
-  return {
-    k,
-    across,
-    down,
-    top: rowY(level.rows) + RACK_GAP,
-    size: Math.max(7, Math.min(SLOT_MAX, room / across - 3)),
-    gap: 3,
-    slots: 3 ** k,
-  };
-}
+const label = (s) => (s === HEAVY ? 'could only be heavy'
+  : s === LIGHT ? 'could only be light'
+  : s === GENUINE ? 'cleared' : 'unknown');
 
-function drawCoins(level, play, live) {
+function drawCoins(level, play) {
   for (let i = 0; i < level.n; i++) {
-    const x = colX(i) + COL / 2;
-    const on = live && live.coin === i;
-    // Heavy and light are told apart by size rather than by colour, because
-    // colour here already means which pan a coin is in — and a heavy coin
-    // drawn in the left pan's colour reads as "this one is on the left".
+    const x = colX(level, i);
+    const side = play.pending[i];
+    const shown = play.reveal ? play.status[i] : null;
+    const picked = play.naming && play.named && play.named.coin === i;
     board.appendChild(svgEl('circle', {
-      cx: x, cy: COIN_Y,
-      r: COIN_R + (on ? (live.heavy ? 3 : -3) : 0),
-      class: 'coin' + (on ? ' live' : '')
-        + (play.hinted && play.hinted.has(i) ? ' hinted' : ''),
+      cx: x, cy: COIN_Y, r: COIN_R,
+      class: 'coin'
+        + (side === LEFT ? ' on-left' : side === RIGHT ? ' on-right' : '')
+        + (shown ? ` is-${shown}` : '')
+        + (picked ? ' picked' : ''),
     }));
-    board.appendChild(text({
-      x, y: COIN_Y + 5, class: 'coin-label' + (on ? ' live' : ''),
-    }, String(i + 1)));
-  }
-}
-
-/** One weighing: the label, a cell under every coin, and the balance itself. */
-function drawRow(level, play, j, tip) {
-  const y = rowY(j);
-  const [l, r] = pans(level, play, j);
-  const idle = l === 0 && r === 0;
-
-  board.appendChild(text({
-    x: GUTTER - 18, y: y + ROW_H / 2 + 5,
-    class: 'row-label' + (idle ? ' idle' : ''),
-  }, idle ? `spare` : `Weighing ${j + 1}`));
-
-  for (let i = 0; i < level.n; i++) {
-    const side = play.cells[i][j];
-    const x = colX(i) + 4;
-    const w = COL - 8;
-    board.appendChild(svgEl('rect', {
-      x, y: y + 6, width: w, height: ROW_H - 12, rx: 8,
-      class: 'cell'
-        + (side === LEFT ? ' left' : side === RIGHT ? ' right' : ''),
-    }));
-    if (side !== ASIDE) {
-      board.appendChild(svgEl('circle', {
-        cx: x + w / 2 + (side === LEFT ? -w / 5 : w / 5),
-        cy: y + ROW_H / 2, r: 7,
-        class: 'pan-mark ' + (side === LEFT ? 'left' : 'right'),
-      }));
+    board.appendChild(text({ x, y: COIN_Y + 5, class: 'coin-label' },
+                           String(i + 1)));
+    if (shown && shown !== BOTH) {
+      board.appendChild(text({ x, y: COIN_Y + COIN_R + 13, class: 'coin-note' },
+        shown === GENUINE ? 'ok' : shown === HEAVY ? 'H?' : 'L?'));
     }
   }
-
-  drawBalance(level, j, l, r, tip, idle);
 }
 
-/** The balance for one weighing, drawn at the end of its row.
+/** The balance, holding whatever is on it right now.
  *
- *  While placing, it leans by however far the pans are from matching, so an
- *  uneven weighing is visible as a thing rather than described as a mistake.
- *  During the run it leans the way that weighing actually tips for the case
- *  being told. */
-function drawBalance(level, j, l, r, tip, idle) {
-  const cx = GUTTER + gridW(level) + SCALES / 2;
-  const cy = rowY(j) + ROW_H / 2;
-  const arm = 46;
-  const lean = tip !== null ? tip * 9 : Math.max(-9, Math.min(9, (r - l) * 5));
+ *  It leans while the pans are uneven, which is the one thing about a weighing
+ *  the player never has to work out for themselves — an uneven weighing tips
+ *  for reasons that have nothing to do with the fake, so it is a physical fact
+ *  rather than a deduction. */
+function drawBalance(level, play, tip) {
+  const [l, r] = pans(play);
+  const w = rowWidth(level);
+  const cx = MARGIN + w / 2;
+  const cy = PAN_TOP + 30;
+  const arm = Math.min(190, w / 2 - 40);
+  const lean = tip !== null && tip !== undefined
+    ? tip * 16 : Math.max(-16, Math.min(16, (r - l) * 8));
   const even = l === r;
 
   board.appendChild(svgEl('path', {
-    d: `M ${cx} ${cy + 16} L ${cx - 11} ${cy + 26} L ${cx + 11} ${cy + 26} Z`,
+    d: `M ${cx} ${cy + 26} L ${cx - 16} ${cy + 44} L ${cx + 16} ${cy + 44} Z`,
     class: 'fulcrum',
   }));
   board.appendChild(svgEl('line', {
     x1: cx - arm, y1: cy + lean, x2: cx + arm, y2: cy - lean,
-    class: 'beam' + (idle ? ' idle' : even ? '' : ' uneven'),
+    class: 'beam' + (l + r === 0 ? ' idle' : even ? '' : ' uneven'),
   }));
   for (const [sx, n, dy] of [[-arm, l, lean], [arm, r, -lean]]) {
     board.appendChild(svgEl('line', {
-      x1: cx + sx, y1: cy + dy, x2: cx + sx, y2: cy + dy + 13, class: 'hanger',
+      x1: cx + sx, y1: cy + dy, x2: cx + sx, y2: cy + dy + 20, class: 'hanger',
     }));
     board.appendChild(svgEl('path', {
-      d: `M ${cx + sx - 13} ${cy + dy + 13} q 13 12 26 0`,
-      class: 'pan' + (idle ? ' idle' : ''),
+      d: `M ${cx + sx - 34} ${cy + dy + 20} q 34 26 68 0`,
+      class: 'pan' + (l + r === 0 ? ' idle' : ''),
     }));
     board.appendChild(text({
-      x: cx + sx, y: cy + dy + 11, class: 'pan-count',
-    }, idle ? '' : String(n)));
+      x: cx + sx, y: cy + dy + 16, class: 'pan-count',
+    }, l + r === 0 ? '' : String(n)));
+  }
+  if (!even && l + r > 0) {
+    board.appendChild(text({
+      x: cx, y: cy + 66, class: 'warn',
+    }, 'The pans must hold the same number of coins.'));
   }
 }
 
-/** The rack: one slot per outcome, and whatever has landed in it so far. */
-function drawRack(level, play, used, filled) {
-  const plan = rackPlan(level, used.length);
-  const counts = filled ? clashedSlots(level, play, filled) : new Map();
-  const stride = plan.size + plan.gap;
-  const left = GUTTER + (gridW(level) + SCALES - plan.across * stride) / 2;
-
-  // The whole theorem, in one line, doing its own arithmetic. Saying "6 cases"
-  // means nothing beside three coins; saying where the 6 came from means
-  // everything, and it is the number the slot count has to be weighed against.
+/** A clickable plate drawn into the board, since every move here is a click on
+ *  the board rather than a run of a simulation. */
+function drawPlate(level, key, x, w, caption, on) {
+  board.appendChild(svgEl('rect', {
+    x, y: PLATE_Y, width: w, height: PLATE_H, rx: 9,
+    class: 'plate' + (on ? '' : ' off') + (key === 'weigh' ? ' go' : ''),
+  }));
   board.appendChild(text({
-    x: GUTTER, y: plan.top - 30, class: 'rack-label',
-  }, `Any of the ${level.n} coins could be the fake, and it could be heavy or `
-     + `light: ${2 * level.n} cases to tell apart.`));
-  board.appendChild(text({
-    x: GUTTER, y: plan.top - 11, class: 'rack-label',
-  }, plan.k === 0
-    ? 'One slot to sort them into: with nothing on the scales, every case '
-      + 'looks exactly the same.'
-    : `${plan.slots} slots to sort them into — one for each way your `
-      + `${plan.k === 1 ? 'weighing' : `${plan.k} weighings`} can come out.`));
+    x: x + w / 2, y: PLATE_Y + 22, class: 'plate-label' + (on ? '' : ' off'),
+  }, caption));
+}
 
-  for (let s = 0; s < plan.slots; s++) {
-    const x = left + (s % plan.across) * stride;
-    const y = plan.top + Math.floor(s / plan.across) * stride;
-    const got = counts.get(s) || 0;
-    board.appendChild(svgEl('rect', {
-      x, y, width: plan.size, height: plan.size, rx: 3,
-      class: 'slot' + (got > 1 ? ' clash' : got ? ' taken' : ''),
-    }));
-    if (got > 1 && plan.size >= 14) {
-      board.appendChild(text({
-        x: x + plan.size / 2, y: y + plan.size / 2 + 4, class: 'slot-count',
-      }, String(got)));
+function plates(level, play) {
+  const w = rowWidth(level);
+  const left = MARGIN;
+  const used = play.history.length;
+  const spent = used >= level.rows;
+  const [l, r] = pans(play);
+  const out = [];
+  // Once the naming is in, the board is a record of what happened rather than
+  // a thing to act on; leaving the plates up invites a click that does nothing.
+  if (play.done) return [];
+  if (play.naming) {
+    if (play.named === null) {
+      out.push({ key: 'cancel', caption: 'Back to weighing', on: true });
+    } else {
+      out.push({ key: 'heavy', caption: `Coin ${play.named.coin + 1} is heavy`, on: true });
+      out.push({ key: 'light', caption: `Coin ${play.named.coin + 1} is light`, on: true });
+      out.push({ key: 'cancel', caption: 'Back', on: true });
     }
+  } else {
+    out.push({
+      key: 'weigh',
+      caption: spent ? 'No weighings left' : 'Weigh these',
+      on: !spent && l > 0 && l === r,
+    });
+    out.push({ key: 'clearpans', caption: 'Take them off', on: l + r > 0 });
+    out.push({ key: 'name', caption: 'Name the fake', on: true });
+  }
+  const gap = 12;
+  const each = (w - gap * (out.length - 1)) / out.length;
+  out.forEach((p, i) => {
+    p.x = left + i * (each + gap);
+    p.w = each;
+    drawPlate(level, p.key, p.x, p.w, p.caption, p.on);
+  });
+  return out;
+}
+
+/** The record: every weighing and how it came out. Everything the player needs
+ *  in order to work out the live cases is here, which is why the live cases
+ *  themselves are not given away. */
+function drawLog(level, play) {
+  const w = rowWidth(level);
+  const names = (list) => (list.length ? list.map((i) => i + 1).join(' ') : '—');
+  play.history.forEach((h, i) => {
+    const y = LOG_TOP + i * LOG_H;
+    board.appendChild(text({ x: MARGIN, y, class: 'log-n' }, `${i + 1}`));
+    board.appendChild(text({ x: MARGIN + 22, y, class: 'log' },
+      `${names(h.left)}   against   ${names(h.right)}`));
+    board.appendChild(text({
+      x: MARGIN + w, y, class: `log-tip tip-${h.tip}`,
+    }, h.tip === 0 ? 'balanced'
+       : h.tip === LEFT ? 'left pan went down' : 'right pan went down'));
+  });
+  if (!play.history.length) {
+    board.appendChild(text({ x: MARGIN, y: LOG_TOP, class: 'log dim' },
+      'Nothing weighed yet.'));
   }
 }
 
-function render(level, play, phase) {
+function render(level, play) {
   board.replaceChildren();
-  const used = usedRows(level, play);
-
-  // While the run is going, the board follows the case being told: one coin
-  // lit as heavy or light, and every balance leaning the way that weighing
-  // actually tips for it. Once it is over the board goes back to reporting the
-  // arrangement, because the answer is now the whole rack rather than any one
-  // case — the last one told is not special.
-  const live = phase === 'running' && play.sim ? play.sim.current() : null;
-  const filled = phase === 'placing' || !play.sim ? 0
-    : phase === 'running' ? play.sim.placed : play.sim.list.length;
-
-  drawCoins(level, play, live);
-  for (let j = 0; j < level.rows; j++) {
-    // A row nobody is using stays level whatever the case.
-    const tip = !live || !used.includes(j) ? (live ? 0 : null)
-      : (live.heavy ? 1 : -1) * play.cells[live.coin][j];
-    drawRow(level, play, j, tip);
-  }
-  drawRack(level, play, used, filled);
-}
-
-/* ------------------------------------------------------------------ hints */
-
-/** The shipped answer, turned to face whatever the player has already built.
- *
- *  A worked answer is only unique up to relabelling — swap two weighings,
- *  swap the pans in one of them, or hand the patterns to different coins, and
- *  it is the same scheme. So rather than wiping the board and imposing a
- *  stranger's arrangement, try every relabelling and keep the one that agrees
- *  with the player most, which usually leaves most of their work standing.
- */
-function nearestAnswer(level, play) {
-  const par = level.par;
-  const answer = level.solution;
-
-  // Which rows to put it in: the ones the player has leaned on hardest.
-  const load = [];
-  for (let j = 0; j < level.rows; j++) {
-    load.push([j, play.cells.reduce((a, row) => a + (row[j] ? 1 : 0), 0)]);
-  }
-  load.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
-  const target = load.slice(0, par).map(([j]) => j).sort((a, b) => a - b);
-
-  const orders = [];
-  (function perm(left, sofar) {
-    if (!left.length) { orders.push(sofar); return; }
-    left.forEach((v, i) => perm(left.filter((_, q) => q !== i), sofar.concat(v)));
-  })([...Array(par).keys()], []);
-
-  let best = null;
-  let bestScore = -1;
-  for (const order of orders) {
-    for (let flip = 0; flip < 1 << par; flip++) {
-      // One relabelling: weighing d of the answer becomes the player's row
-      // target[order[d]], with its pans swapped if bit d of `flip` is set.
-      const vecs = answer.map((v) => v.map(
-        (x, d) => x * ((flip >> d) & 1 ? -1 : 1)));
-
-      const taken = new Array(vecs.length).fill(false);
-      const assign = new Array(level.n);
-      let score = 0;
-      for (let i = 0; i < level.n; i++) {
-        let pick = -1;
-        let agree = -1;
-        for (let t = 0; t < vecs.length; t++) {
-          if (taken[t]) continue;
-          let a = 0;
-          for (let d = 0; d < par; d++) {
-            if (play.cells[i][target[order[d]]] === vecs[t][d]) a++;
-          }
-          if (a > agree) { agree = a; pick = t; }
-        }
-        taken[pick] = true;
-        assign[i] = vecs[pick];
-        score += agree;
-      }
-      if (score > bestScore) { bestScore = score; best = { assign, order }; }
-    }
-  }
-
-  const cells = play.cells.map(() => new Array(level.rows).fill(ASIDE));
-  for (let i = 0; i < level.n; i++) {
-    for (let d = 0; d < par; d++) {
-      cells[i][target[best.order[d]]] = best.assign[i][d];
-    }
-  }
-  return cells;
+  const last = play.history.length
+    ? play.history[play.history.length - 1] : null;
+  drawCoins(level, play);
+  drawBalance(level, play, play.pending.some((s) => s) ? undefined
+    : last ? last.tip : undefined);
+  play.plates = plates(level, play);
+  drawLog(level, play);
 }
 
 /* ---------------------------------------------------------------- exports */
@@ -408,15 +413,16 @@ export default {
   title: 'Coin weighing',
   blurb:
     'One coin in the pile is fake, and you do not know whether it is heavy or '
-    + 'light. Plan every weighing in advance, using as few as you can.',
-  verb: 'Work the scales',
+    + 'light. Find it with as few weighings as you can — and be sure, because '
+    + 'a guess does not count.',
   credit:
     'A game on the counting bound for search with a balance. Each weighing '
     + 'comes out one of three ways, so <b>k</b> weighings can separate at most '
-    + '<b>3<sup>k</sup></b> cases — the argument behind the classic '
-    + 'twelve-coin puzzle, here in its non-adaptive form, where every weighing '
-    + 'is chosen up front. Levels and answers are generated here, so this game '
-    + 'carries no third-party data.',
+    + '<b>3<sup>k</sup></b> cases — the argument behind the classic twelve-coin '
+    + 'puzzle. The scales here answer adversarially: never falsely, but always '
+    + 'as unhelpfully as honesty allows, so par cannot be reached by luck. '
+    + 'Levels and answers are generated here, so this game carries no '
+    + 'third-party data.',
 
   group: (m) => (m.n <= 6 ? 'up to 6 coins'
     : m.n <= 12 ? '7 to 12 coins'
@@ -426,214 +432,220 @@ export default {
   par: (m) => m.par,
 
   start: (level) => ({
-    cells: Array.from({ length: level.n },
-                      () => new Array(level.rows).fill(ASIDE)),
-    hinted: null,
-    sim: null,
+    status: new Array(level.n).fill(BOTH),
+    pending: new Array(level.n).fill(ASIDE),
+    history: [],
+    naming: false,
+    named: null,
+    done: null,
+    reveal: false,
+    plates: [],
   }),
 
-  // Fixed for the level: the rack is bounded in both directions, so this is
-  // the room it will ever need and nothing moves as the player works.
-  view(level) {
-    return [0, 0,
-            GUTTER + gridW(level) + SCALES + 20,
-            rowY(level.rows) + RACK_GAP + RACK_DEEP * (SLOT_MAX + 3) + 24];
-  },
-
-  runnable: (level, play) => play.cells.some((row) => row.some((c) => c)),
+  view: (level) => [0, 0, rowWidth(level) + MARGIN * 2,
+                    LOG_TOP + Math.max(2, level.rows) * LOG_H + 18],
 
   describe(level, play) {
-    const used = usedRows(level, play).length;
-    const slots = 3 ** used;
+    const cases = alive(play);
+    const left = level.rows - play.history.length;
     return {
-      // The task in the words of the puzzle, not in the words of the counting
-      // argument. Leading with "tell all 6 cases apart" asked the player to
-      // take an unexplained 6 on trust, when there are only three coins in
-      // front of them; where the 6 comes from belongs on the rack, next to the
-      // slots it is being compared against.
       goal: `Find the fake coin — and say whether it is heavy or light — `
             + `in <b>${level.par}</b> weighings`,
-      status: `${used} ${used === 1 ? 'weighing' : 'weighings'} · `
-              + `${slots} ${slots === 1 ? 'slot' : 'slots'} for `
-              + `${2 * level.n} cases`,
+      status: (cases === 1 ? '1 case still fits' : `${cases} cases still fit`)
+              + ` · ${play.history.length} weighed, ${left} left`,
     };
   },
 
   click(level, play, p) {
-    const j = Math.floor((p.y - GRID_TOP) / ROW_H);
-    const i = Math.floor((p.x - GUTTER) / COL);
-    if (j < 0 || j >= level.rows || i < 0 || i >= level.n) {
-      return { message: 'Click a coin’s square in a weighing to put it '
-                        + 'on the left pan, then the right, then aside.' };
+    if (play.done) return {};
+
+    // A plate?
+    if (p.y >= PLATE_Y && p.y <= PLATE_Y + PLATE_H) {
+      const hit = play.plates.find((q) => p.x >= q.x && p.x <= q.x + q.w);
+      if (!hit) return {};
+      if (!hit.on) {
+        return { message: hit.key === 'weigh'
+          ? 'Put the same number of coins on each pan first.'
+          : 'Not available yet.' };
+      }
+      return this.plate(level, play, hit.key);
     }
-    const at = play.cells[i][j];
-    play.cells[i][j] = at === ASIDE ? LEFT : at === LEFT ? RIGHT : ASIDE;
-    play.hinted = null;
-    return { changed: true };
+
+    // A coin?
+    if (Math.abs(p.y - COIN_Y) <= COIN_R + 8) {
+      for (let i = 0; i < level.n; i++) {
+        if (Math.abs(p.x - colX(level, i)) <= COL / 2) {
+          if (play.naming) {
+            play.named = { coin: i, heavy: null };
+            return { changed: true };
+          }
+          if (play.history.length >= level.rows) {
+            return { message: 'No weighings left — name the fake.' };
+          }
+          const at = play.pending[i];
+          play.pending[i] = at === ASIDE ? LEFT : at === LEFT ? RIGHT : ASIDE;
+          return { changed: true };
+        }
+      }
+    }
+    return { message: play.naming
+      ? 'Click the coin you believe is the fake.'
+      : 'Click a coin to put it on the left pan, then the right, then off.' };
   },
 
-  draw: render,
-
-  sim: {
-    // No scrub bar. The run does not develop — it reads out an answer the
-    // arrangement already fixed, one case at a time — so stopping partway
-    // shows a half-filled rack, which says strictly less than the full one.
-    replay: false,
-
-    create(level, play) {
-      const { list, used } = cases(level, play);
-      // Slow enough to watch a case land, quick enough that thirty-nine coins
-      // do not outstay their welcome: the whole run is about the same length
-      // whatever the size of the level.
-      const per = Math.max(2, Math.round(150 / list.length));
-      const sim = {
-        list, used, per, tick: 0, placed: 0, level, play,
-        current: () => (sim.placed > 0 && sim.placed <= sim.list.length
-          ? sim.list[sim.placed - 1] : null),
-      };
-      play.sim = sim;
-      return sim;
-    },
-
-    step(sim) {
-      if (sim.placed >= sim.list.length) return true;
-      if (++sim.tick >= sim.per) { sim.tick = 0; sim.placed++; }
-      return sim.placed >= sim.list.length;
-    },
-
-    perFrame: () => 1,
-    paint: (sim) => render(sim.level, sim.play, 'running'),
-    readout(sim) {
-      const at = sim.current();
-      return (at ? `coin ${at.coin + 1} ${at.heavy ? 'heavy' : 'light'} · ` : '')
-        + `${sim.placed} of ${sim.list.length} cases tried`;
-    },
+  /** The moves that are not clicks on a coin. */
+  plate(level, play, key) {
+    if (key === 'clearpans') {
+      play.pending = new Array(level.n).fill(ASIDE);
+      return { changed: true };
+    }
+    if (key === 'name') {
+      play.naming = true;
+      play.named = null;
+      play.pending = new Array(level.n).fill(ASIDE);
+      return { changed: true };
+    }
+    if (key === 'cancel') {
+      if (play.named) { play.named = null; return { changed: true }; }
+      play.naming = false;
+      return { changed: true };
+    }
+    if (key === 'heavy' || key === 'light') {
+      play.named.heavy = key === 'heavy';
+      play.done = 'named';
+      return { changed: true };
+    }
+    if (key === 'weigh') {
+      const said = answer(level, play);
+      play.history.push({
+        left: play.pending.reduce((a, s, i) => (s === LEFT ? a.concat(i) : a), []),
+        right: play.pending.reduce((a, s, i) => (s === RIGHT ? a.concat(i) : a), []),
+        tip: said.tip,
+      });
+      play.status = said.status;
+      play.pending = new Array(level.n).fill(ASIDE);
+      return { changed: true };
+    }
+    return {};
   },
+
+  draw: (level, play) => render(level, play),
+
+  // Move by move: there is no run to watch, because each weighing *is* the
+  // run and its answer arrives at once.
+  over: (level, play) => play.done !== null,
 
   verdict(level, play) {
-    const used = usedRows(level, play).length;
-    const bad = faults(level, play);
+    const cases = alive(play);
+    const used = play.history.length;
+    const said = play.named;
+    const name = (c) => `coin ${c.coin + 1} ${c.heavy ? 'heavy' : 'light'}`;
+    const Name = (c) => name(c)[0].toUpperCase() + name(c).slice(1);
 
-    if (!bad.length) {
-      const perfect = used === level.par;
-      return {
-        won: true,
-        perfect,
-        score: used,
-        title: perfect ? 'Every case has its own slot.'
-                       : 'It works.',
-        detail: perfect
-          ? `Told apart in ${used} ${used === 1 ? 'weighing' : 'weighings'}, `
-            + 'and nothing does it in fewer.'
-          : `Told apart in ${used} weighings, where ${level.par} would do.`,
-        readout: `${used} ${used === 1 ? 'weighing' : 'weighings'}`,
-      };
-    }
-
-    const pans = bad.find((b) => b.kind === 'pans');
-    if (pans) {
+    // Was the naming forced by what the player had seen? That, and not whether
+    // they happened to be right, is the whole question: with the scales
+    // answering adversarially there is no hidden truth to be lucky about, and
+    // every case still alive is a fake the balance could still turn out to
+    // have meant.
+    if (cases > 1) {
+      const others = liveCases(play).filter(
+        (c) => !(c.coin === said.coin && c.heavy === said.heavy));
       return {
         won: false,
-        title: 'The scales were rigged.',
-        detail: `Weighing ${pans.row + 1} had ${pans.left} `
-                + `${pans.left === 1 ? 'coin' : 'coins'} against ${pans.right}, `
-                + 'so it tips that way whatever the fake is doing.',
-        readout: `weighing ${pans.row + 1} was uneven`,
+        title: 'You could not have known.',
+        detail: `${cases} cases still fit every weighing you made — `
+                + `${name(others[0])} just as well as what you said. `
+                + (used < level.rows
+                   ? `You had ${level.rows - used} `
+                     + `${level.rows - used === 1 ? 'weighing' : 'weighings'} `
+                     + 'left to tell them apart.'
+                   : 'There was no weighing left to tell them apart.'),
+        readout: `${cases} cases still fitted`,
       };
     }
 
-    const [a, b] = bad.find((f) => f.kind === 'clash').group;
-    const name = (s) => `coin ${s.coin + 1} ${s.heavy ? 'heavy' : 'light'}`;
-    const detail = a.coin === b.coin
-      ? `Coin ${a.coin + 1} never goes on the scales, so nothing it does `
-        + 'shows: heavy or light, every weighing comes out level.'
-      : `${name(a)[0].toUpperCase()}${name(a).slice(1)} and ${name(b)} tip `
-        + 'every weighing exactly alike, so you could not say which it was.';
+    const only = liveCases(play)[0];
+    if (!only || only.coin !== said.coin || only.heavy !== said.heavy) {
+      return {
+        won: false,
+        title: 'Not what the scales said.',
+        detail: only
+          ? `Everything you weighed points at ${name(only)}.`
+          : 'Nothing at all fits those weighings.',
+        readout: 'named the wrong coin',
+      };
+    }
+
+    const perfect = used === level.par;
     return {
-      won: false,
-      title: 'Two cases, one slot.',
-      detail,
-      readout: 'two cases landed together',
+      won: true,
+      perfect,
+      score: used,
+      title: perfect ? 'Pinned down, and in the fewest weighings there are.'
+                     : 'Pinned down.',
+      detail: perfect
+        ? `${Name(only)}, settled in ${used} `
+          + `${used === 1 ? 'weighing' : 'weighings'} — and against scales `
+          + 'answering as unhelpfully as they honestly can, nothing does it in '
+          + 'fewer.'
+        : `${Name(only)}, settled in ${used} weighings, where ${level.par} `
+          + 'would have done.',
+      readout: `${used} ${used === 1 ? 'weighing' : 'weighings'}`,
     };
   },
 
-  /* The hint is the proof, handed over a piece at a time: count the outcomes,
-     then count the patterns those outcomes leave you, then an answer. */
+  /* The hint is the proof, a piece at a time: how much room is left, then the
+     deduction the player has lost the thread of, then a weighing. */
   hint(level, play, tier) {
-    const n = level.n;
-    const used = usedRows(level, play).length;
-    const bad = faults(level, play);
+    const cases = alive(play);
+    const left = level.rows - play.history.length;
+    const need = cost(level, play);
 
     if (tier === 1) {
-      const uneven = bad.filter((f) => f.kind === 'pans').length;
-      const clashes = bad.filter((f) => f.kind === 'clash').length;
-      let where = 'Nothing is on the scales yet.';
-      if (used) {
-        const parts = [];
-        if (uneven) {
-          parts.push(`${uneven} of your weighings ${uneven === 1 ? 'is' : 'are'} `
-                     + 'uneven');
-        }
-        if (clashes) {
-          parts.push(`${clashes} ${clashes === 1 ? 'slot has' : 'slots have'} `
-                     + 'more than one case in it');
-        }
-        where = parts.length ? `Right now ${parts.join(', and ')}.`
-                             : 'Your arrangement already works.';
-      }
-      // Say what the counting argument actually proves, and no more. On the
-      // two levels where par is higher than the bound, that gap is the most
-      // interesting thing about them.
-      const lo = bound(n);
-      const why = lo === level.par
-        ? `Anything less than ${level.par} runs out of outcomes, so `
-          + `${level.par} is the fewest that can work.`
-        : `Counting alone would let you off with ${lo}: `
-          + `3^${lo} = ${3 ** lo} outcomes is enough room for ${2 * n} `
-          + `cases. But it cannot be done in ${lo} here — every way of `
-          + 'sorting the coins leaves some weighing with an odd number of '
-          + `them, and odd will not split between two pans. It takes `
-          + `${level.par}.`;
+      const room = 3 ** left;
       return {
-        text: `Each weighing comes out one of three ways — left down, right `
-              + `down, or level — so ${level.par} of them can tell at most `
-              + `3^${level.par} = ${3 ** level.par} cases apart. You have `
-              + `${2 * n} to tell: ${n} coins, and either could be the heavy `
-              + `fake or the light one. ${why} ${where}`,
+        text: `${cases} cases still fit what you have seen, and you have `
+              + `${left} ${left === 1 ? 'weighing' : 'weighings'} left. Each `
+              + `weighing comes out one of three ways, so ${left} of them can `
+              + `separate at most ${room} cases. `
+              + (need > left
+                 ? 'That is not enough: this position cannot be settled in '
+                   + `the weighings you have left. It needed ${need}.`
+                 : cases <= 1
+                   ? 'You already have it — name the coin.'
+                   : `You are still on the fastest line: ${need} more `
+                     + `${need === 1 ? 'weighing' : 'weighings'} will do it, `
+                     + 'if each one splits what is left into three even '
+                     + 'groups.'),
       };
     }
 
-    const patterns = (3 ** level.par - 1) / 2;
     if (tier === 2) {
-      const spare = patterns - n;
+      play.reveal = true;
+      const live = liveCases(play);
+      const list = live.length <= 12
+        ? live.map((c) => `${c.coin + 1}${c.heavy ? 'H' : 'L'}`).join(', ')
+        : `${live.length} of them`;
       return {
-        text: 'Think of each coin as the pattern of pans it sits in. Two coins '
-              + 'cannot share a pattern, and no coin may take the mirror of '
-              + 'another’s — that coin heavy and this one light would tip '
-              + 'every weighing the same way. Nor may a coin sit out every '
-              + 'weighing, which is its own mirror. That leaves exactly '
-              + `${patterns} usable patterns for ${level.par} weighings, and `
-              + `you need ${n} of them`
-              + (spare === 0
-                 ? ' — all of them, which is why the pans are so tight here.'
-                 : spare === 1
-                   ? ' — all but one.'
-                   : `, so ${spare} go unused.`),
+        text: 'Here is what your weighings have actually told you, marked on '
+              + 'the coins: H means it could only be the heavy fake, L only '
+              + 'the light one, ok means it is cleared. Still alive: '
+              + `${list}. Any weighing you make now should split those into `
+              + 'three groups as near equal as you can manage — that is the '
+              + 'whole of the strategy.',
       };
     }
 
-    const answer = nearestAnswer(level, play);
-    // Mark only the coins it had to move, so the hint shows its own working
-    // rather than lighting up the whole board including what was already right.
-    play.hinted = new Set();
-    answer.forEach((row, i) => {
-      if (row.some((v, j) => v !== play.cells[i][j])) play.hinted.add(i);
-    });
-    play.cells = answer;
+    const pick = bestWeighing(level, play);
+    if (!pick) {
+      return { text: 'There is no weighing left that helps here.' };
+    }
+    play.pending = pick;
+    const side = (s) => pick.reduce((a, v, i) => (v === s ? a.concat(i + 1) : a), [])
+      .join(' ');
     return {
-      text: 'Here is an arrangement that works, turned to match yours as '
-            + 'closely as it can. Press run and watch every case land in a '
-            + 'slot of its own.',
+      text: `Weigh ${side(LEFT)} against ${side(RIGHT)}. Whichever way it `
+            + 'comes out, what is left is as small as it can be forced to be.',
     };
   },
 };

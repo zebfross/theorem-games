@@ -1,105 +1,109 @@
 # Coin weighing
 
 One coin in the pile is fake. It might be heavier than the rest or it might be
-lighter, and you do not know which. You have a balance and no weights. Plan
-every weighing in advance, and use as few of them as you can.
+lighter, and you do not know which. You have a balance and no weights.
+
+Weigh, see which way it tips, choose what to weigh next — and then name the
+culprit. You win only if your weighings actually pinned it down. Naming while
+two cases still fit is a guess, and a guess loses even when it is right.
 
 ## The theorem
 
-A weighing comes out one of three ways: left pan down, right pan down, or level.
-So *k* weighings can tell at most 3<sup>k</sup> cases apart. There are 2*n*
-cases here — which coin is fake, and whether it is heavy or light — so
+A weighing comes out one of three ways: left pan down, right pan down, or
+level. So *k* weighings can tell at most 3<sup>k</sup> cases apart. There are
+2*n* cases here — which coin, and whether it is heavy or light — so
 
 $$k \ge \log_3 2n$$
 
-and no cleverness gets under that. It is the same counting argument behind the
-classic twelve-coin puzzle: 24 cases, 27 outcomes, three weighings, and barely
-any room to spare.
+and no strategy gets under that. The classic twelve-coin puzzle sits right on
+the edge of it: 24 cases, 27 outcomes, three weighings, almost nothing to spare.
 
-The rack along the bottom of the board is that argument drawn. It holds one slot
-per outcome, and it triples every time you bring in another weighing. Every case
-drops into its slot when you run, and two in the same slot is exactly the thing
-the theorem is counting — the scales behave identically, so you cannot say which
-of the two it was.
+## The scales are an adversary
 
-## The non-adaptive form
+There is no fake coin chosen at the start. The balance answers each weighing
+honestly — every answer it gives is consistent with at least one fake still in
+play, so nothing you are told is ever false — but among the honest answers it
+picks whichever leaves you worst off.
 
-The twelve-coin puzzle is usually solved *adaptively*: weigh, look, then decide
-what to weigh next. Here every weighing is chosen up front, which is a real
-restriction — but it is what makes this a thing you arrange and then run rather
-than a dialogue, and at these sizes the minimum comes out the same.
+That is what makes par mean something. You cannot stumble into a short game by
+luck, a lazy weighing is punished the moment you make it, and the last case
+standing at the end really is the one the balance meant all along. It is also
+the theorem wearing a costume: the adversary's entire power is that three
+outcomes cannot separate more than three groups.
 
-Written non-adaptively the puzzle turns into something pleasantly concrete.
-Give each coin the pattern of pans it sits in, one entry per weighing:
+## What the board will not do for you
 
-```
-+1 left pan     -1 right pan     0 set aside
-```
+It shows every weighing you have made and how it came out, and it counts how
+many cases still fit. It does not tell you *which* cases those are.
 
-If coin *i* is the heavy one, every weighing tips towards the pan holding it, so
-the outcome is that pattern exactly. If it is the light one, the scales tip the
-other way and the outcome is the pattern negated. A scheme works precisely when
-all 2*n* of those are distinct, which needs three things:
+That line is deliberate and it is where this game was originally wrong. The
+first version had you plan all your weighings up front and press a button; the
+button then enumerated the cases, computed every outcome and reported whether
+any two collided. It measured well on the repo's usual test — careless play won
+0.007% of the time — but the test was asking the wrong question. Careless play
+losing is not the same as the interesting work being yours. All the deduction
+had been automated, and what was left was applying a bookkeeping rule about
+patterns, which you can do forever without once thinking about a balance.
 
-- **No coin set aside every time.** Its pattern is all zeroes, which is its own
-  negation, so it looks the same heavy or light.
-- **No two coins with mirrored patterns.** That coin heavy and this one light
-  would tip every weighing alike.
-- **Even pans.** A weighing with more coins on one side tips that way whatever
-  the fake is doing, and tells you nothing.
+So the deduction came back, and the only way to have it is adaptively: choosing
+the next weighing in light of the last answer is exactly the step the plan-ahead
+form forbids. The second hint gives up the live cases to anyone who has lost
+the thread.
 
-The first two say a scheme is a choice of *n* patterns, one from each mirrored
-pair — and there are (3<sup>k</sup> − 1)/2 pairs to choose from. That is the
-second hint, and it is most of the answer.
+## Adaptivity buys nothing
 
-## Why thirteen coins needs a fourth weighing
+Worth knowing, and slightly surprising: playing adaptively does **not** let you
+find the coin in fewer weighings. `tools/adaptive.py` solves the minimax exactly
+and the answer agrees with the plan-ahead optimum at every size from 3 to 39
+coins. Being allowed to look between weighings makes the puzzle far more
+*pleasant*, and no more powerful.
 
-Counting alone permits it: 26 cases fit inside 27 outcomes. But there are
-exactly 13 usable patterns for three weighings, so all thirteen must be used —
-and each weighing is touched by 9 of them. Nine coins cannot be split evenly
-between two pans, so the pans can never come out even. Thirteen needs four.
+## Two sizes where counting is not the answer
 
-Four coins in two weighings fails for the same reason, which is why par is 3
-there and not the 2 the counting bound allows. Both are checked exhaustively
-rather than argued, in `tools/check_pack.py`.
+Par is not always ⌈log₃ 2n⌉.
+
+- **Four coins.** Counting allows two weighings — 8 cases inside 9 outcomes —
+  but no strategy achieves it.
+- **Thirteen coins.** Counting allows three: 26 cases inside 27. No strategy
+  achieves that either, which is why the classic puzzle stops at twelve.
+
+Both are blocked by the pans. A weighing has to hold the same number of coins
+on each side or it tips for reasons that have nothing to do with the fake, and
+in both cases every arrangement that would fit inside the outcomes leaves some
+weighing holding an odd number of coins. Both are settled here by exhaustive
+minimax rather than by argument.
+
+Hand yourself one coin you *know* is genuine and both become possible: ballast
+is what the parity obstruction is short of. That variant is in
+`docs/GAME-IDEAS.md` and is not built.
 
 ## Can it be lost?
 
-Yes, which is the point — a puzzle that solves itself under careless play is not
-a puzzle, and this repo has thrown one away for failing exactly that test.
-Playing thoughtlessly here means evening up the pans and then assigning coins at
-random, which is the strongest careless strategy available. Measured over
-40,000 random arrangements at par:
+Yes. Careless play — legal weighings picked at random, then naming a case that
+is still alive — measured over 3,000 games per size:
 
 | coins | par | careless wins |
 | --- | --- | --- |
-| 3 | 2 | 66% |
-| 5 | 3 | 21% |
-| 8 | 3 | 0.59% |
-| 12 | 3 | 0.007% |
-| 20 | 4 | 0.005% |
-| 24+ | 4 | none in 40,000 |
+| 3 | 2 | 62% |
+| 5 | 3 | 41% |
+| 8 | 3 | 0.93% |
+| 12 | 3 | 0.87% |
+| 20 | 4 | none in 3,000 |
+| 39 | 4 | none in 3,000 |
 
-The first two levels are tutorials and are meant to fall over. Everything from
-about seven coins upward has to be reasoned about.
-
-The board deliberately does **not** fill the rack while you arrange. It shows
-the slots, empty, so the count of slots against the count of cases is there to
-read before you commit — but what lands where is only revealed by running. With
-live collision feedback a blind hill-climber solves twelve coins in a median of
-360 nudges, which is not a game so much as a fidget.
+The first two are tutorials and are meant to fall over.
 
 ## Files
 
 ```
-game.js              the module the engine loads
-style.css            coins, pans, rack
-poster.svg           the homepage card
-data/index.json      24 levels
-data/levels/*.json   n, par, rows, and one worked answer for the last hint
-tools/weighing.py    schemes, faults, and the search for the minimum
-tools/build_pack.py  writes the pack
-tools/check_pack.py  re-derives every claim from the level files alone
+game.js                the module the engine loads
+style.css              coins, balance, the record
+poster.svg             the homepage card
+data/index.json        24 levels
+data/levels/*.json     n, par, and the value of every position that can arise
+tools/adaptive.py      the minimax, and the tables the game reads
+tools/build_pack.py    writes the pack
+tools/check_pack.py    re-derives every shipped value from its own successors
 ```
 
 Levels and answers are generated here, so this game carries no third-party data.
@@ -107,3 +111,8 @@ Levels and answers are generated here, so this game carries no third-party data.
 ```
 python3 tools/build_pack.py && python3 tools/check_pack.py
 ```
+
+`check_pack.py` does not re-run the solver, which would only prove the solver
+agrees with itself. It checks that the shipped numbers satisfy the equation
+defining them — `value = 1 + min over weighings of max over outcomes` — which is
+correct whatever produced them, and cheap where solving was not.

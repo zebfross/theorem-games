@@ -99,32 +99,46 @@ separate at most 3<sup>k</sup> cases. One fake coin among *n*, heavy or light
 unknown, is 2*n* cases, so *k* ≥ log₃ 2*n* — the argument behind the classic
 twelve-coin puzzle.
 
-Played non-adaptively: choose every weighing up front, then run. That
-restriction is what makes it fit the engine — a thing you arrange rather than a
-dialogue — and it turns the puzzle into a clean combinatorial object. Each coin
-gets the pattern of pans it sits in, and a scheme works exactly when no two of
-the 2*n* outcomes agree.
+Built twice, and the first version is the lesson.
 
-**The board is the proof.** A rack of 3<sup>k</sup> slots sits under the grid,
-one per outcome, and it triples each time you bring in another weighing. Every
-case drops into its slot when you run. Two in one slot is precisely what the
-counting argument counts, so the failure is a picture rather than a message —
-and on twelve coins the win is 24 slots filled out of 27, the bound visibly
-almost tight.
+**Version one: plan every weighing up front, press run.** The board held a rack
+of 3<sup>k</sup> slots, every case dropped into its slot, and two in one slot
+was the failure. It passed the fail-state test convincingly — careless play won
+0.007% of the time against Untangling's fatal 58% — and it was still wrong. Zeb
+put it exactly: *the hard part isn’t deciding which coins to put on which
+scale, it’s determining the possible outcomes, which the button does for you.*
 
-Careless play (even up the pans, then assign at random) wins 0.007% of the time
-at twelve coins, against Untangling's fatal 58%. But the first version of the
-design nearly repeated Untangling's mistake in a subtler form: showing the slots
-filling *live* would have let a blind hill-climber solve it by nudging, in a
-median of 360 tweaks. Measuring that before building is what kept the rack empty
-until you press run. **The fail-state test has to be run against the interface,
-not only against the mathematics.**
+The run enumerated the cases, computed every outcome and checked for
+collisions, so the player never once reasoned "tips left then balances, so coin
+7 heavy". What was left was applying a bookkeeping rule — pick patterns
+distinct up to sign with even columns — which you can do forever without
+thinking about a balance at all.
 
-The other thing worth keeping: par is not always the counting bound. Four coins
-and thirteen coins both need one weighing more, because every arrangement that
-would fit leaves a weighing holding an odd number of coins, and odd will not
-split between two pans. Those are the two best levels in the pack, and the first
-hint says so — a claim the pack checker verifies rather than takes on trust.
+**So the fail-state test is necessary and not sufficient.** "Can careless play
+win?" is a different question from "is the interesting work still the
+player’s?", and a game can pass the first while quietly failing the second. Ask
+both. The second one is harder to measure and is best answered by naming, out
+loud, the sentence of reasoning the player has to perform — if the machine
+performs it instead, that is the game gone.
+
+**Version two: adaptive, and the scales are an adversary.** Weigh, see the tip,
+choose the next weighing knowing it, then name the culprit. No fake is chosen
+at the start: the balance answers honestly — always consistently with some
+surviving fake — but picks the honest answer that leaves you worst off. Par
+cannot then be reached by luck, a lazy weighing is punished at once, and the
+adversary is the theorem in costume, since its whole power is that three
+outcomes cannot separate more than three groups.
+
+The board shows the record and counts the cases that still fit; it does not say
+*which*. Naming while two still fit is a guess and loses even when right.
+
+Two things worth keeping. **Adaptivity buys nothing** — the exact minimax
+agrees with the plan-ahead optimum at every size from 3 to 39 coins, so looking
+between weighings makes the puzzle nicer and not more powerful. And **par is
+not always the counting bound**: four coins and thirteen coins each need one
+weighing more, because a pan holding an odd number of coins cannot be evened
+up. Hand the player one known-genuine coin as ballast and both become possible,
+which is the obvious sequel and is sketched below.
 
 ## The happy ending problem
 

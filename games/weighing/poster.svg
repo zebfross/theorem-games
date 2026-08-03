@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
-     aria-label="A balance with coins in both pans, above a rack of slots in which two coins share one slot">
-  <!-- A balance tipping, and below it the rack the game is really about: one
-       slot per outcome, and two cases that have landed in the same one. That
-       collision is the whole failure state, so it is what the card shows. -->
+     aria-label="A balance tipping, above three rows of dots narrowing from many to one">
+  <!-- A balance leaning, and under it what the game is really about: the cases
+       that still fit, narrowing with each weighing until one is left. Three
+       outcomes per weighing is why each row is about a third of the one above,
+       and that is the whole theorem. -->
   <defs>
     <style>
       .beam { stroke: #e8c37a; stroke-width: 4; stroke-linecap: round; }
@@ -11,36 +12,68 @@
       .pan  { fill: none; stroke: #e8c37a; stroke-width: 3; stroke-linecap: round; }
       .coin { fill: #d9a441; stroke: #6b4a12; stroke-width: 1.5; }
       .cool { fill: #7cb8e2; stroke: #2f5d7d; stroke-width: 1.5; }
-      .slot { fill: #ffffff0f; stroke: #ffffff26; stroke-width: 1.5; }
-      .full { fill: #d9a44166; stroke: #d9a441; stroke-width: 1.5; }
-      .bang { fill: #ef7a6a; stroke: #ffb9ad; stroke-width: 2; }
+      .live { fill: #d9a44159; }
+      .gone { fill: #ffffff12; }
+      .last { fill: #6fdc9a; }
     </style>
   </defs>
 
   <!-- the balance, leaning left -->
-  <path class="post" d="M160 96 L160 62"/>
-  <path class="post" d="M144 100 L160 96 L176 100"/>
-  <line class="beam" x1="96" y1="46" x2="224" y2="26"/>
+  <path class="post" d="M160 88 L160 54"/>
+  <path class="post" d="M144 92 L160 88 L176 92"/>
+  <line class="beam" x1="96" y1="40" x2="224" y2="20"/>
 
-  <line class="hang" x1="96" y1="46" x2="96" y2="62"/>
-  <path class="pan" d="M79 62 q17 15 34 0"/>
-  <circle class="coin" cx="89" cy="58" r="7"/>
-  <circle class="coin" cx="103" cy="58" r="7"/>
+  <line class="hang" x1="96" y1="40" x2="96" y2="56"/>
+  <path class="pan" d="M79 56 q17 15 34 0"/>
+  <circle class="coin" cx="89" cy="52" r="7"/>
+  <circle class="coin" cx="103" cy="52" r="7"/>
 
-  <line class="hang" x1="224" y1="26" x2="224" y2="42"/>
-  <path class="pan" d="M207 42 q17 15 34 0"/>
-  <circle class="cool" cx="217" cy="38" r="7"/>
-  <circle class="cool" cx="231" cy="38" r="7"/>
+  <line class="hang" x1="224" y1="20" x2="224" y2="36"/>
+  <path class="pan" d="M207 36 q17 15 34 0"/>
+  <circle class="cool" cx="217" cy="32" r="7"/>
+  <circle class="cool" cx="231" cy="32" r="7"/>
 
-  <!-- the rack: nine outcomes, one of them holding two cases at once -->
+  <!-- what still fits: twenty-four, then eight, then one -->
   <g>
-    <rect class="full" x="40"  y="126" width="24" height="24" rx="4"/>
-    <rect class="slot" x="70"  y="126" width="24" height="24" rx="4"/>
-    <rect class="full" x="100" y="126" width="24" height="24" rx="4"/>
-    <rect class="bang" x="130" y="126" width="24" height="24" rx="4"/>
-    <rect class="full" x="160" y="126" width="24" height="24" rx="4"/>
-    <rect class="full" x="190" y="126" width="24" height="24" rx="4"/>
-    <rect class="slot" x="220" y="126" width="24" height="24" rx="4"/>
-    <rect class="full" x="250" y="126" width="24" height="24" rx="4"/>
+    <g class="live">
+      <rect x="40" y="112" width="9" height="9" rx="2"/><rect x="52" y="112" width="9" height="9" rx="2"/>
+      <rect x="64" y="112" width="9" height="9" rx="2"/><rect x="76" y="112" width="9" height="9" rx="2"/>
+      <rect x="88" y="112" width="9" height="9" rx="2"/><rect x="100" y="112" width="9" height="9" rx="2"/>
+      <rect x="112" y="112" width="9" height="9" rx="2"/><rect x="124" y="112" width="9" height="9" rx="2"/>
+      <rect x="136" y="112" width="9" height="9" rx="2"/><rect x="148" y="112" width="9" height="9" rx="2"/>
+      <rect x="160" y="112" width="9" height="9" rx="2"/><rect x="172" y="112" width="9" height="9" rx="2"/>
+      <rect x="184" y="112" width="9" height="9" rx="2"/><rect x="196" y="112" width="9" height="9" rx="2"/>
+      <rect x="208" y="112" width="9" height="9" rx="2"/><rect x="220" y="112" width="9" height="9" rx="2"/>
+      <rect x="232" y="112" width="9" height="9" rx="2"/><rect x="244" y="112" width="9" height="9" rx="2"/>
+      <rect x="256" y="112" width="9" height="9" rx="2"/><rect x="268" y="112" width="9" height="9" rx="2"/>
+    </g>
+    <g>
+      <rect class="live" x="40" y="132" width="9" height="9" rx="2"/>
+      <rect class="live" x="52" y="132" width="9" height="9" rx="2"/>
+      <rect class="live" x="64" y="132" width="9" height="9" rx="2"/>
+      <rect class="live" x="76" y="132" width="9" height="9" rx="2"/>
+      <rect class="live" x="88" y="132" width="9" height="9" rx="2"/>
+      <rect class="live" x="100" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="112" y="132" width="9" height="9" rx="2"/><rect class="gone" x="124" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="136" y="132" width="9" height="9" rx="2"/><rect class="gone" x="148" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="160" y="132" width="9" height="9" rx="2"/><rect class="gone" x="172" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="184" y="132" width="9" height="9" rx="2"/><rect class="gone" x="196" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="208" y="132" width="9" height="9" rx="2"/><rect class="gone" x="220" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="232" y="132" width="9" height="9" rx="2"/><rect class="gone" x="244" y="132" width="9" height="9" rx="2"/>
+      <rect class="gone" x="256" y="132" width="9" height="9" rx="2"/><rect class="gone" x="268" y="132" width="9" height="9" rx="2"/>
+    </g>
+    <g>
+      <rect class="last" x="40" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="52" y="152" width="9" height="9" rx="2"/><rect class="gone" x="64" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="76" y="152" width="9" height="9" rx="2"/><rect class="gone" x="88" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="100" y="152" width="9" height="9" rx="2"/><rect class="gone" x="112" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="124" y="152" width="9" height="9" rx="2"/><rect class="gone" x="136" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="148" y="152" width="9" height="9" rx="2"/><rect class="gone" x="160" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="172" y="152" width="9" height="9" rx="2"/><rect class="gone" x="184" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="196" y="152" width="9" height="9" rx="2"/><rect class="gone" x="208" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="220" y="152" width="9" height="9" rx="2"/><rect class="gone" x="232" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="244" y="152" width="9" height="9" rx="2"/><rect class="gone" x="256" y="152" width="9" height="9" rx="2"/>
+      <rect class="gone" x="268" y="152" width="9" height="9" rx="2"/>
+    </g>
   </g>
 </svg>

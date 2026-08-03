@@ -24,7 +24,7 @@
     {
       "id": "weighing",
       "title": "Coin weighing",
-      "blurb": "Find the fake coin with a balance, planning every weighing in advance.",
+      "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
       "theorem": "The counting bound \u2014 k weighings separate at most 3\u1d4f cases",
       "levels": 24
     }
