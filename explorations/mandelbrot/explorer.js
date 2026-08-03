@@ -18,7 +18,7 @@
 
 // Resolved against this script rather than the page, so the worker is found
 // wherever the page including it happens to live.
-const WORKER_URL = new URL('worker.js?v=4', document.currentScript.src).href;
+const WORKER_URL = new URL('worker.js?v=6', document.currentScript.src).href;
 
 const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
