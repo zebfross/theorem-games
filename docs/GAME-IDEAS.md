@@ -230,11 +230,19 @@ j of the par points, and the player places the rest. Completability is then
 guaranteed by construction rather than by search, and the size of the seed is
 the difficulty dial.
 
-**Verified so far** (tools/points.py): the convexity test is checked against the
+**All three configurations are found and verified.** I expected the 16-point
+one for k=6 to need the Erdos-Szekeres cups-and-caps construction, on the
+grounds that it is a far smaller needle than the other two. That was wrong:
+randomised growth found it on the first seed. Worth remembering before reaching
+for a clever construction — the naive search was not merely adequate, it was
+instant.
+
+**Verified** (tools/points.py): the convexity test is checked against the
 theorem in both directions — 4000 random 5-point sets all contain a convex
 quadrilateral and 300 random 9-point sets all contain a convex pentagon, which
 would fail if the test were too strict; and the 4-point and 8-point extremal
-configurations are both found, which would fail if it were too eager. The
-16-point configuration for k=6 is a much smaller needle and randomised growth
-may not reach it — the fallback is the Erdos-Szekeres cups-and-caps
-construction, which builds 2^(k-2) points with no convex k-gon directly.
+configurations are both found, which would fail if it were too eager. The 16-point
+set is confirmed by two independently written convexity tests — an angular-sort
+turn test and a monotone-chain hull — agreeing on all 8008 of its six-point
+subsets, and its largest convex subset is a pentagon, which is forced since any
+nine points contain one. All three sit in data/extremal.json.
