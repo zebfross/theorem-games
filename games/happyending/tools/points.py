@@ -88,12 +88,17 @@ def cap(k):
     return {3: 2, 4: 4, 5: 8, 6: 16}.get(k)
 
 
-def search(k, want, box, rng, tries=200000, slack=200.0):
+def search(k, want, box, rng, tries=200000, slack=200.0, spacing=0.0):
     """Hunt for `want` points inside `box` with no convex k-gon.
 
-    Grown one point at a time and restarted when stuck, which finds the k=4 and
-    k=5 configurations quickly. The k=6 one is a 16-point needle and wants the
-    construction below instead.
+    Grown one point at a time and restarted when stuck. All three sizes fall
+    out of this quickly, including the 16-point one, which I had expected to
+    need the Erdos-Szekeres cups-and-caps construction.
+
+    `spacing` is the least distance between two points, and it is not
+    cosmetic: the game refuses a click that lands too near an existing point,
+    so a configuration packed tighter than that is one the player is forbidden
+    to reproduce. Generating without it shipped eight unplaceable levels.
     """
     w, h = box
     best = []
@@ -103,6 +108,9 @@ def search(k, want, box, rng, tries=200000, slack=200.0):
             return pts
         p = (rng.randrange(20, w - 20), rng.randrange(20, h - 20))
         trial = pts + [p]
+        if spacing and any((q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2
+                           < spacing * spacing for q in pts):
+            continue
         if not general_position(trial, slack):
             continue
         if has_convex(trial, k):

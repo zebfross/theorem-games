@@ -27,6 +27,13 @@
       "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
       "theorem": "The counting bound \u2014 k weighings separate at most 3\u1d4f cases",
       "levels": 24
+    },
+    {
+      "id": "happyending",
+      "title": "The happy ending problem",
+      "blurb": "Scatter points without ever letting a convex polygon appear among them.",
+      "theorem": "Erd\u0151s\u2013Szekeres \u2014 any 5 points force a convex quadrilateral, 9 a pentagon, 17 a hexagon",
+      "levels": 18
     }
   ]
 }

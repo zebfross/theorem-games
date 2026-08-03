@@ -140,15 +140,42 @@ weighing more, because a pan holding an odd number of coins cannot be evened
 up. Hand the player one known-genuine coin as ballast and both become possible,
 which is the obvious sequel and is sketched below.
 
-## The happy ending problem
+## ~~The happy ending problem~~ — built
 
 **Erdős–Szekeres.** Any 5 points in general position contain a convex
-quadrilateral; 9 force a convex pentagon, 17 a hexagon.
+quadrilateral, 9 a convex pentagon, 17 a convex hexagon. Par is one less than
+each: 4, 8, 16 points. See `games/happyending/`.
 
-Inverted: place points *trying to avoid* one. The run searches and highlights
-the convex subset you failed to dodge. A game you are guaranteed to lose
-eventually, which is a good change of temperature, and the known extremal
-numbers give exact pars.
+**The one game here you cannot beat**, and that is why it was worth building.
+Everywhere else par is an optimum somebody found and the pleasure is finding it
+too. Here par is a ceiling the theorem fixed in advance — one point past it is
+impossible for anyone, forever. The tension is not "can I find it" but "how
+close to the wall can I get", and the wall always wins in the end. A good
+change of temperature after three games you can win outright.
+
+**It is also the counter-example to the lesson coin weighing taught.** That game
+was wrong because the machine performed the deduction that *was* the puzzle.
+This game has the machine check all 8008 six-point subsets for a convex hexagon
+every time a point goes down — far more computation, on the player's behalf —
+and it is right to. The puzzle here is spatial judgement about where the next
+point can go; spotting a convex hexagon buried in sixteen points is not
+judgement, it is bookkeeping nobody can do by eye. **The test is not "does the
+machine compute something" but "does it compute the thing the puzzle is
+about."**
+
+**What it cost.** Two rounds, both from the same mistake in different clothes:
+choosing a rule and then generating data that had to obey it. The game refuses
+a click too near an existing point; the extremal configurations were generated
+without that constraint, and eight levels shipped with points packed closer
+together than anyone was allowed to place. They loaded, they looked right, and
+they were quietly impossible. Then the fix was wrong too — scaling the
+configurations up to spread them, which cannot work, because how crowded a set
+looks relative to its own extent is invariant under scaling. The rule had to be
+read off the configurations instead.
+
+The generator now enforces exactly what the game enforces, and a level-sweep
+plays every level to par through the real click path rather than by writing
+points straight into the state.
 
 ## Sperner's lemma
 
