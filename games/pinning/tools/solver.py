@@ -34,6 +34,22 @@ legs do share arcs, removability needs a case analysis that is not implemented
 here, so those come back as UNKNOWN and the caller is expected to discard the
 whole question rather than guess. `Puzzle.minimal_pinning_sets` reports whether
 any UNKNOWN arose.
+
+WHERE THIS STANDS, measured rather than guessed. Against all 1074 catalogue
+levels (tools/validate_solver.py): 897 reproduced exactly, 138 disagreed, 39
+declined as UNKNOWN. That is 86.7% of the ones it answered.
+
+The disagreements are not noise. In 105 of the 138, every minimal set this
+solver reports is *contained* in one the catalogue reports — it believes fewer
+pins suffice than they do. Only 16 run the other way. A solver that thinks a
+drawing is taut when it is not is one that has failed to find a bigon that is
+there, and it is wrong in the **unsafe** direction: shipping those levels would
+mean telling a player their pinning set works when it does not.
+
+So this is not yet fit to generate levels from, and the honest reading is that
+the bigon search is incomplete rather than that the catalogue is wrong. The
+declining path is working as intended and is not the problem: those 39 cost a
+level each and mislead nobody. The 105 are the bug.
 """
 
 from itertools import combinations

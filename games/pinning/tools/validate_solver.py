@@ -29,12 +29,22 @@ def check(level):
 
     puzzle = solver.Puzzle([[tuple(p) for p in st] for st in level["rope"]], sites)
 
-    # sanity: the drawing's own crossing count must agree with the catalog
-    total = sum(puzzle.selfs) + sum(puzzle.pairs.values())
+    # sanity: the drawing's own crossing count must agree with the catalog.
+    # `drawn` is the solver's own geometric count, self and mutual together;
+    # it replaced an earlier selfs/pairs split and this had drifted behind it.
+    total = puzzle.drawn
     if total != level["crossings"]:
         return False, f"drawn crossings {total} != catalog {level['crossings']}"
 
-    mine = [sorted(numbers[i] for i in s) for s in puzzle.minimal_pinning_sets()]
+    sets, unknown = puzzle.minimal_pinning_sets()
+    # A run that hit a bigon the solver cannot classify proves nothing either
+    # way. Counting those as agreement would flatter the solver and counting
+    # them as disagreement would blame it for a case it declined to guess at,
+    # so they are their own outcome.
+    if unknown:
+        return None, "hit a bigon the solver will not classify"
+
+    mine = [sorted(numbers[i] for i in s) for s in sets]
     mine.sort(key=lambda s: (len(s), s))
     theirs = sorted((sorted(g) for g in level["generators"]), key=lambda s: (len(s), s))
     if mine != theirs:
@@ -64,22 +74,34 @@ def main():
         levels = levels[: args.limit]
 
     ok = 0
+    declined = []
     failures = []
     t0 = time.time()
     for i, lv in enumerate(levels):
         good, detail = check(lv)
-        if good:
+        if good is None:
+            declined.append(f"{lv['id']}: {detail}")
+        elif good:
             ok += 1
         else:
             failures.append(f"{lv['id']}: {detail}")
         if (i + 1) % 25 == 0:
-            print(f"  {i + 1}/{len(levels)} checked, {len(failures)} failed",
-                  file=sys.stderr, flush=True)
+            print(f"  {i + 1}/{len(levels)} checked, {len(failures)} wrong, "
+                  f"{len(declined)} declined", file=sys.stderr, flush=True)
 
     dt = time.time() - t0
-    print(f"\n{ok}/{len(levels)} levels reproduced exactly  ({dt:.1f}s)")
+    answered = ok + len(failures)
+    print(f"\n{len(levels)} levels in {dt:.1f}s")
+    print(f"  {ok} reproduced exactly")
+    print(f"  {len(failures)} disagreed with the catalogue")
+    print(f"  {len(declined)} declined \u2014 a bigon the solver will not classify")
+    if answered:
+        print(f"\nof the {answered} it answered, {100 * ok / answered:.1f}% agreed")
+    # Declining is the safe outcome and is not a failure: the solver saying "I
+    # cannot tell" costs a level, while the solver guessing wrong would ship a
+    # puzzle whose answer is untrue. Only disagreements fail the run.
     if failures:
-        print(f"\n{len(failures)} disagreements:")
+        print(f"\ndisagreements:")
         for f in failures[:20]:
             print("  " + f)
         if len(failures) > 20:
