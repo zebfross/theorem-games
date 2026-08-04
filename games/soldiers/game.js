@@ -57,6 +57,27 @@ function cellAt(level, p) {
 }
 
 const key = (c) => `${c[0]},${c[1]}`;
+
+/* Arrangements are worth keeping. Building a twenty-soldier army is minutes of
+   fiddly work and a refresh should not throw it away — which it did, to Zeb,
+   because I reloaded the tab he was working in. Saved per level, restored on
+   load, and dropped when the board is cleared. */
+const SAVE = (level) => `soldiers.army.${level.id}`;
+
+function remember(level, play) {
+  try {
+    localStorage.setItem(SAVE(level), JSON.stringify({
+      army: [...play.army],
+      first: play.history.length ? [...play.history[0]] : null,
+    }));
+  } catch { /* storage off; the game still plays, it just forgets */ }
+}
+
+function recall(level) {
+  try {
+    return JSON.parse(localStorage.getItem(SAVE(level)) || 'null');
+  } catch { return null; }
+}
 const DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 
 /** Every jump available to the soldier on `from`. */
@@ -144,15 +165,34 @@ function render(level, play) {
 }
 
 function plates(level, play) {
-  if (play.done) return [];
   const out = [];
+  // Copying stays available after the level ends. Running out of jumps is the
+  // commonest way to finish, and it would be perverse for the board to end the
+  // level and take away the button that hands over what you built.
+  if (play.done) {
+    if (play.army.size || play.history.length) {
+      out.push({ key: 'copy', caption: play.copied ? 'copied' : 'Copy this army',
+                 on: true });
+      layout(level, out);
+    }
+    return out;
+  }
   if (play.history.length) {
     out.push({ key: 'undo', caption: 'Take that jump back', on: true });
   }
   if (level.wall) {
     out.push({ key: 'give', caption: 'I cannot do it', on: true });
   }
+  if (play.army.size) {
+    out.push({ key: 'copy', caption: play.copied ? 'copied' : 'Copy this army',
+               on: true });
+  }
   if (!out.length) return [];
+  layout(level, out);
+  return out;
+}
+
+function layout(level, out) {
   const width = boardW(level);
   const gap = 12;
   const each = (width - gap * (out.length - 1)) / out.length;
@@ -169,7 +209,6 @@ function plates(level, play) {
     t.textContent = p.caption;
     board.appendChild(t);
   });
-  return out;
 }
 
 /* ---------------------------------------------------------------- exports */
@@ -194,13 +233,19 @@ export default {
   chip: (m) => (m.wall ? 'row 5' : `${m.row}·${m.par}`),
   par: (m) => m.par,
 
-  start: () => ({
-    army: new Set(),
-    picked: null,
-    history: [],
-    done: null,
-    plates: [],
-  }),
+  start(level) {
+    // Come back to the arrangement rather than an empty board. Only the army
+    // is restored, never the jumps: half a solved puzzle handed back is a
+    // worse gift than a clean start.
+    const saved = recall(level);
+    return {
+      army: new Set(saved ? saved.army : []),
+      picked: null,
+      history: [],
+      done: null,
+      plates: [],
+    };
+  },
 
   view: (level) => [0, 0, boardW(level) + MARGIN * 2,
                     plateY(level) + PLATE_H + MARGIN],
@@ -223,13 +268,12 @@ export default {
   },
 
   click(level, play, p) {
-    if (play.done) return {};
-
     if (p.y >= plateY(level) && p.y <= plateY(level) + PLATE_H) {
       const hit = play.plates.find((q) => p.x >= q.x && p.x <= q.x + q.w);
       if (hit) return this.plate(level, play, hit.key);
       return {};
     }
+    if (play.done) return {};
 
     const cell = cellAt(level, p);
     if (!cell) return { message: 'Click a square on the board.' };
@@ -257,7 +301,8 @@ export default {
       if (!play.history.length && !jumpsFrom(play.army, cell).length) {
         play.army.delete(k);
         play.picked = null;
-        return { changed: true };
+        remember(level, play);
+    return { changed: true };
       }
       play.picked = play.picked && key(play.picked) === k ? null : cell;
       return { changed: true };
@@ -272,6 +317,7 @@ export default {
     }
     play.army.add(k);
     play.picked = null;
+    remember(level, play);
     return { changed: true };
   },
 
@@ -282,6 +328,19 @@ export default {
       return { changed: true };
     }
     if (which === 'give') { play.done = 'gave-up'; return { changed: true }; }
+    if (which === 'copy') {
+      // The army as it *started*, not as it stands: after a few jumps the
+      // board shows the aftermath, and what is worth passing on is the setup.
+      const from = play.history.length ? play.history[0] : play.army;
+      const cells = [...from].map((k) => k.split(',').map(Number))
+        .sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+      const textOut = JSON.stringify(cells);
+      try { navigator.clipboard.writeText(textOut); } catch { /* no clipboard */ }
+      console.log(textOut);
+      play.copied = true;
+      return { changed: true, message: `${cells.length} soldiers copied — `
+        + 'also printed to the console if the clipboard is blocked.' };
+    }
     return {};
   },
 
