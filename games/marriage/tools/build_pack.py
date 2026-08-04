@@ -71,9 +71,11 @@ def build_level(rng, n, m, degree, want_blocked, lid):
     for _ in range(3000):
         adj = make(rng, n, m, degree)
 
-        # An applicant qualified for nothing is a one-person bottleneck and
-        # gives the answer away; a job nobody can do is just clutter.
-        if any(not row for row in adj):
+        # Every applicant needs at least two options. One option is what makes
+        # a bottleneck leap off the screen — two people whose only job is the
+        # same job is a puzzle you have solved before you have started — and
+        # Zeb spotted that most blocked levels were exactly that shape.
+        if any(len(row) < 2 for row in adj):
             continue
         if any(all(j not in row for row in adj) for j in range(m)):
             continue
@@ -86,10 +88,11 @@ def build_level(rng, n, m, degree, want_blocked, lid):
         blocked = worst > 0
         if blocked != want_blocked:
             continue
-        # A blocked level whose bottleneck is most of the board is not a
-        # discovery, and one that costs more than a couple of places is
-        # dispiriting rather than instructive.
-        if blocked and (len(group) > n - 1 or worst > 2):
+        # A bottleneck of two is visible at a glance and is not worth finding.
+        # Three or more applicants, each with options of their own, that
+        # nonetheless share too few jobs between them — that is a thing you
+        # have to look for.
+        if blocked and (len(group) < 3 or len(group) > n - 1 or worst > 2):
             continue
 
         rate = careless_rate(adj, m, matched, rng)
@@ -111,7 +114,12 @@ def build_level(rng, n, m, degree, want_blocked, lid):
             'n': n,
             'm': m,
             'adj': adj,
-            'par': worst,                 # people left unplaced, at best
+            # Par is the size of the tightest proof, not the number of people
+            # left out. On a blocked level the certificate *is* the answer, so
+            # what is being minimised is how small a group you can find that
+            # still settles the question.
+            'par': len(group),
+            'worst': worst,               # people left unplaced, at best
             'matched': matched,
             'blocked': blocked,
             # The certificate, for the verdict and the last hint. Never shown
@@ -129,7 +137,6 @@ def build_level(rng, n, m, degree, want_blocked, lid):
 RECIPES = [
     # (applicants, jobs, most jobs per applicant, blocked?, how many)
     (4, 4, 2, False, 3),
-    (5, 5, 3, True, 3),
     (5, 5, 3, False, 3),
     (6, 6, 3, True, 4),
     (6, 5, 3, True, 3),
@@ -139,7 +146,8 @@ RECIPES = [
     (8, 8, 4, True, 4),
     (9, 8, 3, True, 3),
     (9, 9, 4, False, 3),
-    (10, 10, 4, True, 3),
+    (10, 10, 4, True, 4),
+    (9, 9, 3, True, 3),
 ]
 
 

@@ -23,11 +23,24 @@ Matching people to jobs is pleasant but it is not, on its own, a puzzle with an
 end: you shuffle until you are stuck, and then you wonder whether you are really
 stuck or merely tired.
 
-So on the blocked levels, finishing is not enough. You must also point at the
-bottleneck. Saying "I think this is the best possible" is a guess; naming the
-group that shares too few jobs is knowing, and the game only accepts the second.
-It is the same move as naming the fake coin in `games/weighing/` — the theorem
-as a win condition rather than a footnote.
+So the blocked levels do not ask for a matching at all. They ask for the proof:
+the smallest group of applicants sharing too few jobs between them. Saying "I
+think this is the best possible" is a guess; naming the group is knowing, and
+the game only accepts the second. Same move as naming the fake coin in
+`games/weighing/`.
+
+Par is the size of the smallest group that settles it, so what is being
+minimised is how tight a proof you can find. **Matching is a tool, not the
+task** — an augmenting search that gets stuck hands you the group, which is
+exactly how the proof of the theorem goes — but you can answer with an empty
+board if you can see it.
+
+An earlier version required you to build a maximum matching *before* it would
+accept a bottleneck. That was backwards: on many boards the bottleneck is the
+first thing you notice, and the game made you grind out the rest of the puzzle
+before letting you say the answer you already had. The certificate stands on its
+own — it fixes the maximum at *n* minus its deficiency whatever is on the board
+— so there was never a reason to gate it.
 
 The board counts for you as you build the group — *"2 chosen · 1 job between
 them"* — because that comparison is the whole of Hall's condition, and watching
@@ -60,8 +73,14 @@ maximum still has to explain it, which takes the blocked rate from 34% to 2.3%.
 Levels are filtered on that measurement rather than on judgement. Solvable ones
 must resist greedy at least 70% of the time; four-applicant boards are exempt
 and are tutorials, since there is no room for greedy to go wrong on four
-applicants. An applicant qualified for nothing is rejected outright — a
-one-person bottleneck hands over the answer.
+applicants.
+
+Blocked levels have two further rules, both there to stop the answer being
+visible at a glance. **Every applicant has at least two options** — one option
+is what makes a bottleneck leap off the screen, since two people whose only job
+is the same job is a puzzle solved before it starts. And **the smallest
+bottleneck has at least three people in it**. Bottleneck sizes now run from 3 to
+9.
 
 ## Files
 

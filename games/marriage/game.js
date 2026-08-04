@@ -122,8 +122,13 @@ function plates(level, play) {
                on: play.group.length >= 2 });
     out.push({ key: 'cancel', caption: 'Back to matching', on: true });
   } else {
-    out.push({ key: 'done', caption: 'Everyone is placed', on: placed(play) === level.n });
-    out.push({ key: 'name', caption: 'No better is possible', on: true });
+    if (!level.blocked) {
+      out.push({ key: 'done', caption: 'Everyone is placed',
+                 on: placed(play) === level.n });
+    }
+    out.push({ key: 'name',
+               caption: level.blocked ? 'Name the bottleneck'
+                                      : 'No better is possible', on: true });
   }
   const width = RIGHT_X - LEFT_X + 260;
   const left = LEFT_X - 130;
@@ -188,10 +193,18 @@ export default {
       };
     }
     return {
-      goal: `Place all <b>${level.n}</b> applicants`
-        + (level.blocked ? ' — or show that you cannot' : ''),
-      status: `${on} of ${level.n} placed`
-        + (on < level.n ? ` · ${level.n - on} left out` : ''),
+      goal: level.blocked
+        ? `Somebody must go without. Find the <b>smallest group</b> of `
+          + 'applicants that proves it'
+        : `Place all <b>${level.n}</b> applicants`,
+      // On a blocked level, counting placements would suggest that placing
+      // people is the task. It is not — it is a way of hunting for the group,
+      // and the player is free to ignore it entirely.
+      status: level.blocked
+        ? `at most ${level.matched} of ${level.n} can be placed`
+          + (on ? ` · ${on} on the board` : '')
+        : `${on} of ${level.n} placed`
+          + (on < level.n ? ` · ${level.n - on} left out` : ''),
     };
   },
 
@@ -316,34 +329,43 @@ export default {
       };
     }
 
-    // A real bottleneck, but does it prove what the player needs it to? It
-    // proves at least `deficiency` people must go unplaced; that is only a
-    // complete answer if they actually placed the rest.
     play.blame = new Set(play.group);
-    if (left > deficiency) {
+
+    // A real bottleneck, but a weak one: it proves some people must go without,
+    // and not how many. Only a group of the worst deficiency settles the
+    // question.
+    if (deficiency < level.worst) {
       return {
         won: false,
-        title: 'True, but not the whole story.',
-        detail: `Applicants ${names} do share only ${seen.size} jobs, so at `
-                + `least ${deficiency} must go unplaced. But you left ${left} `
-                + 'out, and this does not excuse the others — there is a better '
-                + 'arrangement than the one on the board.',
-        readout: `${left} left out, ${deficiency} explained`,
+        title: 'True, but it does not settle it.',
+        detail: `Applicants ${names} share only ${seen.size} `
+                + `${seen.size === 1 ? 'job' : 'jobs'}, so ${deficiency} of `
+                + `them must go without. But ${level.worst} people have to go `
+                + 'without on this board, and this group does not show that. '
+                + 'There is a tighter squeeze somewhere.',
+        readout: `${deficiency} of ${level.worst} explained`,
       };
     }
 
-    const perfect = left === level.par;
+    // The certificate is the whole answer: it fixes the maximum at
+    // n - deficiency whatever is on the board, so there is no need to have
+    // built the matching first. Requiring that was the game asking the player
+    // to do the busywork *after* they had already seen the answer.
+    const perfect = play.group.length === level.par;
     return {
       won: true,
       perfect,
-      score: left,
-      title: 'Proved.',
-      detail: `Applicants ${names} have only ${seen.size} `
-              + `${seen.size === 1 ? 'job' : 'jobs'} open to them between them, `
-              + `so ${deficiency} of them must go without whatever anybody `
-              + `does. You placed ${on}, and by Hall and König that is exactly `
-              + 'as many as can be placed — not a near miss, the maximum.',
-      readout: `${left} left out, and it had to be`,
+      score: play.group.length,
+      title: perfect ? 'Proved, and as tightly as it can be.' : 'Proved.',
+      detail: `Applicants ${names} — ${play.group.length} people — have only `
+              + `${seen.size} ${seen.size === 1 ? 'job' : 'jobs'} open to them `
+              + `between them, so ${deficiency} must go without whatever `
+              + `anybody does. That fixes the answer at ${level.matched} `
+              + 'placed, no arrangement doing better.'
+              + (perfect ? ' No smaller group proves it.'
+                 : ` A group of ${level.par} is enough to prove the same thing.`),
+      readout: perfect ? 'proved with the smallest group'
+                       : `proved with ${play.group.length}`,
     };
   },
 
@@ -368,7 +390,9 @@ export default {
                    + 'qualified for and free theirs up. That chain of swaps is '
                    + 'what you are looking for.'
                  : level.blocked
-                   ? 'That is the maximum. Now find the group that proves it.'
+                   ? 'You do not have to place anybody to answer this — the '
+                     + 'group is the answer. Matching is only a way of finding '
+                     + 'it: get stuck, and the people you tried are the group.'
                    : 'Everybody is in.'),
       };
     }
