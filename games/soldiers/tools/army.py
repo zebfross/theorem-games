@@ -128,6 +128,13 @@ def climb_to(start, row, cap=600000):
     were tried — by height, and by Conway weight alone — and neither got there
     inside 400,000 positions.
 
+    AND A SECOND ONE, since the first correction was itself half right. Extra
+    soldiers do block landings, but adjacency is the binding constraint: a jump
+    needs two *neighbouring* soldiers, so an army thin enough to avoid blocking
+    cannot move at all. Counted on a seven-row footprint, a packed block of 63
+    soldiers has 32 legal jumps and a checkerboard of 32 has zero. Density is
+    what play needs.
+
     A WRONG INFERENCE, RECORDED because it nearly went in the README as fact.
     Feeding the search a deliberately oversized army (55 soldiers) also failed,
     and I read that as proof the search was at fault rather than the armies,

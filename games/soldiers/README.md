@@ -81,10 +81,23 @@ just to arrive somewhere useful, and the deep rows are where the fuel for the
 last push comes from. Five rows was never going to be enough, and picking that
 number without checking a solution fitted was the actual mistake.
 
-Row 4 still is not found by search, now with room to look. That may still be the
-search, or it may be that starting from a fully packed pool leaves almost no
-legal jumps — a packed board has nowhere to land. Either way the honest move is
-to take a working arrangement from a player rather than keep guessing at one.
+Row 4 still is not found by search, now with room to look.
+
+I guessed in an earlier draft of this file that a fully packed starting pool
+might be the trouble, on the grounds that a jump needs an empty cell to land in.
+Counting the legal jumps says otherwise: a packed block of 63 soldiers offers 32
+of them, which is a healthy branching factor, while a checkerboard of 32
+soldiers over the same footprint offers **none at all** — a jump needs two
+*adjacent* soldiers, and a checkerboard has no two adjacent anything.
+
+So density is what a jump needs, not room, and the packed pool was never the
+problem. That also tempers the earlier note about extra soldiers blocking: both
+effects are real, but adjacency is the binding one, and an army too thin to have
+neighbours cannot move at all.
+
+Which leaves the plain answer: the tree is simply enormous and best-first is not
+finding the needle in it. Taking a working arrangement from a player is the way
+through, and the pruner will cut it down to the soldiers that did the work.
 
 So the pack ships rows 1, 2, 3 and the wall. Row 4 is the obvious next piece of
 work and the only thing standing between this and the full ladder.
