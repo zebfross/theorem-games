@@ -8,7 +8,7 @@ built alongside rather than in place of the original so the two can be compared.
 
 ## Where it stands
 
-**Shipped: 60 levels**, 2 to 8 crossings, needing 2 to 7 pins. Drawings made
+**Shipped: 120 levels**, 2 to 6 crossings, needing 2 to 5 pins. Drawings made
 here, answers computed here, no third-party data — so this game is MIT while
 Pinning, next to it on the shelf, is GPL-3.0 because of its catalogue.
 
@@ -18,10 +18,19 @@ a bug gets fixed in one game and not the other.
 
 ## What it cost, and the honest caveat
 
-60 levels took **7541 drawings**. Almost all were thrown away, and that is the
-design rather than a defect. The solver declines any position it cannot settle,
-and a level is only written when it answered every question about that drawing
-without once declining.
+**Fewer than one drawing in a hundred becomes a level.** Almost all are thrown
+away, and that is the design rather than a defect. The solver declines any
+position it cannot settle, and a level is only written when it answered every
+question about that drawing without once declining.
+
+Two other filters do most of the discarding, and both are about the drawing
+rather than the answer. A drawing with a corner sharper than 95° looks wrong
+next to the catalogue's right angles however much it is smoothed. And every
+region has to be comfortably clickable: not by area, which lets a long thin
+sliver through, but by how far the region's own pin point sits from the nearest
+wall. Zeb hit the version without that check immediately — the first level had a
+loop with 8 units of room and could barely be hit. The bar is 18, and the
+tightest point in the shipped pack has 18.1.
 
 That policy is what makes the answers trustworthy. Measured against all 1074
 catalogue levels, the solver reproduces 603 exactly, disagrees with 1, and

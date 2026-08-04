@@ -32,6 +32,7 @@ export default {
     + '<b>Arettines</b>’ algorithm. Everything here is generated: the drawings '
     + 'are random multiloops and the pinning sets are computed, so this game '
     + 'carries no third-party data. The solver declines any position it cannot '
-    + 'settle and those drawings are thrown away, which is why 60 levels took '
-    + '7541 attempts.',
+    + 'settle and those drawings are thrown away, along with any whose regions '
+    + 'are too cramped to click — fewer than one drawing in a hundred becomes a '
+    + 'level.',
 };

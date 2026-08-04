@@ -26,6 +26,7 @@ Usage:  python3 tools/build_pack.py [count]
 import json
 import math
 import os
+import signal
 import random
 import sys
 
@@ -42,10 +43,55 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(os.path.dirname(HERE), 'data')
 
 PAD = 16.0
+CLEARANCE = 18.0        # units of room a pin point needs on every side
+PER_SHAPE = 6           # levels allowed to share one pinning structure
+MAX_REGIONS = 7         # subsets to search grow as 2^this
+
+# A hard stop per drawing. Most solve in milliseconds, but the cost of a single
+# tautness query grows with the number of arcs as well as the number of subsets,
+# and an unlucky drawing can sit there for minutes on its own — which looks
+# exactly like a hung build. Skipping it costs nothing; drawings are free.
+SOLVE_SECONDS = 4.0
 
 
 def build_level(rng, strand_count, corners, want_crossings):
-    """One level, or None if the drawing or the answer will not do."""
+    """One level, or None if the drawing or the answer will not do.
+
+    Wrapped in a wall-clock limit. Most drawings resolve in milliseconds, but an
+    unlucky one can sit for minutes, which is indistinguishable from a hung
+    build. An earlier version timed only the subset walk, guessing that was the
+    slow step — the build still hung, so the guard now covers everything and
+    needs no guess about where the time goes.
+    """
+    old = signal.signal(signal.SIGALRM, _give_up)
+    signal.setitimer(signal.ITIMER_REAL, SOLVE_SECONDS)
+    try:
+        return _build_level(rng, strand_count, corners, want_crossings)
+    except (_TooSlow, ValueError, ZeroDivisionError):
+        return None
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
+
+
+class _TooSlow(BaseException):
+    """Raised by the alarm, and deliberately not an `Exception`.
+
+    Both `draw.analyse` and the `Puzzle` constructor are wrapped in bare
+    `except Exception`, to drop drawings the geometry cannot handle. A
+    TimeoutError is an Exception, so those handlers swallowed the alarm — and
+    since the timer had already fired, the attempt then ran on with no limit at
+    all. The build stalled at exactly the point the guard was supposed to
+    prevent. Inheriting from BaseException means nothing between here and there
+    catches it by accident.
+    """
+
+
+def _give_up(signum, frame):
+    raise _TooSlow
+
+
+def _build_level(rng, strand_count, corners, want_crossings):
     pts = draw.drawing(rng, strand_count, corners)
     arr = draw.analyse(pts)
     if arr is None:
@@ -74,14 +120,35 @@ def build_level(rng, strand_count, corners, want_crossings):
     inner = [f for f in faces if not f['outer']]
     if len(inner) < 3:
         return None
-    # Every region has to be clickable, so a sliver that no honest click could
-    # land in disqualifies the drawing rather than shipping as a trap.
-    if any(abs(f['area']) < 900 for f in inner):
+    # Answering a drawing costs 2^regions tautness queries, since the minimal
+    # pinning sets are found by walking every subset. Ten regions is a thousand
+    # queries and seconds of work, and it was the whole cost of generation —
+    # the filtering above is cheap and happens first. The cap is what keeps a
+    # pack a minute's work rather than an afternoon's.
+    if len(inner) > MAX_REGIONS:
         return None
 
-    sites = [arrangement.interior_point(f['polygon']) for f in inner]
+    try:
+        # Raises rather than returning None on a face too degenerate to place a
+        # point in, which is a drawing to throw away rather than an error.
+        sites = [arrangement.interior_point(f['polygon']) for f in inner]
+    except ValueError:
+        return None
     if any(p is None for p in sites):
         return None
+
+    # Every region has to be comfortably clickable. Area is the wrong measure —
+    # a long thin sliver can have plenty of it and still be impossible to hit —
+    # so what is checked is how far the region's own pin point sits from the
+    # nearest wall. The level that prompted this had a region of area 1150,
+    # over the old threshold, whose pin point had 8 units of room.
+    for f, site in zip(inner, sites):
+        poly = [tuple(q) for q in f['polygon']]
+        n = len(poly)
+        room = min(arrangement._dist_to_segment(site, poly[i], poly[(i + 1) % n])
+                   for i in range(n))
+        if room < CLEARANCE:
+            return None
 
     strands = [[tuple(p) for p in s] for s in pts]
     try:
@@ -125,19 +192,26 @@ def build_level(rng, strand_count, corners, want_crossings):
 def build(target, seed=20260804):
     rng = random.Random(seed)
     levels = []
-    seen = set()
+    seen = {}
     tries = 0
     while len(levels) < target and tries < target * 400:
         tries += 1
         strand_count = rng.choice([1, 1, 1, 2])
-        lv = build_level(rng, strand_count, rng.randint(5, 9), (2, 8))
+        lv = build_level(rng, strand_count, rng.randint(5, 9), (2, 6))
+        if tries % 500 == 0:
+            print(f'  {tries} drawings, {len(levels)} levels', flush=True)
         if not lv:
             continue
+        # Two drawings with the same crossings, strands and pinning sets pose
+        # much the same puzzle, so a few of each is variety and a hundred is
+        # padding. Refusing duplicates outright was worse: the structures run
+        # out at the small sizes and the build grinds without finding anything
+        # it will accept.
         key = (lv['crossings'], lv['strands'],
                tuple(sorted(tuple(g) for g in lv['generators'])))
-        if key in seen:
+        if seen.get(key, 0) >= PER_SHAPE:
             continue
-        seen.add(key)
+        seen[key] = seen.get(key, 0) + 1
         levels.append(lv)
     # Easiest first: fewest crossings, then fewest pins needed.
     levels.sort(key=lambda l: (l['crossings'], l['effectiveMinimum'], l['strands']))
