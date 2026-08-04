@@ -41,8 +41,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(os.path.dirname(HERE), 'data')
 
 # The staging area the player may use: cells below the line, y <= 0.
-WIDTH = 6
-DEPTH = 5
+#
+# Deep enough to hold a solution, which the first version was not. Five rows
+# looked like plenty and is not: a jump moves a soldier two squares, so a
+# soldier eight rows down needs several jumps merely to arrive somewhere useful,
+# and the deeper rows are where the fuel for the last push comes from. Zeb hit
+# the ceiling immediately — "I had to have 7 rows of soldiers but this board
+# only allows 5" — while every search here was quietly failing inside the same
+# too-small box and being blamed on the search.
+WIDTH = 7
+DEPTH = 9
 
 PAR = {1: 2, 2: 4, 3: 8, 4: 20}
 

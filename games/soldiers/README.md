@@ -68,14 +68,23 @@ fault. It is not. A jump needs an empty cell to land in, so extra soldiers block
 as readily as they help — a packed board is worse than a sparse one, adding
 soldiers is not monotone, and that experiment says nothing at all.
 
-**Where this leaves it.** The mechanics are certainly right: the search finds
-2, 4 and 8 for rows 1, 2 and 3, which are Conway's numbers, so the jump rule and
-the geometry agree with the literature. Row 4 exists — it is classical. What is
-missing is either the published twenty-cell configuration or a search strong
-enough to find one, and best-first over 300,000 positions is not remotely that
-against a twenty-piece board. The next person should look the configuration up
-rather than rediscover it; the pack will replay and verify whatever it is
-handed.
+**The board was too small, and that was the whole story for a long time.** The
+staging area started at five rows below the line. Zeb ran into the ceiling at
+once — *"I had to have 7 rows of soldiers but this board only allows 5"* — and
+every search here had been running inside that same box and coming back empty.
+I read those failures as the search being too weak and said so more than once.
+They were not: a space with no solution in it cannot yield one, however good the
+search. The staging area is now nine rows deep and fifteen columns wide.
+
+A jump moves a soldier two squares, so a soldier far back needs several jumps
+just to arrive somewhere useful, and the deep rows are where the fuel for the
+last push comes from. Five rows was never going to be enough, and picking that
+number without checking a solution fitted was the actual mistake.
+
+Row 4 still is not found by search, now with room to look. That may still be the
+search, or it may be that starting from a fully packed pool leaves almost no
+legal jumps — a packed board has nowhere to land. Either way the honest move is
+to take a working arrangement from a player rather than keep guessing at one.
 
 So the pack ships rows 1, 2, 3 and the wall. Row 4 is the obvious next piece of
 work and the only thing standing between this and the full ladder.
