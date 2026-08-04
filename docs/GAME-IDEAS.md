@@ -191,6 +191,42 @@ minimum — but a good short interlude.
 
 ---
 
+## Hall's marriage theorem — in progress
+
+**Hall; König.** Everyone can be matched to a job they are qualified for exactly
+when every group of k applicants has at least k jobs open to them between them.
+When that fails, the fewest people you must leave unplaced is the worst
+deficiency of any group — and that group is a *proof* that no arrangement could
+have done better. See `games/marriage/`.
+
+**Why it passes the criteria**, including the one the happy ending problem
+failed. The player builds a matching: a construction they reason their way to,
+which succeeds or fails on its merits. Knowing the theorem does not trivialise
+it, since "the answer is n minus the worst deficiency" gives the *number* and
+not the assignment — you still have to find the augmenting chains. And the
+machine computes nothing the player cannot see: whether an applicant has a job
+is visible at a glance, unlike whether sixteen points hide a convex hexagon.
+
+**The shape.** Match as many as you can; par is the largest matching, scored as
+the number left unplaced, so 0 is a perfect result on a solvable level. That
+needed an engine fix — `bestFor` conflated "no record" with "scored zero", so
+any game whose optimum is *nothing left over* could not record its best result.
+
+**The second half is the interesting one.** On levels where a perfect matching
+is impossible, finishing is not enough: the player must also point at the
+bottleneck, the group of applicants sharing too few jobs between them. That is
+the theorem as a win condition rather than a footnote — failure with a
+certificate — and it is the same move as naming the fake coin.
+
+**Verified so far** (`tools/hall.py`): König's identity holds on 6000 random
+instances, with the two sides computed by completely different means —
+augmenting paths against an exhaustive sweep over every subset of applicants —
+so agreement is evidence rather than tautology. That check earned its place
+immediately: it caught a wrong early-exit in the sweep within seconds. The sweep
+had stopped as soon as some group of size k had deficiency k, on the theory that
+nothing could beat it. One unqualified applicant is such a group; four
+unqualified applicants have deficiency 4.
+
 ## The Chinese postman
 
 **Euler; Edmonds & Johnson.** A connected graph has a closed walk using every
@@ -233,46 +269,3 @@ achievable everywhere.
 - **Pick's theorem.** Closer to an exercise than a puzzle.
 
 ---
-
-## Notes toward the happy ending game (in progress)
-
-Par is the Erdos-Szekeres number minus one: 4 points with no convex
-quadrilateral, 8 with no convex pentagon, 16 with no convex hexagon. The first
-two are classical, the third was settled by Szekeres and Peters in 2006 by
-computer, and nothing past it is known — so the last level of the game sits on
-the edge of an open problem, which is a nice place for a game to end.
-
-**The fail-state question has an unusual answer here, and it is the reason to
-build it.** Every other game in this repo can be lost by playing badly. This one
-cannot be won past par *by anybody*, because the theorem says so. The tension is
-not "did I find the answer" but "how far can I get before the mathematics stops
-me", and the stopping is guaranteed. That is a genuinely different temperature
-from the other three, and it is the whole appeal.
-
-**Design so far.** Free placement rather than a grid: the constraints are open
-conditions, so every valid next point has a whole region to land in and the
-player is never asked to hit a pixel. General position is enforced with a real
-area threshold, since a set only just in general position is one where convexity
-comes down to rounding.
-
-**Levels** come from revealing a prefix of a known extremal configuration: seed
-j of the par points, and the player places the rest. Completability is then
-guaranteed by construction rather than by search, and the size of the seed is
-the difficulty dial.
-
-**All three configurations are found and verified.** I expected the 16-point
-one for k=6 to need the Erdos-Szekeres cups-and-caps construction, on the
-grounds that it is a far smaller needle than the other two. That was wrong:
-randomised growth found it on the first seed. Worth remembering before reaching
-for a clever construction — the naive search was not merely adequate, it was
-instant.
-
-**Verified** (tools/points.py): the convexity test is checked against the
-theorem in both directions — 4000 random 5-point sets all contain a convex
-quadrilateral and 300 random 9-point sets all contain a convex pentagon, which
-would fail if the test were too strict; and the 4-point and 8-point extremal
-configurations are both found, which would fail if it were too eager. The 16-point
-set is confirmed by two independently written convexity tests — an angular-sort
-turn test and a monotone-chain hull — agreeing on all 8008 of its six-point
-subsets, and its largest convex subset is a pentagon, which is forced since any
-nine points contain one. All three sit in data/extremal.json.
