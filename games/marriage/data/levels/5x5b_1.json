@@ -1,0 +1,1 @@
+{"id":"5x5b_1","n":5,"m":5,"adj":[[2],[1,2,3],[2],[1,2],[0,3,4]],"par":1,"matched":4,"blocked":true,"bottleneck":[0,2],"careless":0.4675}
