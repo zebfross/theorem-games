@@ -47,60 +47,39 @@ classical, and re-deriving them means searching every subset of a staging area �
 around 10<sup>11</sup> armies for row 4. The game states the minimum on Conway's
 authority and this file says so rather than implying a search that never ran.
 
-## Row 4 is not in the pack yet
+## Row 4, and what it rests on
 
-Twenty soldiers is far past brute force, so finding a working army needs either
-the published configuration or a directed search. Three attempts so far, none
-successful: a hill climb on "how high can this army get" (`tools/climb.py`), and
-a best-first search (`army.climb_to`) ordered first by height and then by
-Conway weight alone. The best-first search settles rows 1 to 3 instantly, so it
-is not simply broken.
+Row 4 ships, and it is the one level whose par is not verified here.
 
-Acting on that, four structured candidates were tried — two wide rows, a
-triangle broad at the line, a checkerboard, and a column with a shelf — on the
-theory that armies with room in them jump better than solid blocks. None
-reached row 4 either.
+The distinction the rest of this file draws — par is *enough* is proved here,
+par is *necessary* is Conway's — does not hold for row 4. Neither half is proved
+here. A twenty-soldier army that reaches row 4 was never found by any search in
+`tools/`, so there is no arrangement to replay and no last hint to give: the
+third hint on that level says what is known and admits it has no layout to hand
+over.
 
-One thing learned along the way, recorded because it was nearly written down as
-a fact: feeding the search a deliberately oversized army of 55 soldiers *also*
-failed, which looked like proof that the search rather than the armies was at
-fault. It is not. A jump needs an empty cell to land in, so extra soldiers block
-as readily as they help — a packed board is worse than a sparse one, adding
-soldiers is not monotone, and that experiment says nothing at all.
+The level plays perfectly regardless, because the game never needed one. It
+reads a worked answer only to place a layout for the last hint, and reads the
+jump sequence not at all — that exists purely so `build_pack.py` can replay a
+solution and refuse to write a level whose answer does not hold up. And since a
+player may bring as many soldiers as they like, row 4 is always completable; par
+is the target, not a gate.
 
-**The board was too small, and that was the whole story for a long time.** The
-staging area started at five rows below the line. Zeb ran into the ceiling at
-once — *"I had to have 7 rows of soldiers but this board only allows 5"* — and
-every search here had been running inside that same box and coming back empty.
-I read those failures as the search being too weak and said so more than once.
-They were not: a space with no solution in it cannot yield one, however good the
-search. The staging area is now nine rows deep and fifteen columns wide.
+That whole realisation came from Zeb, after a long detour in which the missing
+sequence was treated as a blocker: *"you don't even really need the move history
+since for Stuck you just give a layout that works and they have to figure out
+the sequence of jumps for themselves."* Quite so. The hint hands over a
+position, never a line of play, and row 4 could have shipped hours earlier.
 
-A jump moves a soldier two squares, so a soldier far back needs several jumps
-just to arrive somewhere useful, and the deep rows are where the fuel for the
-last push comes from. Five rows was never going to be enough, and picking that
-number without checking a solution fitted was the actual mistake.
-
-Row 4 still is not found by search, now with room to look.
-
-I guessed in an earlier draft of this file that a fully packed starting pool
-might be the trouble, on the grounds that a jump needs an empty cell to land in.
-Counting the legal jumps says otherwise: a packed block of 63 soldiers offers 32
-of them, which is a healthy branching factor, while a checkerboard of 32
-soldiers over the same footprint offers **none at all** — a jump needs two
-*adjacent* soldiers, and a checkerboard has no two adjacent anything.
-
-So density is what a jump needs, not room, and the packed pool was never the
-problem. That also tempers the earlier note about extra soldiers blocking: both
-effects are real, but adjacency is the binding one, and an army too thin to have
-neighbours cannot move at all.
-
-Which leaves the plain answer: the tree is simply enormous and best-first is not
-finding the needle in it. Taking a working arrangement from a player is the way
-through, and the pruner will cut it down to the soldiers that did the work.
-
-So the pack ships rows 1, 2, 3 and the wall. Row 4 is the obvious next piece of
-work and the only thing standing between this and the full ladder.
+**What was actually tried**, so the next attempt does not repeat it: exhaustive
+search over small pools (fine to row 3, hopeless past it); hill-climbing on how
+high an army can get; best-first ordered by height, by Conway weight, and by the
+nearest soldier's distance to the target; generous armies pruned to their
+participants; and staging areas from four to nine rows deep. The two jump-rule
+implementations were checked against each other and agree, so none of this was
+a rules mismatch. Zeb reached row 4 by hand with a solid eight-by-four block of
+32 soldiers, which settles that it is reachable and that the searches here are
+simply not strong enough.
 
 ## Files
 

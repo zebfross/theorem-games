@@ -438,7 +438,7 @@ export default {
       };
     }
 
-    if (tier === 2) {
+    if (tier === 2 && level.answer.length) {
       const cluster = level.answer.filter(([, y]) => y === 0).length;
       return {
         text: 'Build a column under the target and a shelf beside it. The '
@@ -449,6 +449,22 @@ export default {
       };
     }
 
+    if (!level.answer.length) {
+      // No worked layout ships for this row, so the hint says what is known
+      // rather than pretending to more. Conway's number is the number; where
+      // the soldiers go is the puzzle, and nobody here has an arrangement to
+      // hand over.
+      return {
+        text: `Conway's answer for row ${level.row} is ${level.par} soldiers, `
+              + 'and no arrangement ships with this level — this is the one row '
+              + 'where you are on your own. Build downwards and inwards: the '
+              + 'column under the target, then shelves either side of it, then '
+              + 'depth behind those. A soldier jumps two squares, so anything '
+              + 'far back has to be walked forward, and walking costs soldiers '
+              + 'too. Nothing stops you using more than '
+              + `${level.par} — that simply will not be par.`,
+      };
+    }
     play.army = new Set(level.answer.map((c) => key(c)));
     play.history = [];
     play.picked = null;

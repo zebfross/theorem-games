@@ -78,7 +78,29 @@ def build():
     levels = []
     for row in sorted(PAR):
         if row not in POOL:
-            print(f'  row {row}: no search pool; needs a shipped army')
+            # Row 4. No army is shipped, and none is needed: the game reads
+            # `answer` only to place a layout for the last hint, and never
+            # reads `moves` at all — those exist so this script can replay a
+            # solution and refuse to write a level whose answer does not hold
+            # up. Without one, the level still plays perfectly, and since a
+            # player may bring as many soldiers as they like it is always
+            # completable; par is the target, not a gate.
+            #
+            # What is lost is honest to state: for rows 1 to 3 this build
+            # proves par is enough by finding an army and replaying it. For row
+            # 4 that rests on Conway. See the README.
+            levels.append({
+                'id': f'row{row}',
+                'row': row,
+                'par': PAR[row],
+                'width': WIDTH,
+                'depth': DEPTH,
+                'answer': [],
+                'moves': [],
+                'cited': True,
+            })
+            print(f'  row {row}: par {PAR[row]}, shipped on Conway\'s authority '
+                  f'— no army found here, so no last hint')
             continue
         found = find_army(row)
         if not found:
