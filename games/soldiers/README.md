@@ -50,10 +50,18 @@ authority and this file says so rather than implying a search that never ran.
 ## Row 4 is not in the pack yet
 
 Twenty soldiers is far past brute force, so finding a working army needs either
-the published configuration or a directed search. `tools/climb.py` hill-climbs
-on "how high can this army get", swapping cells while the answer does not get
-worse. It had not turned one up when this was written, and shipping row 4
-without a replayed solution would break the rule above.
+the published configuration or a directed search. Three attempts so far, none
+successful: a hill climb on "how high can this army get" (`tools/climb.py`), and
+a best-first search (`army.climb_to`) ordered first by height and then by
+Conway weight alone. The best-first search settles rows 1 to 3 instantly, so it
+is not simply broken.
+
+One thing learned along the way, recorded because it was nearly written down as
+a fact: feeding the search a deliberately oversized army of 55 soldiers *also*
+failed, which looked like proof that the search rather than the armies was at
+fault. It is not. A jump needs an empty cell to land in, so extra soldiers block
+as readily as they help — a packed board is worse than a sparse one, adding
+soldiers is not monotone, and that experiment says nothing at all.
 
 So the pack ships rows 1, 2, 3 and the wall. Row 4 is the obvious next piece of
 work and the only thing standing between this and the full ladder.

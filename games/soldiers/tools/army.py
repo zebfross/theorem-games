@@ -109,3 +109,56 @@ def fewest(row, width=4, depth=4, cap=12):
             if reaches(army, row):
                 return size, army
     return None, None
+
+
+def climb_to(start, row, cap=600000):
+    """Best-first hunt for a jump sequence reaching `row`, or None.
+
+    `reaches` explores in whatever order moves come out, which is fine for a
+    handful of pieces and hopeless for twenty: the tree is enormous and an
+    arbitrary order wanders sideways forever. This orders the frontier by how
+    high the army has got and how concentrated it still is, which is what the
+    weighting argument says matters — and it finds a line quickly when one is
+    there.
+
+    Best-first, so a `None` here means "not found within `cap` positions", not
+    "impossible". Only the exhaustive `reaches` may be read as a proof.
+
+    It settles rows 1 to 3 instantly and has not found row 4. Two orderings
+    were tried — by height, and by Conway weight alone — and neither got there
+    inside 400,000 positions.
+
+    A WRONG INFERENCE, RECORDED because it nearly went in the README as fact.
+    Feeding the search a deliberately oversized army (55 soldiers) also failed,
+    and I read that as proof the search was at fault rather than the armies,
+    on the reasoning that a bigger army can only help. It cannot. A jump needs
+    an *empty* cell to land in, so extra soldiers block as easily as they
+    assist, and a packed board is worse than a sparse one. Supersets are not
+    monotone here, and the 55-soldier failure says nothing whatever about the
+    search.
+    """
+    import heapq
+    PHI = (1 + 5 ** 0.5) / 2
+
+    def score(a):
+        top = max(y for (_, y) in a)
+        # Conway's weight, with the target on `row` above the centre column.
+        w = sum(PHI ** -(abs(x) + abs(row - y)) for (x, y) in a)
+        return (-top, -w)
+
+    start = frozenset(start)
+    seen = {start}
+    heap = [(score(start), 0, start, [])]
+    tick = 0
+    while heap and tick < cap:
+        _, _, cur, path = heapq.heappop(heap)
+        if any(y >= row for (_, y) in cur):
+            return path
+        for m in moves(cur):
+            nxt = apply(cur, m)
+            if nxt in seen:
+                continue
+            seen.add(nxt)
+            tick += 1
+            heapq.heappush(heap, (score(nxt), tick, nxt, path + [m]))
+    return None
