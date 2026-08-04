@@ -73,6 +73,20 @@ sanity check on a known-good army caught immediately, because that one scored
 0.53 and plainly worked. The bound applies per target cell, and the game accepts
 any column. A measurement pointed at the wrong thing is not better than a guess.
 
+## Getting an arrangement out
+
+`?dev` on the URL adds a **Copy this army** button, which puts the starting
+army and the jumps played from it on the clipboard. That is how row 4 got into
+the pack: a player found a line nobody's search could, and there was no way to
+get it out of the browser. It is authoring rather than playing, so it stays
+behind the flag.
+
+Arrangements are also saved as they are built and restored on the next visit,
+so a stray reload does not cost twenty soldiers of fiddly placement. Clear
+forgets the saved one — which needed a new argument to `start`, because
+otherwise Clear restored exactly what it had just cleared and appeared to do
+nothing.
+
 ## Files
 
 ```

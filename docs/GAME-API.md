@@ -52,13 +52,19 @@ par(meta)     // best achievable score; a run matching it is "perfect"
 ## A play
 
 ```js
-start(level)              // -> play, your mutable per-attempt state
+start(level, fresh)       // -> play, your mutable per-attempt state
 describe(level, play)     // -> {goal, status}; goal may be HTML
 runnable(level, play)     // -> can the run button be pressed yet
 draw(level, play, phase)  // paint the board; phase is placing|running|result
 view(level, play)         // -> initial [x, y, w, h]
 click(level, play, point) // -> {changed} or {message} for a miss
 ```
+
+`fresh` is true only when the player pressed **Clear**, false on a level load or
+a retry. Most games can ignore it. A game that remembers an arrangement between
+visits cannot: Clear calls `start`, and a `start` that restores what was just
+cleared leaves the button doing nothing at all, which is how Conway's soldiers
+shipped briefly with a dead Clear.
 
 `draw` is handed nothing: it renders into the shared `<svg id="board">`, which
 you can import along with `svgEl` from the engine. Redraws happen whenever the

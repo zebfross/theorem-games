@@ -64,6 +64,12 @@ const key = (c) => `${c[0]},${c[1]}`;
    load, and dropped when the board is cleared. */
 const SAVE = (level) => `soldiers.army.${level.id}`;
 
+/* The copy button exists to get a solution out of a player's browser and into
+   the level pack, which is how row 4 got here. That is authoring, not playing,
+   so it stays behind ?dev — on the board it is one more thing to wonder about,
+   and the game has no need of it. */
+const DEV = /(^|[?&])dev\b/.test(location.search);
+
 function remember(level, play) {
   try {
     localStorage.setItem(SAVE(level), JSON.stringify({
@@ -171,7 +177,7 @@ function plates(level, play) {
   // commonest way to finish, and it would be perverse for the board to end the
   // level and take away the button that hands over what you built.
   if (play.done) {
-    if (play.army.size || play.history.length) {
+    if (DEV && (play.army.size || play.history.length)) {
       out.push({ key: 'copy', caption: play.copied ? 'copied' : 'Copy this army',
                  on: true });
       layout(level, out);
@@ -184,7 +190,7 @@ function plates(level, play) {
   if (level.wall) {
     out.push({ key: 'give', caption: 'I cannot do it', on: true });
   }
-  if (play.army.size) {
+  if (DEV && play.army.size) {
     out.push({ key: 'copy', caption: play.copied ? 'copied' : 'Copy this army',
                on: true });
   }
@@ -234,11 +240,19 @@ export default {
   chip: (m) => (m.wall ? 'row 5' : `${m.row}·${m.par}`),
   par: (m) => m.par,
 
-  start(level) {
+  start(level, fresh) {
     // Come back to the arrangement rather than an empty board. Only the army
     // is restored, never the jumps: half a solved puzzle handed back is a
     // worse gift than a clean start.
-    const saved = recall(level);
+    //
+    // Except when Clear was pressed, which is the player saying they want the
+    // board empty. Remembering the army broke that button outright — Clear
+    // called start, start restored what had just been cleared, and the board
+    // sat there unchanged.
+    if (fresh) {
+      try { localStorage.removeItem(SAVE(level)); } catch { /* nothing to do */ }
+    }
+    const saved = fresh ? null : recall(level);
     return {
       army: new Set(saved ? saved.army : []),
       picked: null,

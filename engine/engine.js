@@ -370,7 +370,11 @@ function resetLevel(keep) {
   // run again", which only makes sense for a game that has a run. Played move
   // by move the moves are already spent, and honouring `keep` would put the
   // player back on the dead end they just lost on with nothing to click.
-  if (!keep || !app.game.sim) app.play = app.game.start(app.level);
+  // `fresh` tells the game that the player asked for a clean slate rather than
+  // another go, which a game that remembers arrangements between visits needs
+  // in order to know when to forget one. Games that ignore the argument are
+  // unaffected.
+  if (!keep || !app.game.sim) app.play = app.game.start(app.level, !keep);
   el('verdict').hidden = true;
   el('scrub').hidden = true;
   el('controls').hidden = false;
