@@ -24,6 +24,7 @@ Usage:  python3 tools/build_pack.py [count]
 """
 
 import json
+import math
 import os
 import random
 import sys
@@ -52,6 +53,22 @@ def build_level(rng, strand_count, corners, want_crossings):
     crossings = arr['crossings']
     if not (want_crossings[0] <= crossings <= want_crossings[1]):
         return None
+
+    # No spikes. Smoothing rounds most corners, but a point the loop nearly
+    # doubles back on stays sharp however much it is cut, and one spike is
+    # enough to make a drawing look wrong next to the catalogue's right angles.
+    for strand in pts:
+        n = len(strand)
+        for i in range(n):
+            ax, ay = strand[i - 1]
+            bx, by = strand[i]
+            cx, cy = strand[(i + 1) % n]
+            v1 = (bx - ax, by - ay)
+            v2 = (cx - bx, cy - by)
+            turn = abs(math.atan2(v1[0] * v2[1] - v1[1] * v2[0],
+                                  v1[0] * v2[0] + v1[1] * v2[1]))
+            if turn > math.radians(95):
+                return None
 
     faces = arr['faces']
     inner = [f for f in faces if not f['outer']]

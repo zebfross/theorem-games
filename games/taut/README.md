@@ -18,7 +18,7 @@ a bug gets fixed in one game and not the other.
 
 ## What it cost, and the honest caveat
 
-60 levels took **8144 drawings**. Almost all were thrown away, and that is the
+60 levels took **7541 drawings**. Almost all were thrown away, and that is the
 design rather than a defect. The solver declines any position it cannot settle,
 and a level is only written when it answered every question about that drawing
 without once declining.
@@ -39,10 +39,22 @@ witness to a bug that is still there.
 
 ## Comparing the two
 
-They are meant to be played side by side. The visible difference is that these
-drawings are angular where the catalogue's are smooth and deliberately laid out,
-because these are random points joined in a random order. Whether that makes
-them worse puzzles is a question about taste and not one the solver can answer.
+They are meant to be played side by side.
+
+The first pack looked wrong in a way that had nothing to do with the
+mathematics: random points joined in a random order give very sharp corners,
+which read as spikes. The catalogue's ropes are axis-aligned rectangles, whose
+right angles round off pleasantly under a thick stroke — that rounded-rectangle
+feel is a large part of why the original is nice to look at. Three passes of
+Chaikin corner cutting before the drawing is analysed fixes most of it, and a
+drawing with any turn sharper than 95° is thrown away — smoothing rounds a
+corner but cannot rescue a point the loop nearly doubles back on, and one spike
+is enough to make a drawing look wrong. The sharpest turn anywhere in the pack
+is now 94°, with a median of 58°, against a worst of 163° before.
+
+What remains different is character rather than quality: these are organic
+loops, the catalogue's are rectilinear. Which makes the better puzzle is a
+question about taste and not one the solver can answer.
 
 
 

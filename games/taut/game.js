@@ -33,5 +33,5 @@ export default {
     + 'are random multiloops and the pinning sets are computed, so this game '
     + 'carries no third-party data. The solver declines any position it cannot '
     + 'settle and those drawings are thrown away, which is why 60 levels took '
-    + '8144 attempts.',
+    + '7541 attempts.',
 };

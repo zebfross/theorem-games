@@ -52,6 +52,34 @@ def loop(rng, corners, radius, centre, wobble=0.30):
     return [pts[i] for i in order]
 
 
+def smooth(points, rounds=3):
+    """Round off the corners, by Chaikin's corner cutting.
+
+    Each pass replaces every corner with two points a quarter and three
+    quarters along its edges, so the polyline converges on a curve. Three
+    passes turns a spiky heptagon into something with the rounded feel of the
+    catalogue's drawings, whose ropes are axis-aligned rectangles and so round
+    off pleasantly under a thick stroke where random angles do not.
+
+    Done here rather than at drawing time on purpose: the arrangement and the
+    solver must see exactly the curve the player sees, or the regions and the
+    crossings will not be the ones on the screen. Smoothing can move a crossing
+    or remove one, and analysing afterwards means whatever comes out is
+    consistent with itself.
+    """
+    for _ in range(rounds):
+        out = []
+        n = len(points)
+        for i in range(n):
+            (x0, y0), (x1, y1) = points[i], points[(i + 1) % n]
+            out.append((round(0.75 * x0 + 0.25 * x1, 3),
+                        round(0.75 * y0 + 0.25 * y1, 3)))
+            out.append((round(0.25 * x0 + 0.75 * x1, 3),
+                        round(0.25 * y0 + 0.75 * y1, 3)))
+        points = out
+    return points
+
+
 def drawing(rng, strands, corners):
     """A whole drawing: `strands` closed polylines over a shared field."""
     out = []
@@ -62,7 +90,7 @@ def drawing(rng, strands, corners):
         off = 0 if strands == 1 else (SIZE - 2 * MARGIN) * 0.14
         centre = (SIZE / 2 + off * math.cos(ang), SIZE / 2 + off * math.sin(ang))
         radius = (SIZE / 2 - MARGIN) * rng.uniform(0.72, 0.95)
-        out.append(loop(rng, corners, radius, centre))
+        out.append(smooth(loop(rng, corners, radius, centre)))
     return out
 
 
