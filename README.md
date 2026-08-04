@@ -19,6 +19,7 @@ No build step, no dependencies, no server-side anything. Static files.
 | [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 | [Coin weighing](games/weighing/) | k weighings separate at most 3ᵏ cases — the counting bound |
 | [Hall's marriage theorem](games/marriage/) | A matching exists unless some group shares too few jobs — Hall; König |
+| [Taut](games/taut/) | Pinning, on generated drawings — MIT rather than GPL |
 | [Conway's soldiers](games/soldiers/) | 2, 4, 8, 20 soldiers reach rows 1–4, and row 5 is impossible — Conway |
 
 And one thing that is not a game, because it has nothing to arrange and no way
@@ -109,6 +110,8 @@ games sharing the latest date, in a place popularity does not reach into.
 
 The engine and `lib/` are MIT. Individual games carry their own licence, since
 they often embed data from published work. Pinning is GPL-3.0 because the
-catalogue it derives from is. Max-flow min-cut, Art gallery and Coin weighing
+catalogue it derives from is; [Taut](games/taut/) is the same game on generated
+drawings and is MIT, built alongside it to compare the two and to find out what
+cutting that dependency would cost. Max-flow min-cut, Art gallery and Coin weighing
 are MIT, having no inherited data at all — their networks, rooms and weighing
 schemes are generated here and their answers computed.

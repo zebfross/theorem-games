@@ -47,6 +47,14 @@
       "theorem": "Conway — 2, 4, 8, 20 soldiers reach rows 1 to 4, and row 5 is impossible",
       "levels": 4,
       "added": "2026-08-03"
+    },
+    {
+      "id": "taut",
+      "title": "Taut",
+      "blurb": "Pinning, on drawings generated here rather than taken from a catalogue.",
+      "theorem": "The pinning ideal of a multiloop — Simon & Stucky, via Arettines",
+      "levels": 60,
+      "added": "2026-08-04"
     }
   ]
 }
