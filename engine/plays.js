@@ -14,21 +14,26 @@
  * person deploying makes, not one that ships turned on. tools/counter-worker.js
  * is a counter small enough to read in one sitting if you want one.
  *
- * WHAT COUNTS AS A PLAY: one per game per browser session, recorded when a
- * level is opened. Not per level — a player working through thirty pinning
- * puzzles is one person enjoying pinning, and counting them thirty times would
- * rank the games with short levels above the games people like. Not per page
- * load either, or a refresh would inflate it.
+ * WHAT COUNTS AS A PLAY: one per level played through to a verdict. Somebody
+ * who works through thirty pinning puzzles counts thirty times, because they
+ * plainly enjoyed it more than somebody who tried one and left — which is the
+ * whole thing the number is for.
  *
- * ON RANKING BY THIS: it feeds back. The game at the top gets played most
- * because it is at the top, which keeps it at the top. `order()` therefore
- * ranks on counts but never lets a game with no plays yet sink out of sight —
- * see the comment there.
+ * A verdict rather than a level being opened, so that clicking down the level
+ * picker looking for something does not read as playing. Retrying a level you
+ * already beat counts again, which is right: going back to improve a score is
+ * as good a sign as any.
+ *
+ * ON RANKING BY THIS: it feeds back. Whatever is on top is played most because
+ * it is on top, which keeps it on top. A newly added game starts on zero and
+ * has no way to climb, so `order()` breaks ties by date added and the homepage
+ * carries a separate recently-added shelf. Neither fixes the feedback loop —
+ * nothing short of ranking by a rate would — and the shelf is the honest
+ * answer: a place a new game is seen that popularity cannot push it out of.
  */
 
 const ENDPOINT = '';           // e.g. 'https://plays.example.workers.dev'
 const LOCAL = 'plays.local';
-const SEEN = 'plays.session';
 const TIMEOUT = 2500;
 
 /** This browser's own tally, which is also the fallback when there is no
@@ -51,19 +56,6 @@ function bumpLocal(id) {
   }
 }
 
-/** Has this game already been counted in this session? */
-function firstThisSession(id) {
-  try {
-    const seen = JSON.parse(sessionStorage.getItem(SEEN) || '[]');
-    if (seen.includes(id)) return false;
-    seen.push(id);
-    sessionStorage.setItem(SEEN, JSON.stringify(seen));
-    return true;
-  } catch {
-    return true;      // no session storage: count it and move on
-  }
-}
-
 /** A fetch that gives up rather than hanging a page on a slow counter. */
 async function brief(url, options) {
   const stop = new AbortController();
@@ -77,7 +69,6 @@ async function brief(url, options) {
 
 /** Record that somebody played this game. Never throws, never blocks. */
 export function record(id) {
-  if (!firstThisSession(id)) return;
   bumpLocal(id);
   if (!ENDPOINT) return;
   // Fire and forget: nothing on the page is waiting for this, and a counter
@@ -109,35 +100,42 @@ export async function counts() {
   return { counts: local(), shared: false };
 }
 
-/** Games most played first — but not so firmly that nothing else is seen.
+/** Most played first; among equals, most recently added first.
  *
- *  Ranking by popularity feeds back on itself: whatever is on top is played
- *  because it is on top. Two things keep that from closing:
+ *  The date only decides ties, which in practice means it decides the order of
+ *  the games nobody has played yet — so a new game arrives at the top of the
+ *  unplayed ones rather than the bottom of everything. It does not lift a new
+ *  game above a played one, and no secondary sort could: that would want
+ *  ranking by plays per day rather than by plays, which is a different and much
+ *  noisier thing at these numbers. The recently-added shelf is what actually
+ *  gives a new game somewhere to be seen.
  *
- *  A game nobody has played yet is not sorted to the bottom, where it would
- *  stay forever with no way to earn a play. It keeps the position the registry
- *  gave it, among the played ones, so a new game arrives somewhere visible and
- *  either earns its place or drifts down.
- *
- *  And ties keep registry order, so the ordering is stable and an author who
- *  wants a particular game first can still say so.
+ *  Registry order is the last word, so the ordering is stable and an author can
+ *  still break a tie by hand.
  */
 export function order(games, counts) {
   const rank = new Map(games.map((g, i) => [g.id, i]));
-  const played = games.filter((g) => counts[g.id] > 0);
-  if (!played.length) return games.slice();
-
-  const sorted = played.slice().sort((a, b) => {
-    const d = (counts[b.id] || 0) - (counts[a.id] || 0);
-    return d !== 0 ? d : rank.get(a.id) - rank.get(b.id);
+  return games.slice().sort((a, b) => {
+    const byPlays = (counts[b.id] || 0) - (counts[a.id] || 0);
+    if (byPlays !== 0) return byPlays;
+    const byDate = String(b.added || '').localeCompare(String(a.added || ''));
+    if (byDate !== 0) return byDate;
+    return rank.get(a.id) - rank.get(b.id);
   });
+}
 
-  // Put the played games, in their new order, into the slots the played games
-  // used to occupy. Everything unplayed stays exactly where it was.
-  const slots = games
-    .map((g, i) => (counts[g.id] > 0 ? i : -1))
-    .filter((i) => i >= 0);
-  const out = games.slice();
-  slots.forEach((slot, k) => { out[slot] = sorted[k]; });
-  return out;
+/** The newest games, for the shelf that popularity cannot push anything off.
+ *
+ *  The most recent batch only — the games sharing the latest date — rather than
+ *  the top few by date. Taking the top three of five put a game from the first
+ *  day of the project under a heading saying "recently added", which is the
+ *  shelf lying to fill itself. One card that is genuinely new beats three that
+ *  are not.
+ */
+export function newest(games, howMany = 4) {
+  const dated = games.filter((g) => g.added);
+  if (!dated.length) return [];
+  const latest = dated.reduce(
+    (a, g) => (String(g.added) > a ? String(g.added) : a), '');
+  return dated.filter((g) => String(g.added) === latest).slice(0, howMany);
 }

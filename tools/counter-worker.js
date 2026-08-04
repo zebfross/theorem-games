@@ -25,7 +25,10 @@
 
 const ALLOW = /^[a-z0-9-]{1,32}$/;      // game ids, and nothing else
 const WINDOW = 60;                       // seconds
-const PER_WINDOW = 20;                   // requests per address per window
+const PER_WINDOW = 90;                   // requests per address per window
+// Generous, because a play is now one level rather than one session: somebody
+// enjoying a game finishes several levels a minute, and throttling that would
+// quietly under-count exactly the players the number is meant to notice.
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,

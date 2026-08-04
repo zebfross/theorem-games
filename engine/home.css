@@ -113,3 +113,13 @@ body.home header .brand p {
   font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* When a game arrived. Shown because it decides ties in the ranking and heads
+   its own shelf, so it should not be a hidden rule. */
+.game-added {
+  display: block;
+  margin-top: 0.15rem;
+  color: #ffffff33;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}

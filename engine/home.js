@@ -14,7 +14,7 @@
  * index just to draw a homepage — Pinning's alone is 158KB.
  */
 
-import { counts, order } from './plays.js';
+import { counts, order, newest } from './plays.js';
 
 const grid = document.getElementById('games');
 const empty = document.getElementById('games-empty');
@@ -75,6 +75,12 @@ function card(game, kind = 'game') {
   const meta = document.createElement('p');
   meta.className = 'game-meta';
   const solved = progress(game.id);
+  if (game.added) {
+    const when = document.createElement('span');
+    when.className = 'game-added';
+    when.textContent = `added ${game.added}`;
+    body.appendChild(when);
+  }
   if (game.plays > 0) {
     const plays = document.createElement('span');
     plays.className = 'game-plays';
@@ -129,13 +135,21 @@ async function boot() {
   for (const g of games) grid.appendChild(card(g));
   counts().then(({ counts: tally, shared }) => {
     if (!shared) return;          // one browser's habits are not a ranking
-    const ranked = order(games, tally);
-    const same = ranked.every((g, i) => g.id === games[i].id);
-    for (const g of ranked) g.plays = tally[g.id] || 0;
-    if (!same || ranked.some((g) => g.plays)) {
-      grid.replaceChildren(...ranked.map((g) => card(g)));
-    }
+    for (const g of games) g.plays = tally[g.id] || 0;
+    grid.replaceChildren(...order(games, tally).map((g) => card(g)));
   }).catch(() => { /* the gallery stands in registry order */ });
+
+  // The newest games, on a shelf of their own. The ranking above cannot lift a
+  // game with no plays above a game with some, and no tie-break could — so a
+  // new game needs a place that popularity does not reach into. Shown only
+  // when there is more than one shelf's worth to choose between, or it is just
+  // the gallery again in a different order.
+  const fresh = newest(games, 3);
+  if (games.length > fresh.length && fresh.length) {
+    document.getElementById('fresh').hidden = false;
+    const shelf = document.getElementById('fresh-grid');
+    for (const g of fresh) shelf.appendChild(card(g));
+  }
 
   // Explorations are not games: nothing to arrange, no par, no way to lose.
   // They get their own section rather than being dressed up as puzzles with an

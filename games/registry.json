@@ -5,35 +5,40 @@
       "title": "Pinning",
       "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
       "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)",
-      "levels": 1074
+      "levels": 1074,
+      "added": "2026-08-01"
     },
     {
       "id": "maxflow",
       "title": "Max-flow min-cut",
       "blurb": "Cut pipes until no water reaches the sink, spending as little as you can.",
       "theorem": "Menger; Ford & Fulkerson, max-flow min-cut",
-      "levels": 117
+      "levels": 117,
+      "added": "2026-08-01"
     },
     {
       "id": "gallery",
       "title": "Art gallery",
       "blurb": "Station guards on the corners of a room until every part of it is watched.",
       "theorem": "Chvátal, with Fisk's proof — ⌊n/3⌋ guards always suffice",
-      "levels": 114
+      "levels": 114,
+      "added": "2026-08-01"
     },
     {
       "id": "weighing",
       "title": "Coin weighing",
       "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
       "theorem": "The counting bound — k weighings separate at most 3ᵏ cases",
-      "levels": 24
+      "levels": 24,
+      "added": "2026-08-03"
     },
     {
       "id": "marriage",
       "title": "Hall's marriage theorem",
       "blurb": "Give every applicant a job they can do — and when you cannot, prove it.",
       "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
-      "levels": 40
+      "levels": 40,
+      "added": "2026-08-03"
     }
   ]
 }

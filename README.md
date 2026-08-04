@@ -90,12 +90,19 @@ inflation. It cannot stop a determined effort, which would need something that
 tells people apart, and that is exactly what this is built not to have. Read the
 numbers as a weathervane.
 
-Two deliberate choices in the ranking. A play is counted **once per game per
-session**, not once per level, or a game with thirty short levels would outrank
-one people actually like. And a game nobody has played yet **keeps its registry
-position** rather than sinking to the bottom, because ranking by popularity
-feeds back on itself — whatever is on top is played because it is on top, and a
-new game needs somewhere visible to start from.
+A play is **one level played through to an answer**. Somebody who works through
+thirty pinning puzzles counts thirty times, because they plainly enjoyed it more
+than somebody who tried one and left — which is the whole thing the number is
+for. A verdict rather than a level being opened, so reading down the level
+picker is not a play.
+
+Ranking by popularity feeds back on itself: whatever is on top is played because
+it is on top. Ties break by **date added**, newest first, so a new game arrives
+at the top of the games nobody has played rather than the bottom of everything.
+That is all a tie-break can do — it cannot lift a new game above a played one,
+and nothing short of ranking by plays *per day* could, which is far too noisy at
+these numbers. So the homepage also carries a **recently added** shelf: the
+games sharing the latest date, in a place popularity does not reach into.
 
 ## Licence
 

@@ -243,6 +243,11 @@ function startRun() {
 
 function finishRun() {
   const v = app.game.verdict(app.level, app.play, app.sim);
+  // A level played through to an answer. Counted here rather than when a game
+  // is opened, so that reading down the level picker is not a play and a
+  // player who works through thirty levels counts thirty times — which is the
+  // difference the number exists to show. Never waited on; see engine/plays.js.
+  recordPlay(app.game.id);
   app.phase = 'result';
   status(v.readout);
   draw();
@@ -441,10 +446,6 @@ async function boot() {
   // Moving between games is the homepage's job, not a control tucked into the
   // header here. A dropdown hides the collection behind something you have to
   // already know to look at, and leaves no room to say what any game is.
-
-  // Somebody is playing this. Counted once per game per session, and never
-  // waited on — see engine/plays.js.
-  recordPlay(app.game.id);
 
   app.index = await (await fetch(`../games/${app.game.id}/data/index.json`)).json();
   el('coverage').textContent = app.index.note || '';
