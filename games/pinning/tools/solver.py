@@ -36,20 +36,33 @@ whole question rather than guess. `Puzzle.minimal_pinning_sets` reports whether
 any UNKNOWN arose.
 
 WHERE THIS STANDS, measured rather than guessed. Against all 1074 catalogue
-levels (tools/validate_solver.py): 897 reproduced exactly, 138 disagreed, 39
-declined as UNKNOWN. That is 86.7% of the ones it answered.
+levels (tools/validate_solver.py): 924 reproduced exactly, 106 disagreed, 44
+declined as UNKNOWN — 89.7% of the ones it answered, up from 86.7%.
 
-The disagreements are not noise. In 105 of the 138, every minimal set this
+The disagreements are not noise. In 76 of the 106, every minimal set this
 solver reports is *contained* in one the catalogue reports — it believes fewer
-pins suffice than they do. Only 16 run the other way. A solver that thinks a
-drawing is taut when it is not is one that has failed to find a bigon that is
-there, and it is wrong in the **unsafe** direction: shipping those levels would
-mean telling a player their pinning set works when it does not.
+pins suffice. A solver that thinks a drawing is taut when it is not has failed
+to find a bigon that is there, and that is the **unsafe** direction: shipping
+those levels would tell a player their pinning set works when it does not. So
+this is still not fit to generate levels from.
 
-So this is not yet fit to generate levels from, and the honest reading is that
-the bigon search is incomplete rather than that the catalogue is wrong. The
-declining path is working as intended and is not the problem: those 39 cost a
-level each and mislead nobody. The 105 are the bug.
+WHY THE LOCKSTEP SEARCH MISSES BIGONS, which is the diagnosis that moved it.
+`find_removable_bigon` walks the two legs together and gives up the moment they
+leave through different polygon edges. That condition is sufficient for a bigon
+and not necessary: a puncture lying *outside* the bigon can still have its cut
+dip into the disc and back out through the same leg, so the legs cross different
+cuts while the disc between them stays empty. On the smallest failing level —
+7^2_1, seven crossings — seventeen of twenty traces parted company on the very
+first step.
+
+What must actually hold is that the legs are homotopic rel their endpoints:
+their words agree once adjacent inverse pairs cancel. `find_bigon_free` tests
+that. On its own it is a worse finder than the lockstep walk — 72 right against
+78 on the small levels — so it does not replace it. It is used instead to
+withhold confidence: a "no bigon" from the lockstep search is believed only when
+the free-reduction search agrees there is nothing to find. That combination is
+better than either alone in both directions at once, more right and less wrong,
+which is why it is the one wired into `taut`.
 """
 
 from itertools import combinations
@@ -271,17 +284,112 @@ class Diagram:
                         legs = self._trace(a, b, d1, d2)
                         if legs is None:
                             continue
+                        if legs is self.SHARED:
+                            ambiguous = True
+                            continue
                         left, right = legs
                         if set(left).isdisjoint(right):
                             return True
                         ambiguous = True
         return UNKNOWN if ambiguous else False
 
+    SHARED = 'shared'          # the legs ran onto the same arc
+
+    @staticmethod
+    def _reduce(word):
+        """Cancel adjacent inverse letters, as in a free group.
+
+        A letter is (cut, side): the cut this leg crossed and which side it
+        left by, so (g, +1) and (g, -1) are inverses. A leg that crosses a cut
+        and immediately crosses back has gone nowhere, and the pair cancels.
+        """
+        out = []
+        for g, side in word:
+            if out and out[-1][0] == g and out[-1][1] == -side:
+                out.pop()
+            else:
+                out.append((g, side))
+        return tuple(out)
+
+    @staticmethod
+    def _invert(word):
+        return tuple((g, -side) for g, side in reversed(word))
+
+    def _walk(self, start, d):
+        """Every arc along one leg, with the word spelled getting there.
+
+        Stops after one circuit of the strand. A bigon's legs are simple paths
+        from one of its crossings to the other, so a leg that has come all the
+        way back to where it started has overshot — and letting it carry on
+        makes every pair of legs appear to share an arc, which reads as
+        undecidable and buries the answer.
+        """
+        cur, word = start, ()
+        out = [(cur, word)]
+        for _ in range(len(self.arcs[start[0]]) - 1):
+            word = word + (self.leaving_edge(cur, d),)
+            cur = self.step(cur, d)
+            out.append((cur, word))
+        return out
+
+    def find_bigon_free(self):
+        """Bigon search that compares the legs' words after cancellation.
+
+        The older `find_removable_bigon` walks the two legs in lockstep and
+        gives up the moment they leave through different edges. That condition
+        is sufficient for a bigon and not necessary: a puncture outside the
+        bigon can still have its cut dip into the disc and back out through the
+        *same* leg, so the legs cross different cuts while the disc between them
+        stays empty. Measured on one seven-crossing level, seventeen of twenty
+        traces parted company on the very first step.
+
+        What actually has to hold is that the two legs are homotopic rel their
+        endpoints: their words agree once adjacent inverse pairs are cancelled.
+        """
+        arcs = list(self.all_arcs())
+        ambiguous = False
+        for x in range(len(arcs)):
+            for y in range(x + 1, len(arcs)):
+                a, b = arcs[x], arcs[y]
+                if not self.crosses(a, b):
+                    continue
+                for d1 in (1, -1):
+                    for d2 in (1, -1):
+                        legs_a = self._walk(a, d1)
+                        legs_b = self._walk(b, d2)
+                        for i in range(1, len(legs_a)):
+                            arc_a, wa = legs_a[i]
+                            for j in range(1, len(legs_b)):
+                                arc_b, wb = legs_b[j]
+                                if not self.crosses(arc_a, arc_b):
+                                    continue          # not a second crossing
+                                if self._reduce(wa + self._invert(wb)):
+                                    continue          # legs are not homotopic
+                                # Only now is this pair a bigon at all, and only
+                                # now does it matter whether its legs share an
+                                # arc. Asking that question earlier flagged
+                                # every passing coincidence as undecidable and
+                                # buried four fifths of the catalogue.
+                                shared = (set(legs_a[k][0] for k in range(i + 1))
+                                          & set(legs_b[k][0] for k in range(j + 1)))
+                                if shared:
+                                    ambiguous = True
+                                    continue
+                                return True
+        return UNKNOWN if ambiguous else False
+
     def _trace(self, a, b, d1, d2):
         """Follow two arcs from a shared crossing, hunting the bigon's far end.
 
-        Returns the pair of legs if they cross again, else None once they leave
-        through different edges.
+        Returns the pair of legs if they cross again, SHARED if the legs run
+        onto one and the same arc, or None once they leave through different
+        edges.
+
+        SHARED is not "no bigon". The two legs meeting on a single arc is the
+        shared-arc case this implementation does not decide, and it used to be
+        reported as None — a confident no — which is how the solver came to
+        claim drawings were taut when they were not, and so to report pinning
+        sets smaller than they really are.
         """
         left, right = [a], [b]
         cur_a, cur_b = a, b
@@ -292,7 +400,7 @@ class Diagram:
             cur_a = self.step(cur_a, d1)
             cur_b = self.step(cur_b, d2)
             if cur_a == cur_b:
-                return None
+                return self.SHARED
             left.append(cur_a)
             right.append(cur_b)
             if self.crosses(cur_a, cur_b):
@@ -394,10 +502,26 @@ class Puzzle:
         # representative does strictly better, which settles it outright.
         if d.crossing_count() < self.drawn:
             return False
+        # Two bigon searches, used for different things. The lockstep one is
+        # the better finder — measured against the catalogue it gets more
+        # answers right than the free-reduction one does. But when it finds
+        # nothing it is too easily believed: it gives up the moment the legs
+        # leave through different edges, which is sufficient for a bigon and not
+        # necessary, and that is how the solver came to call drawings taut that
+        # were not.
+        #
+        # So the second search is not asked to find bigons. It is asked whether
+        # this is a position it can be sure about, and a "no bigon" is only
+        # believed when it agrees.
         found = d.find_removable_bigon()
         if found is UNKNOWN:
             return UNKNOWN
-        return not found
+        if found:
+            return False
+        second = d.find_bigon_free()
+        if second is UNKNOWN or second:
+            return UNKNOWN if second is UNKNOWN else False
+        return True
 
     def minimal_pinning_sets(self):
         """(minimal sets as sorted site-index lists, saw_unknown).
