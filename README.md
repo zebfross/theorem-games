@@ -18,6 +18,7 @@ No build step, no dependencies, no server-side anything. Static files.
 | [Max-flow min-cut](games/maxflow/) | The greatest flow equals the cheapest cut — Menger; Ford & Fulkerson |
 | [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 | [Coin weighing](games/weighing/) | k weighings separate at most 3ᵏ cases — the counting bound |
+| [Hall's marriage theorem](games/marriage/) | A matching exists unless some group shares too few jobs — Hall; König |
 
 And one thing that is not a game, because it has nothing to arrange and no way
 to lose:

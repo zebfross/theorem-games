@@ -1,0 +1,73 @@
+/* Hall's marriage theorem: applicants, jobs, and the lines between them.
+
+   Scoped to #board — a game's stylesheet is loaded into the whole page, and an
+   unscoped class here can reach the level picker and the buttons. */
+
+/* Somebody's qualification. Faint until it is the job they actually hold, so
+   the matching reads as a picture rather than as a list to be decoded. */
+#board .link {
+  stroke: #ffffff1c;
+  stroke-width: 2;
+  pointer-events: none;
+}
+#board .link.taken {
+  stroke: var(--rope);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+}
+
+#board .who {
+  fill: #22322a;
+  stroke: #ffffff33;
+  stroke-width: 2;
+  cursor: pointer;
+}
+#board .who:hover { stroke: var(--brass); }
+
+/* In work. The whole goal is for the left column to end up like this. */
+#board .who.placed { fill: #5d4a1e; stroke: var(--rope); }
+
+/* Waiting to be given a job. */
+#board .who.picked { stroke: var(--ink); stroke-width: 3.5; }
+
+/* Being nominated as part of the bottleneck, and the jobs that group can
+   reach — the two counts the player is comparing, shown side by side. */
+#board .who.chosen { fill: #6b2f28; stroke: var(--bad); stroke-width: 3; }
+#board .who.wanted { stroke: var(--bad); stroke-dasharray: 4 3; }
+#board .who.blame { fill: #6b2f28; stroke: var(--bad); stroke-width: 3; }
+
+#board .who-label {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+#board .column {
+  fill: var(--ink-dim);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+#board .plate {
+  fill: #ffffff0d;
+  stroke: var(--line);
+  stroke-width: 1;
+  cursor: pointer;
+}
+#board .plate:hover { fill: #ffffff1f; }
+#board .plate.go { fill: #d9a4412e; stroke: var(--rope); }
+#board .plate.off { fill: #ffffff05; stroke: #ffffff14; cursor: default; }
+#board .plate.off:hover { fill: #ffffff05; }
+
+#board .plate-label {
+  fill: var(--ink);
+  font-size: 14px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+#board .plate-label.off { fill: #ffffff33; }

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="Applicants joined to jobs, with two applicants competing for a single job">
+  <!-- Applicants on the left, jobs on the right, and the bottleneck: two people
+       whose only option is the same job. That is Hall's certificate, and the
+       card shows the thing the game is really about. -->
+  <defs>
+    <style>
+      .link  { stroke: #ffffff26; stroke-width: 2; }
+      .taken { stroke: #d9a441; stroke-width: 4; stroke-linecap: round; }
+      .jam   { stroke: #ef7a6a; stroke-width: 3; stroke-linecap: round; }
+      .who   { fill: #22322a; stroke: #ffffff40; stroke-width: 2; }
+      .ok    { fill: #5d4a1e; stroke: #d9a441; stroke-width: 2; }
+      .bad   { fill: #6b2f28; stroke: #ef7a6a; stroke-width: 2.5; }
+      .want  { fill: #22322a; stroke: #ef7a6a; stroke-width: 2.5; stroke-dasharray: 4 3; }
+    </style>
+  </defs>
+  <line class="taken" x1="106" y1="34"  x2="214" y2="34"/>
+  <line class="taken" x1="106" y1="76"  x2="214" y2="76"/>
+  <line class="link"  x1="106" y1="34"  x2="214" y2="76"/>
+  <line class="jam"   x1="106" y1="118" x2="214" y2="146"/>
+  <line class="jam"   x1="106" y1="160" x2="214" y2="146"/>
+  <circle class="ok"  cx="106" cy="34"  r="15"/>
+  <circle class="ok"  cx="106" cy="76"  r="15"/>
+  <circle class="bad" cx="106" cy="118" r="15"/>
+  <circle class="bad" cx="106" cy="160" r="15"/>
+  <circle class="ok"   cx="214" cy="34"  r="15"/>
+  <circle class="ok"   cx="214" cy="76"  r="15"/>
+  <circle class="who"  cx="214" cy="104" r="15"/>
+  <circle class="want" cx="214" cy="146" r="15"/>
+</svg>

@@ -18,15 +18,22 @@
       "id": "gallery",
       "title": "Art gallery",
       "blurb": "Station guards on the corners of a room until every part of it is watched.",
-      "theorem": "Chv\u00e1tal, with Fisk's proof \u2014 \u230an/3\u230b guards always suffice",
+      "theorem": "Chvátal, with Fisk's proof — ⌊n/3⌋ guards always suffice",
       "levels": 114
     },
     {
       "id": "weighing",
       "title": "Coin weighing",
       "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
-      "theorem": "The counting bound \u2014 k weighings separate at most 3\u1d4f cases",
+      "theorem": "The counting bound — k weighings separate at most 3ᵏ cases",
       "levels": 24
+    },
+    {
+      "id": "marriage",
+      "title": "Hall's marriage theorem",
+      "blurb": "Give every applicant a job they can do — and when you cannot, prove it.",
+      "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
+      "levels": 40
     }
   ]
 }

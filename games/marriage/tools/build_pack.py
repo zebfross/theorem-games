@@ -117,6 +117,10 @@ def build_level(rng, n, m, degree, want_blocked, lid):
             # The certificate, for the verdict and the last hint. Never shown
             # otherwise: finding it is the second half of the game.
             'bottleneck': sorted(group),
+            # One maximum matching, for the last hint. Held back otherwise:
+            # building it is the first half of the game.
+            'answer': {str(a): j for a, j in
+                       hall.max_matching(adj, m).items()},
             'careless': round(rate, 4),
         }
     return None
