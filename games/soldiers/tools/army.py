@@ -34,7 +34,20 @@ JUMPS = ((0, 1), (0, -1), (1, 0), (-1, 0))
 
 
 def moves(army):
-    """Every jump available, as (from, over, to)."""
+    """Every jump available, as (from, over, to).
+
+    THIS RULE EXISTS TWICE — here, and as `jumpsFrom` in game.js — because the
+    search runs offline and the game runs in a browser. Two implementations of
+    one rule is exactly the thing that drifts silently, and if they drifted, a
+    line a player found would be unreproducible here and I would go on blaming
+    the search. So they were compared: identical jumps offered on random boards,
+    checked cell by cell through the game's own click path. They agree.
+
+    Worth repeating if either side is touched. The first attempt at that
+    comparison reported a disagreement that was not real — the harness picked
+    soldiers up one after another on a shared board, and picking up a soldier
+    with no jumps *removes* it, so the board was being eaten as it was measured.
+    """
     out = []
     for (x, y) in army:
         for dx, dy in JUMPS:
