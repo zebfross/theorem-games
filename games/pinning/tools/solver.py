@@ -46,6 +46,23 @@ to find a bigon that is there, and that is the **unsafe** direction: shipping
 those levels would tell a player their pinning set works when it does not. So
 this is still not fit to generate levels from.
 
+THE CATALOGUE IS A TRUSTWORTHY ORACLE, checked rather than assumed, since every
+disagreement is only evidence against this solver if the reference is right. On
+7^2_1 the generators are minimal pinning sets over the six inner regions; the
+seven subsets containing one of them, doubled by the free choice of the outer
+region, come to fourteen — exactly the `totalPinningSets` the catalogue records.
+It is self-consistent, and {1,2,6,7} really is not a pinning set.
+
+WHAT IS LEFT, on that same smallest case. With pins {1,2,6,7} the model has five
+crossings, matching the drawing, and neither bigon search finds anything: of 28
+pairs of legs that cross a second time, not one pair is homotopic. A monogon
+search finds nothing either, and rebuilding the diagram from scratch for that
+subset rather than filtering the full one gives byte-identical arcs, so the
+subsetting shortcut is not the culprit. The reduction the catalogue implies is
+therefore invisible to this encoding as currently read — which points at the
+singular-bigon case of Arettines' Theorem 3.5, the one the implementation has
+never covered, rather than at another bug in the search.
+
 WHY THE LOCKSTEP SEARCH MISSES BIGONS, which is the diagnosis that moved it.
 `find_removable_bigon` walks the two legs together and gives up the moment they
 leave through different polygon edges. That condition is sufficient for a bigon
