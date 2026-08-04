@@ -14,6 +14,8 @@
  * index just to draw a homepage — Pinning's alone is 158KB.
  */
 
+import { counts, order } from './plays.js';
+
 const grid = document.getElementById('games');
 const empty = document.getElementById('games-empty');
 
@@ -73,6 +75,12 @@ function card(game, kind = 'game') {
   const meta = document.createElement('p');
   meta.className = 'game-meta';
   const solved = progress(game.id);
+  if (game.plays > 0) {
+    const plays = document.createElement('span');
+    plays.className = 'game-plays';
+    plays.textContent = game.plays === 1 ? '1 play' : `${game.plays} plays`;
+    body.appendChild(plays);
+  }
   const total = game.levels;
   meta.textContent = total
     ? (solved ? `${solved} of ${total} puzzles solved` : `${total} puzzles`)
@@ -114,7 +122,20 @@ async function boot() {
     empty.hidden = false;
     return;
   }
+  // Most played first. The counts are asked for rather than waited on: a
+  // counter that is slow, blocked or absent must not keep the gallery off the
+  // screen, so the cards go up in registry order and are reordered if and when
+  // an answer arrives.
   for (const g of games) grid.appendChild(card(g));
+  counts().then(({ counts: tally, shared }) => {
+    if (!shared) return;          // one browser's habits are not a ranking
+    const ranked = order(games, tally);
+    const same = ranked.every((g, i) => g.id === games[i].id);
+    for (const g of ranked) g.plays = tally[g.id] || 0;
+    if (!same || ranked.some((g) => g.plays)) {
+      grid.replaceChildren(...ranked.map((g) => card(g)));
+    }
+  }).catch(() => { /* the gallery stands in registry order */ });
 
   // Explorations are not games: nothing to arrange, no par, no way to lose.
   // They get their own section rather than being dressed up as puzzles with an

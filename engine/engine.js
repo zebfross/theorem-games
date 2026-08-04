@@ -13,6 +13,8 @@
  * step timer gives a scrub bar whose back half shows nothing.
  */
 
+import { record as recordPlay } from './plays.js';
+
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 export const el = (id) => document.getElementById(id);
 export const board = el('board');
@@ -439,6 +441,10 @@ async function boot() {
   // Moving between games is the homepage's job, not a control tucked into the
   // header here. A dropdown hides the collection behind something you have to
   // already know to look at, and leaves no room to say what any game is.
+
+  // Somebody is playing this. Counted once per game per session, and never
+  // waited on — see engine/plays.js.
+  recordPlay(app.game.id);
 
   app.index = await (await fetch(`../games/${app.game.id}/data/index.json`)).json();
   el('coverage').textContent = app.index.note || '';

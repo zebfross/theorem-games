@@ -103,3 +103,13 @@ body.home header .brand p {
   margin-top: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 23rem));
 }
+
+/* Play count. Deliberately quiet: it is a weathervane, not a score, and the
+   number that matters on a card is how much of the game you have solved. */
+.game-plays {
+  display: block;
+  margin-top: 0.15rem;
+  color: #ffffff40;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}

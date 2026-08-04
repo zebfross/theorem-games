@@ -74,6 +74,29 @@ outline against itself a few hundred steps back instead. The engine's frame
 recorder is built on exactly this and gives you a scrub bar that is even in how
 much changes rather than even in effort spent.
 
+## Play counts
+
+The homepage can rank games by how often they are played. This is the one part
+of the site that wants a server, so it is built to degrade rather than to
+depend: `engine/plays.js` ships with no endpoint configured, keeps counts in
+`localStorage`, sends nothing anywhere, and leaves the gallery in registry
+order. A clone works offline and makes no network requests.
+
+To collect shared counts, deploy `tools/counter-worker.js` (a Cloudflare Worker
+plus a KV namespace, about seventy lines) and set `ENDPOINT` in
+`engine/plays.js`. It stores one integer per game id — no visitor identifier, no
+address, no timestamp — and rate-limits per address to turn away casual
+inflation. It cannot stop a determined effort, which would need something that
+tells people apart, and that is exactly what this is built not to have. Read the
+numbers as a weathervane.
+
+Two deliberate choices in the ranking. A play is counted **once per game per
+session**, not once per level, or a game with thirty short levels would outrank
+one people actually like. And a game nobody has played yet **keeps its registry
+position** rather than sinking to the bottom, because ranking by popularity
+feeds back on itself — whatever is on top is played because it is on top, and a
+new game needs somewhere visible to start from.
+
 ## Licence
 
 The engine and `lib/` are MIT. Individual games carry their own licence, since
