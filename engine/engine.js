@@ -72,12 +72,23 @@ const app = {
 /* ---------- saved progress, namespaced per game ---------- */
 
 const key = (kind, id) => `${app.game.id}.${kind}.${id}`;
-const bestFor = (id) => Number(localStorage.getItem(key('best', id))) || 0;
+/** A recorded best, or null if there is none.
+ *
+ *  Null rather than 0, because 0 is a real score. A game whose optimum is
+ *  "nothing left over" — no applicant unmatched, no pipe uncut — would
+ *  otherwise have its best possible result read back as never having played.
+ */
+const bestFor = (id) => {
+  const raw = localStorage.getItem(key('best', id));
+  return raw === null ? null : Number(raw);
+};
 const assisted = (id) => localStorage.getItem(key('hinted', id)) === '1';
 
 function recordBest(id, score) {
   const cur = bestFor(id);
-  if (!cur || score < cur) localStorage.setItem(key('best', id), String(score));
+  if (cur === null || score < cur) {
+    localStorage.setItem(key('best', id), String(score));
+  }
 }
 
 /* ---------- board ---------- */
@@ -116,7 +127,8 @@ function status(readout) {
   const d = app.game.describe(app.level, app.play);
   el('goal-text').innerHTML = readout === undefined ? d.goal : `${d.goal} &nbsp;·&nbsp; ${readout}`;
   const best = bestFor(app.level.id);
-  el('score').textContent = d.status + (best ? ` · your best ${best}` : '');
+  el('score').textContent = d.status
+    + (best === null ? '' : ` · your best ${best}`);
   // A game without a simulation is played move by move: there is nothing to
   // run, so the button goes away rather than sitting there permanently dead.
   el('run').hidden = !app.game.sim;
@@ -388,12 +400,14 @@ function renderPicker() {
       const b = document.createElement('button');
       b.className = 'chip';
       const best = bestFor(meta.id);
-      if (best) b.classList.add(best === app.game.par(meta) ? 'perfect' : 'solved');
+      if (best !== null) {
+        b.classList.add(best === app.game.par(meta) ? 'perfect' : 'solved');
+      }
       else if (assisted(meta.id)) b.classList.add('assisted');
       if (app.level && meta.id === app.level.id) b.classList.add('current');
       b.textContent = app.game.chip(meta);
       b.title = `${meta.id} — best possible ${app.game.par(meta)}`
-              + (best ? `, your best ${best}` : '');
+              + (best === null ? '' : `, your best ${best}`);
       b.addEventListener('click', () => { loadLevel(meta.id); el('picker').hidden = true; });
       row.appendChild(b);
     }
