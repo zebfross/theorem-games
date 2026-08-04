@@ -36,50 +36,48 @@ whole question rather than guess. `Puzzle.minimal_pinning_sets` reports whether
 any UNKNOWN arose.
 
 WHERE THIS STANDS, measured rather than guessed. Against all 1074 catalogue
-levels (tools/validate_solver.py): 924 reproduced exactly, 106 disagreed, 44
-declined as UNKNOWN — 89.7% of the ones it answered, up from 86.7%.
+levels (tools/validate_solver.py): 603 reproduced exactly, 1 disagreed, 470
+declined as UNKNOWN. Of the ones it answers, 99.8% are right.
 
-The disagreements are not noise. In 76 of the 106, every minimal set this
-solver reports is *contained* in one the catalogue reports — it believes fewer
-pins suffice. A solver that thinks a drawing is taut when it is not has failed
-to find a bigon that is there, and that is the **unsafe** direction: shipping
-those levels would tell a player their pinning set works when it does not. So
-this is still not fit to generate levels from.
+That shape is deliberate. An earlier version answered far more — 924 right, 106
+wrong — and was useless for the job it exists for, because 106 wrong answers in
+the *unsafe* direction means 106 generated levels telling a player their pinning
+set works when it does not. Declining is cheap: it costs a level. Being wrong is
+not. So the solver now refuses far more questions and is almost never wrong
+about the ones it takes.
 
-THE CATALOGUE IS A TRUSTWORTHY ORACLE, checked rather than assumed, since every
-disagreement is only evidence against this solver if the reference is right. On
-7^2_1 the generators are minimal pinning sets over the six inner regions; the
-seven subsets containing one of them, doubled by the free choice of the outer
-region, come to fourteen — exactly the `totalPinningSets` the catalogue records.
-It is self-consistent, and {1,2,6,7} really is not a pinning set.
+WHAT MADE THE DIFFERENCE was not a better bigon search. Each strand spells a
+word in the cuts it crosses, and that word is often not *cyclically* reduced:
+the strand crosses a cut and comes straight back, having gone out around a
+puncture and returned. That is slack in the drawing, it is not a bigon, and no
+bigon search can see it — which is why the solver kept declaring drawings taut
+with nothing to show against them.
 
-WHAT IS LEFT, on that same smallest case. With pins {1,2,6,7} the model has five
-crossings, matching the drawing, and neither bigon search finds anything: of 28
-pairs of legs that cross a second time, not one pair is homotopic. A monogon
-search finds nothing either, and rebuilding the diagram from scratch for that
-subset rather than filtering the full one gives byte-identical arcs, so the
-subsetting shortcut is not the culprit. The reduction the catalogue implies is
-therefore invisible to this encoding as currently read — which points at the
-singular-bigon case of Arettines' Theorem 3.5, the one the implementation has
-never covered, rather than at another bug in the search.
+Slack is not by itself proof of reducibility: winding round a puncture and back
+changes the word without necessarily costing a crossing. Treating it as proof
+was tried and measured, and it was much worse — 705 right against 339 wrong. So
+slack is used the other way round, as grounds to decline. `Diagram.slack()`.
 
-WHY THE LOCKSTEP SEARCH MISSES BIGONS, which is the diagnosis that moved it.
-`find_removable_bigon` walks the two legs together and gives up the moment they
-leave through different polygon edges. That condition is sufficient for a bigon
-and not necessary: a puncture lying *outside* the bigon can still have its cut
-dip into the disc and back out through the same leg, so the legs cross different
-cuts while the disc between them stays empty. On the smallest failing level —
-7^2_1, seven crossings — seventeen of twenty traces parted company on the very
-first step.
+TWO SEARCHES, USED DIFFERENTLY. `find_removable_bigon` walks the two legs of a
+candidate bigon in lockstep and gives up the moment they leave through different
+polygon edges. That is sufficient for a bigon and not necessary: a puncture
+outside the bigon can have its cut dip into the disc and back out through the
+same leg, so the legs cross different cuts while the disc stays empty. On 7^2_1,
+seventeen of twenty traces parted company on the first step.
 
-What must actually hold is that the legs are homotopic rel their endpoints:
-their words agree once adjacent inverse pairs cancel. `find_bigon_free` tests
-that. On its own it is a worse finder than the lockstep walk — 72 right against
-78 on the small levels — so it does not replace it. It is used instead to
-withhold confidence: a "no bigon" from the lockstep search is believed only when
-the free-reduction search agrees there is nothing to find. That combination is
-better than either alone in both directions at once, more right and less wrong,
-which is why it is the one wired into `taut`.
+`find_bigon_free` instead asks whether the legs are homotopic rel endpoints —
+their words agreeing after cancellation. On its own it is the worse finder, so
+it does not replace the lockstep walk; it is used to withhold confidence, and a
+"no bigon" is believed only when both agree.
+
+THE ONE REMAINING DISAGREEMENT is 11^3_19, where this reports {1,3,4} as a
+minimal pinning set and the catalogue has {1,3,4,9}. Still the unsafe direction,
+and still unexplained.
+
+THE CATALOGUE IS A TRUSTWORTHY ORACLE, checked rather than assumed. On 7^2_1 the
+generators are minimal pinning sets over the six inner regions; the seven
+subsets containing one of them, doubled by the free choice of the outer region,
+come to exactly the fourteen `totalPinningSets` recorded.
 """
 
 from itertools import combinations
@@ -329,6 +327,35 @@ class Diagram:
         return tuple(out)
 
     @staticmethod
+    def _cyclic_reduce(word):
+        """Cancel inverse pairs, including across the join of a closed loop."""
+        w = list(Diagram._reduce(tuple(word)))
+        while len(w) >= 2 and w[0][0] == w[-1][0] and w[0][1] == -w[-1][1]:
+            w = list(Diagram._reduce(tuple(w[1:-1])))
+        return tuple(w)
+
+    def slack(self):
+        """Does some strand wind round a puncture and straight back?
+
+        Each strand spells a word in the cuts it crosses. If that word is not
+        cyclically reduced then the strand crosses a cut and returns across it
+        with nothing in between — it has gone out around a puncture and come
+        back — and that loop can be pulled out, taking crossings with it. The
+        drawing is then not taut.
+
+        This is not a bigon and no bigon search can see it, which is why the
+        solver kept declaring drawings taut with nothing to show against them.
+        On the smallest failing level, 7^2_1, the pin sets the catalogue accepts
+        have cyclically reduced words and the one it rejects does not, exactly.
+        """
+        for s in range(len(self.arcs)):
+            word = tuple(self.leaving_edge((s, i), 1)
+                         for i in range(len(self.arcs[s])))
+            if len(self._cyclic_reduce(word)) != len(word):
+                return True
+        return False
+
+    @staticmethod
     def _invert(word):
         return tuple((g, -side) for g, side in reversed(word))
 
@@ -530,6 +557,10 @@ class Puzzle:
         # So the second search is not asked to find bigons. It is asked whether
         # this is a position it can be sure about, and a "no bigon" is only
         # believed when it agrees.
+        # Slack first: a strand that winds round a puncture and back can be
+        # pulled straight whatever the bigons say, and it is cheap to spot.
+        if d.slack():
+            return UNKNOWN
         found = d.find_removable_bigon()
         if found is UNKNOWN:
             return UNKNOWN
