@@ -56,12 +56,26 @@ a best-first search (`army.climb_to`) ordered first by height and then by
 Conway weight alone. The best-first search settles rows 1 to 3 instantly, so it
 is not simply broken.
 
+Acting on that, four structured candidates were tried — two wide rows, a
+triangle broad at the line, a checkerboard, and a column with a shelf — on the
+theory that armies with room in them jump better than solid blocks. None
+reached row 4 either.
+
 One thing learned along the way, recorded because it was nearly written down as
 a fact: feeding the search a deliberately oversized army of 55 soldiers *also*
 failed, which looked like proof that the search rather than the armies was at
 fault. It is not. A jump needs an empty cell to land in, so extra soldiers block
 as readily as they help — a packed board is worse than a sparse one, adding
 soldiers is not monotone, and that experiment says nothing at all.
+
+**Where this leaves it.** The mechanics are certainly right: the search finds
+2, 4 and 8 for rows 1, 2 and 3, which are Conway's numbers, so the jump rule and
+the geometry agree with the literature. Row 4 exists — it is classical. What is
+missing is either the published twenty-cell configuration or a search strong
+enough to find one, and best-first over 300,000 positions is not remotely that
+against a twenty-piece board. The next person should look the configuration up
+rather than rediscover it; the pack will replay and verify whatever it is
+handed.
 
 So the pack ships rows 1, 2, 3 and the wall. Row 4 is the obvious next piece of
 work and the only thing standing between this and the full ladder.
