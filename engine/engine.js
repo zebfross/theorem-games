@@ -148,7 +148,14 @@ function status(readout) {
   el('run').hidden = !app.game.sim;
   el('run').disabled = app.phase !== 'placing'
     || !(app.game.runnable ? app.game.runnable(app.level, app.play) : false);
-  el('clear').disabled = app.phase !== 'placing';
+  // Clear is off while something is running, and off after a run has finished,
+  // because a finished run is a result worth reading rather than wiping. But a
+  // game played move by move has no run: it ends with the final position still
+  // on the board, and Clear is the obvious thing to press — so leaving it dead
+  // there just looks broken. Conway's soldiers ends a won level showing the one
+  // soldier who arrived, and Clear did nothing to it.
+  el('clear').disabled = app.phase === 'running'
+    || (app.phase === 'result' && !!app.game.sim);
   el('stuck').disabled = app.phase === 'running';
 }
 

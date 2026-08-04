@@ -104,6 +104,12 @@ straight to the verdict the moment a click returns true from it.
 over(level, play)  // -> has the level just ended?
 ```
 
+Clear stays live once such a level ends, which it is not for a game with a run.
+A finished run is a result worth reading rather than wiping, but a game played
+move by move ends with the final position sitting on the board and Clear is the
+obvious thing to press — Conway's soldiers ended a won level showing the single
+soldier who had arrived, and Clear did nothing to it.
+
 Everything else is unchanged: `click` still reports `{changed}`, `verdict`
 still decides the outcome, and hints and best scores work the same. `verdict`
 is handed `null` where the sim would be, and with no recorded frames the
