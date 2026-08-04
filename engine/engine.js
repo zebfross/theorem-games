@@ -55,6 +55,18 @@ function unschedule() {
   clearTimeout(app.timer);
 }
 
+/* The whole of the running state, and reachable from outside on purpose.
+ *
+ * It used to be module-private, which sounds tidy and cost a player his work.
+ * Zeb played a winning line nobody could reproduce, and there was no way to get
+ * the moves out of the page — no console command could reach them, and the only
+ * remedy was to reload and play it again, which loses the very thing being
+ * rescued. A game that records what you did and then cannot tell you is worse
+ * than one that never recorded it.
+ *
+ * So: window.theoremGames.play is the current attempt, .level the level, .game
+ * the module. Read-only by convention; nothing here reads it back.
+ */
 const app = {
   game: null,
   index: null,
@@ -424,6 +436,13 @@ function renderPicker() {
 
 /* ---------- boot ---------- */
 
+/** Publish the running state, so what happened in a session can be got at. */
+function publish() {
+  try {
+    window.theoremGames = app;
+  } catch { /* nothing here depends on it */ }
+}
+
 async function boot() {
   const registry = await (await fetch('../games/registry.json')).json();
   const wanted = new URLSearchParams(location.search).get('game');
@@ -450,6 +469,7 @@ async function boot() {
   app.index = await (await fetch(`../games/${app.game.id}/data/index.json`)).json();
   el('coverage').textContent = app.index.note || '';
 
+  publish();
   el('run').addEventListener('click', startRun);
   el('clear').addEventListener('click', () => { app.hintTier = 0; resetLevel(false); });
   el('again').addEventListener('click', () => resetLevel(true));
