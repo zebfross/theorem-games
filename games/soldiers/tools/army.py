@@ -1,0 +1,111 @@
+"""Conway's soldiers: how far above the line can checker-jumping reach?
+
+Soldiers stand on a grid below a line. A soldier may jump over a neighbour into
+the empty cell beyond, orthogonally, and the soldier jumped over is removed —
+peg solitaire, on an unbounded board, with all the pieces starting on one side.
+
+How few soldiers does it take to get one of them to row n above the line?
+
+    row 1    2 soldiers
+    row 2    4
+    row 3    8
+    row 4   20
+    row 5   impossible, for any number of soldiers whatsoever
+
+That last line is Conway's, and it is the reason to build this. Not hard, not
+unknown — impossible, proved by giving cell (x, y) the weight phi^(n - y - |x|)
+where phi is the golden ratio, chosen precisely because phi^2 = phi + 1 makes a
+jump towards the target never increase the total. The whole half-plane below the
+line sums to exactly 1, which is the weight of the single target cell, and the
+sum is strictly decreasing in practice, so the target can never be occupied.
+
+An infinite army, arranged however you like, cannot put one man on row 5.
+
+The ladder 2, 4, 8, 20 is what makes it a game rather than a curiosity: four
+levels with exact, classical pars, each a construction the player builds, and
+then a wall that no amount of cleverness gets through.
+"""
+
+import heapq
+from functools import lru_cache
+
+# Below the line is y <= 0; the target rows are y = 1, 2, 3, ...
+JUMPS = ((0, 1), (0, -1), (1, 0), (-1, 0))
+
+
+def moves(army):
+    """Every jump available, as (from, over, to)."""
+    out = []
+    for (x, y) in army:
+        for dx, dy in JUMPS:
+            over = (x + dx, y + dy)
+            to = (x + 2 * dx, y + 2 * dy)
+            if over in army and to not in army:
+                out.append(((x, y), over, to))
+    return out
+
+
+def apply(army, move):
+    frm, over, to = move
+    return frozenset(army - {frm, over} | {to})
+
+
+def reaches(army, row):
+    """Can this army put somebody on `row`? Depth-first with memoing.
+
+    Every jump removes exactly one soldier, so the search is bounded by the
+    size of the army and cannot loop.
+    """
+    seen = set()
+
+    def walk(a):
+        if any(y >= row for (_, y) in a):
+            return True
+        if a in seen:
+            return False
+        seen.add(a)
+        return any(walk(apply(a, m)) for m in moves(a))
+
+    return walk(frozenset(army))
+
+
+def solution(army, row):
+    """A jump sequence that reaches `row`, or None. Same search, kept."""
+    seen = set()
+
+    def walk(a, path):
+        if any(y >= row for (_, y) in a):
+            return path
+        if a in seen:
+            return None
+        seen.add(a)
+        for m in moves(a):
+            got = walk(apply(a, m), path + [m])
+            if got is not None:
+                return got
+        return None
+
+    return walk(frozenset(army), [])
+
+
+def cells_below(width, depth):
+    """The staging area: a block of cells below the line to choose from."""
+    return [(x, y) for y in range(0, -depth, -1)
+            for x in range(-width, width + 1)]
+
+
+def fewest(row, width=4, depth=4, cap=12):
+    """The fewest soldiers that can reach `row`, searched by growing armies.
+
+    Armies are tried smallest first, so the first that works is minimal. This
+    is only affordable for the small rows — row 4 needs twenty soldiers and the
+    number of twenty-cell subsets is astronomical — which is why the pack ships
+    known configurations and checks them rather than searching for them.
+    """
+    from itertools import combinations
+    pool = cells_below(width, depth)
+    for size in range(1, cap + 1):
+        for army in combinations(pool, size):
+            if reaches(army, row):
+                return size, army
+    return None, None

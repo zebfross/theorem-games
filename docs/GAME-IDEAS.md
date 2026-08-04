@@ -227,6 +227,39 @@ had stopped as soon as some group of size k had deficiency k, on the theory that
 nothing could beat it. One unqualified applicant is such a group; four
 unqualified applicants have deficiency 4.
 
+## Conway's soldiers — started
+
+**Conway.** Soldiers below a line, jumping peg-solitaire style. The fewest
+needed to put a man on row n is 2, 4, 8, 20 — and row 5 is impossible for any
+army whatsoever, proved by weighting cell (x, y) with phi^(n - y - |x|), where
+phi is chosen because phi^2 = phi + 1 makes no jump towards the target increase
+the total. The whole half-plane sums to exactly the weight of the target cell,
+and strictly decreases in play. See `games/soldiers/`.
+
+**Why it is worth building.** It passes every criterion, including the one that
+sank the happy ending problem: rows 1 to 4 are constructions the player builds
+and reasons toward, with exact classical pars. The impossibility is one capstone
+level rather than the whole game, which is the difference — Erdos-Szekeres was
+avoidance all the way down.
+
+And it looks like nothing else on the shelf. No graph, no polygon, no scales: a
+board of checkers hopping over each other, which is a mechanic anybody
+recognises before a word of explanation.
+
+**Where it stands.** `tools/army.py` has the jump mechanics and a search for the
+smallest army that reaches a given row. Rows 1 and 2 are confirmed by that
+search at 2 and 4 soldiers, matching Conway independently of anything asserted.
+
+Row 3 is the first that brute force cannot reach: eight soldiers out of a
+thirty-six cell staging area is thirty million subsets, and the reachability
+test inside each is itself a search. It wants either target-directed pruning or,
+more sensibly, shipping the known configurations and *checking* them — which is
+what the rest of this repo does, and is the right call here too, since the pars
+are classical and the interesting question is whether a given army works rather
+than which army is smallest.
+
+Not playable yet: the mechanics are verified, the board is not built.
+
 ## The Chinese postman
 
 **Euler; Edmonds & Johnson.** A connected graph has a closed walk using every
