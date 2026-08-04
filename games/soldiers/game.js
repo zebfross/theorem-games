@@ -69,6 +69,7 @@ function remember(level, play) {
     localStorage.setItem(SAVE(level), JSON.stringify({
       army: [...play.army],
       first: play.history.length ? [...play.history[0]] : null,
+      moves: play.moves || [],
     }));
   } catch { /* storage off; the game still plays, it just forgets */ }
 }
@@ -242,6 +243,7 @@ export default {
       army: new Set(saved ? saved.army : []),
       picked: null,
       history: [],
+      moves: [],
       done: null,
       plates: [],
     };
@@ -285,6 +287,12 @@ export default {
         .find((j) => key(j.to) === k);
       if (jump) {
         play.history.push(new Set(play.army));
+        // Keep the move itself, not merely the position before it. The whole
+        // solution is then a thing that can be handed over, which is what was
+        // wanted all along — Zeb had played a winning line and there was no way
+        // to get it out of the browser, so I went searching for one instead.
+        (play.moves = play.moves || []).push(
+          [play.picked.slice(), jump.over.slice(), jump.to.slice()]);
         play.army.delete(key(play.picked));
         play.army.delete(key(jump.over));
         play.army.add(key(jump.to));
@@ -323,6 +331,7 @@ export default {
 
   plate(level, play, which) {
     if (which === 'undo' && play.history.length) {
+      if (play.moves) play.moves.pop();
       play.army = play.history.pop();
       play.picked = null;
       return { changed: true };
@@ -334,12 +343,16 @@ export default {
       const from = play.history.length ? play.history[0] : play.army;
       const cells = [...from].map((k) => k.split(',').map(Number))
         .sort((a, b) => b[1] - a[1] || a[0] - b[0]);
-      const textOut = JSON.stringify(cells);
+      const textOut = JSON.stringify(
+        play.moves && play.moves.length ? { army: cells, moves: play.moves }
+                                        : cells);
       try { navigator.clipboard.writeText(textOut); } catch { /* no clipboard */ }
       console.log(textOut);
       play.copied = true;
-      return { changed: true, message: `${cells.length} soldiers copied — `
-        + 'also printed to the console if the clipboard is blocked.' };
+      const n = play.moves ? play.moves.length : 0;
+      return { changed: true, message: `${cells.length} soldiers`
+        + (n ? ` and ${n} jumps` : '') + ' copied — also printed to the '
+        + 'console if the clipboard is blocked.' };
     }
     return {};
   },
