@@ -54,22 +54,25 @@ DEPTH = 9
 
 PAR = {1: 2, 2: 4, 3: 8, 4: 20}
 
-# Row 4, played by hand by Zeb when every search here had failed: a solid block
-# eight columns wide and four rows deep. Thirty-two soldiers, well above
-# Conway's twenty, so it is not par — but the last hint's job is to unstick
-# somebody, and an arrangement that works is worth more than none. Assisted
-# solves never record a score anyway, so handing over a wasteful army costs the
-# player nothing they would have kept.
+# Row 4, and the story of why it took so long.
 #
-# Not replayed by this build: no search here has found a line through it. It is
-# shipped on the word of the person who played it, which is a weaker footing
-# than everything else in the pack and is labelled as such in the game and in
-# the README.
+# Zeb played a solid eight-by-four block of 32 soldiers by hand. Every search
+# here had failed on it — and on everything else — for one reason: they all
+# steered towards a target at column 0, while his army sits over columns -7 to
+# 0 and points at column -3. Conway's own weighting says so plainly. Scored
+# against column 0 the block is worth 0.84, under the 1.0 a target cell needs;
+# scored against column -3 it is worth 1.18. I was aiming every search at the
+# weakest corner of his army.
+#
+# Retargeted, it fell out in fourteen seconds. Pruned to the soldiers that
+# actually take part, it comes to exactly twenty — Conway's number — and that
+# pruned army reaches row 4 on its own in nineteen jumps, replayed below like
+# every other level.
 PLAYED = {
-    4: [(-7, 0), (-6, 0), (-5, 0), (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0),
-        (-7, -1), (-6, -1), (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1),
-        (-7, -2), (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2),
-        (-7, -3), (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3)],
+    4: [(-7, 0), (-6, -1), (-6, 0), (-5, -3), (-5, -2), (-5, -1), (-5, 0), (-4, -2), (-4, -1), (-4, 0), (-3, -3), (-3, -2), (-3, -1), (-3, 0), (-2, -2), (-2, -1), (-2, 0), (-1, -2), (-1, -1), (-1, 0)],
+}
+PLAYED_MOVES = {
+    4: [((-3, -1), (-3, 0), (-3, 1)), ((-5, 0), (-4, 0), (-3, 0)), ((-3, 0), (-3, 1), (-3, 2)), ((-3, -3), (-3, -2), (-3, -1)), ((-1, 0), (-2, 0), (-3, 0)), ((-3, -1), (-3, 0), (-3, 1)), ((-3, 1), (-3, 2), (-3, 3)), ((-4, -2), (-4, -1), (-4, 0)), ((-2, -2), (-2, -1), (-2, 0)), ((-1, -2), (-1, -1), (-1, 0)), ((-6, -1), (-5, -1), (-4, -1)), ((-4, -1), (-4, 0), (-4, 1)), ((-7, 0), (-6, 0), (-5, 0)), ((-1, 0), (-2, 0), (-3, 0)), ((-5, -3), (-5, -2), (-5, -1)), ((-5, -1), (-5, 0), (-5, 1)), ((-5, 1), (-4, 1), (-3, 1)), ((-3, 0), (-3, 1), (-3, 2)), ((-3, 2), (-3, 3), (-3, 4))],
 }
 
 # How far the search for a working army of exactly par soldiers may range.
@@ -95,6 +98,27 @@ def find_army(row):
 def build():
     levels = []
     for row in sorted(PAR):
+        if row in PLAYED_MOVES:
+            found = [tuple(c) for c in PLAYED[row]]
+            seq = PLAYED_MOVES[row]
+            state = frozenset(found)
+            for frm, over, to in seq:
+                if frm not in state or over not in state or to in state:
+                    raise SystemExit(f'row {row}: shipped sequence is not legal')
+                state = army.apply(state, (frm, over, to))
+            if not any(y >= row for (_, y) in state):
+                raise SystemExit(f'row {row}: shipped sequence does not reach it')
+            if len(found) != PAR[row]:
+                raise SystemExit(f'row {row}: {len(found)} soldiers, par is {PAR[row]}')
+            levels.append({
+                'id': f'row{row}', 'row': row, 'par': PAR[row],
+                'width': WIDTH, 'depth': DEPTH,
+                'answer': [list(c) for c in found],
+                'moves': [[list(f), list(o), list(t)] for f, o, t in seq],
+                'replayed': True,
+            })
+            print(f'  row {row}: par {PAR[row]}, {len(seq)} jumps, verified')
+            continue
         if row not in POOL:
             # Row 4. No army is shipped, and none is needed: the game reads
             # `answer` only to place a layout for the last hint, and never

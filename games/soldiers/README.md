@@ -47,50 +47,31 @@ classical, and re-deriving them means searching every subset of a staging area �
 around 10<sup>11</sup> armies for row 4. The game states the minimum on Conway's
 authority and this file says so rather than implying a search that never ran.
 
-## Row 4, and what it rests on
+## Row 4, and why it took so long
 
-Row 4 ships, and it is the one level whose par is not verified here.
+Row 4 ships at par: twenty soldiers, nineteen jumps, replayed by the build like
+every other level.
 
-The distinction the rest of this file draws — par is *enough* is proved here,
-par is *necessary* is Conway's — does not hold for row 4. Neither half is proved
-here. A twenty-soldier army that reaches row 4 was never found by any search in
-`tools/`, so there is no arrangement to replay and no last hint to give: the
-third hint on that level says what is known and admits it has no layout to hand
-over.
+It should have taken minutes. Every search here failed on it for one reason,
+and the reason was mine: they all steered towards a target at column 0. Zeb's
+army sat over columns −7 to 0 and pointed at column −3. Conway's own weighting
+says so at a glance — scored against column 0 that army is worth 0.84, under the
+1.0 a target cell needs, and against column −3 it is worth 1.18. I was aiming
+every search at the weakest corner of the board and concluding the search was
+too weak.
 
-The last hint does hand over an arrangement: the solid eight-by-four block of 32
-soldiers that Zeb played by hand, when every search here had failed. It is well
-above Conway's 20 and the hint says so — it gets you across without being the
-answer. That is a fair trade for a hint, since an assisted solve never records a
-score anyway, so a wasteful army costs the player nothing they would have kept.
+Retargeted, it fell out in fourteen seconds. Pruned to the soldiers that
+actually take part, it came to exactly twenty — Conway's number, arrived at from
+a player's thirty-two.
 
-It is shipped on the word of the person who played it. No search here has found
-a line through it, so `build_pack.py` did not replay it, and the level carries
-`replayed: false` to say so. That is a weaker footing than anything else in the
-pack, and the only one of its kind.
-
-The level plays perfectly regardless, because the game never needed a worked
-answer at all. It reads one only to place a layout for the last hint, and reads
-the jump sequence not at all — that exists purely so `build_pack.py` can replay a
-solution and refuse to write a level whose answer does not hold up. And since a
-player may bring as many soldiers as they like, row 4 is always completable; par
-is the target, not a gate.
-
-That whole realisation came from Zeb, after a long detour in which the missing
-sequence was treated as a blocker: *"you don't even really need the move history
-since for Stuck you just give a layout that works and they have to figure out
-the sequence of jumps for themselves."* Quite so. The hint hands over a
-position, never a line of play, and row 4 could have shipped hours earlier.
-
-**What was actually tried**, so the next attempt does not repeat it: exhaustive
-search over small pools (fine to row 3, hopeless past it); hill-climbing on how
-high an army can get; best-first ordered by height, by Conway weight, and by the
-nearest soldier's distance to the target; generous armies pruned to their
-participants; and staging areas from four to nine rows deep. The two jump-rule
-implementations were checked against each other and agree, so none of this was
-a rules mismatch. Zeb reached row 4 by hand with a solid eight-by-four block of
-32 soldiers, which settles that it is reachable and that the searches here are
-simply not strong enough.
+**Two lessons, both about checking rather than reasoning.** The weighting is
+computable in five lines and would have diagnosed this at any point in several
+hours of searching; I treated it as a fact about row 5 rather than as an
+instrument. And when I finally did compute it, I measured against a single
+target column and briefly concluded the army was *provably impossible* — which a
+sanity check on a known-good army caught immediately, because that one scored
+0.53 and plainly worked. The bound applies per target cell, and the game accepts
+any column. A measurement pointed at the wrong thing is not better than a guess.
 
 ## Files
 
