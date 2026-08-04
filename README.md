@@ -19,6 +19,7 @@ No build step, no dependencies, no server-side anything. Static files.
 | [Art gallery](games/gallery/) | ⌊n/3⌋ guards always suffice — Chvátal, with Fisk's proof |
 | [Coin weighing](games/weighing/) | k weighings separate at most 3ᵏ cases — the counting bound |
 | [Hall's marriage theorem](games/marriage/) | A matching exists unless some group shares too few jobs — Hall; König |
+| [Conway's soldiers](games/soldiers/) | 2, 4, 8, 20 soldiers reach rows 1–4, and row 5 is impossible — Conway |
 
 And one thing that is not a game, because it has nothing to arrange and no way
 to lose:

@@ -1,0 +1,72 @@
+/* Conway's soldiers: a board, a line, and the country on the other side of it.
+
+   Scoped to #board — a game's stylesheet is loaded into the whole page, and an
+   unscoped class here can reach the level picker and the buttons. */
+
+/* The two halves of the board. Which side of the line a square is on is the
+   only thing about it that matters, so the ground says so before the pieces do. */
+#board .below { fill: #16302a; }
+#board .above { fill: #101f1b; }
+
+#board .cell {
+  fill: #ffffff05;
+  stroke: #ffffff12;
+  stroke-width: 1;
+}
+
+/* The row being aimed at. */
+#board .cell.target { fill: #d9a4411a; stroke: #d9a44159; }
+
+/* The line itself. Everything starts below it; the game is about crossing. */
+#board .frontier {
+  stroke: var(--brass);
+  stroke-width: 2.5;
+  stroke-dasharray: 9 6;
+  pointer-events: none;
+}
+
+#board .soldier {
+  fill: #c9a15e;
+  stroke: #0e1a15;
+  stroke-width: 2;
+  cursor: pointer;
+}
+#board .soldier:hover { fill: var(--brass); }
+#board .soldier.picked { stroke: var(--ink); stroke-width: 3.5; }
+
+/* Whoever is currently highest. The whole game is one number — how far up
+   anybody has got — so the board keeps that piece visible. */
+#board .soldier.leader { fill: var(--rope); stroke: var(--brass); }
+#board .soldier.arrived { fill: var(--good); stroke: #d6ffe8; stroke-width: 3; }
+
+/* Where the picked soldier may land, and who it would cost to go there. A jump
+   always spends the piece it hops, and seeing that before committing is the
+   difference between planning and flailing. */
+#board .landing {
+  fill: #6fdc9a1f;
+  stroke: var(--good);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+#board .doomed {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+#board .plate {
+  fill: #ffffff0d;
+  stroke: var(--line);
+  stroke-width: 1;
+  cursor: pointer;
+}
+#board .plate:hover { fill: #ffffff1f; }
+#board .plate-label {
+  fill: var(--ink);
+  font-size: 14px;
+  text-anchor: middle;
+  pointer-events: none;
+}

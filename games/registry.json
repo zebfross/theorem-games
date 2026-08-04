@@ -39,6 +39,14 @@
       "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
       "levels": 40,
       "added": "2026-08-03"
+    },
+    {
+      "id": "soldiers",
+      "title": "Conway's soldiers",
+      "blurb": "Jump soldiers over each other to cross a line — there is a row nobody reaches.",
+      "theorem": "Conway — 2, 4, 8, 20 soldiers reach rows 1 to 4, and row 5 is impossible",
+      "levels": 4,
+      "added": "2026-08-03"
     }
   ]
 }
