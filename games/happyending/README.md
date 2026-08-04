@@ -57,6 +57,30 @@ levels shipped with points packed closer together than the game would let anyone
 place. The levels loaded, looked right, and were quietly impossible. The
 generator now enforces the same spacing the game does.
 
+## "Pentagon" does not mean the regular one
+
+A convex pentagon here is five points sitting in a ring with none of them
+tucked inside the others. It is usually lopsided, and it always will be: no
+theorem can force a *regular* polygon out of a point set, because regularity is
+a measure-zero condition — nudge any point and every regular polygon in the set
+is destroyed. Convex position is the strongest thing finitely many points can be
+forced into, and it is what Erdos and Szekeres proved.
+
+## The wall
+
+There is one level per polygon whose whole content is that it cannot be done.
+Par points are already down — the most that can avoid the shape — and you place
+one more, anywhere you like. It fails. It fails wherever you click, because the
+theorem says so, and pressing "try again" and failing somewhere else is the
+level working as intended.
+
+Reaching par is satisfying. Finding out that par + 1 is not merely hard but
+*forbidden* is the theorem, and without these levels the game never showed it:
+every other level can be won, so a loss reads as your mistake rather than as a
+wall. The claim is checked rather than asserted — a sweep of all three wall
+levels on a 5-unit grid tries 52,749 spots the game would accept, and not one
+escapes.
+
 ## Levels
 
 Each level is a polygon to avoid and a head start: some of an extremal

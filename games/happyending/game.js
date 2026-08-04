@@ -206,7 +206,7 @@ export default {
     + 'generated here, so this game carries no third-party data.',
 
   group: (m) => `avoiding a convex ${({ 4: 'quadrilateral', 5: 'pentagon', 6: 'hexagon' })[m.k]}`,
-  chip: (m) => `${m.par - m.seed}·${m.par}`,
+  chip: (m) => (m.wall ? 'wall' : `${m.par - m.seed}·${m.par}`),
   par: (m) => m.par,
 
   start: () => ({ placed: [], caught: null, showing: null, done: false }),
@@ -215,9 +215,17 @@ export default {
 
   describe(level, play) {
     const on = allPoints(level, play).length;
+    if (level.wall) {
+      return {
+        goal: `<b>${level.wall}</b> points are down with no convex `
+              + `<b>${level.shape}</b>. Put one more anywhere you like`,
+        status: play.caught ? 'and there it is' : 'anywhere at all',
+      };
+    }
     return {
       goal: `Get <b>${level.par}</b> points down with no convex `
-            + `<b>${level.shape}</b> among them`,
+            + `<b>${level.shape}</b> — no ${level.par === 4 ? 'four' : 'five'}`
+            + ` of them in a ring with none tucked inside`,
       status: `${on} of ${level.par} placed`
         + (play.caught ? ' · a convex ' + level.shape + ' appeared' : ''),
     };
@@ -243,7 +251,9 @@ export default {
     play.showing = null;
     const pts = allPoints(level, play);
     play.caught = findConvex(pts, level.k);
-    if (play.caught || pts.length >= level.par) play.done = true;
+    // On a wall level the polygon appearing is the whole point, so it ends the
+    // level either way.
+    if (play.caught || play.placed.length >= level.par) play.done = true;
     return { changed: true };
   },
 
@@ -255,11 +265,32 @@ export default {
 
   verdict(level, play) {
     const on = allPoints(level, play).length;
+
+    // The wall. Failing is the result being demonstrated, so failing is the win.
+    if (level.wall) {
+      const at = play.placed[0];
+      return {
+        won: true,
+        perfect: true,
+        score: 1,
+        title: 'There was nowhere to put it.',
+        detail: `Any ${level.wall + 1} points in general position contain a `
+                + `convex ${level.shape}. Not usually, not almost always — `
+                + 'always. Wherever you had clicked, on any part of the field, '
+                + `a convex ${level.shape} would have appeared, and one did. `
+                + 'Try again somewhere else and watch it happen again.',
+        readout: `it appeared at ${Math.round(at[0])}, ${Math.round(at[1])}`,
+      };
+    }
+
     if (play.caught) {
       return {
         won: false,
         title: `A convex ${level.shape}.`,
-        detail: `Point ${on} made one, and it was there the instant you put it `
+        detail: `Those ${level.k} points sit in a ring with none of them inside `
+                + `the others, which is all "convex ${level.shape}" means — it `
+                + 'need not be regular, or anything like it. '
+                + `Point ${on} made one, and it was there the instant you put it `
                 + `down. ${level.par} points can avoid a convex ${level.shape}; `
                 + `${on} sometimes can, and this arrangement could not.`,
         readout: `stopped at ${on}`,
@@ -299,6 +330,13 @@ export default {
     const on = allPoints(level, play).length;
     const need = level.par - on;
 
+    if (level.wall) {
+      return {
+        text: `There is no hint. That is the level: ${level.wall} points is the `
+              + `most that can avoid a convex ${level.shape}, so the one you are `
+              + 'holding has nowhere to go. Put it down anywhere and see.',
+      };
+    }
     if (tier === 1) {
       return {
         text: `Any ${level.par + 1} points in general position contain a convex `

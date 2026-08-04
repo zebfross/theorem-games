@@ -81,6 +81,24 @@ def build():
                 for i, a in enumerate(config) for b in config[i + 1:]]
         print(f'  k={k}: par {par}, closest pair {min(gaps):.1f}, '
               f'smallest triangle {min(abs(P.cross(x, y, z)) for x in config for y in config for z in config if x < y < z):.0f}')
+        # The wall. A full board is already down — par points, the most that
+        # can avoid the shape — and there is one more to place. Every legal
+        # spot on the field fails, because the theorem says any par + 1 points
+        # contain the polygon, so this is the one level whose whole content is
+        # that it cannot be done. Reaching par is satisfying; finding out that
+        # par + 1 is not merely hard but forbidden is the point of the theorem,
+        # and the game had no way to show it.
+        levels.append({
+            'id': f'k{k}wall',
+            'k': k,
+            'shape': SHAPE[k],
+            'par': 1,               # one point to place, and it will not save you
+            'wall': par,            # how many are already down
+            'seed': par,
+            'field': list(FIELD),
+            'given': [list(p) for p in config],
+            'rest': [],
+        })
         for seed in SEEDS[k]:
             levels.append({
                 'id': f'k{k}s{seed}',
@@ -105,7 +123,8 @@ if __name__ == '__main__':
             json.dump(lv, f, separators=(',', ':'))
     index = {
         'count': len(levels),
-        'levels': [{key: lv[key] for key in ('id', 'k', 'par', 'seed')}
+        'levels': [{**{key: lv[key] for key in ('id', 'k', 'par', 'seed')},
+                    **({'wall': lv['wall']} if 'wall' in lv else {})}
                    for lv in levels],
     }
     with open(os.path.join(DATA, 'index.json'), 'w') as f:
