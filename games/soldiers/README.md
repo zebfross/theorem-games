@@ -58,9 +58,20 @@ here. A twenty-soldier army that reaches row 4 was never found by any search in
 third hint on that level says what is known and admits it has no layout to hand
 over.
 
-The level plays perfectly regardless, because the game never needed one. It
-reads a worked answer only to place a layout for the last hint, and reads the
-jump sequence not at all — that exists purely so `build_pack.py` can replay a
+The last hint does hand over an arrangement: the solid eight-by-four block of 32
+soldiers that Zeb played by hand, when every search here had failed. It is well
+above Conway's 20 and the hint says so — it gets you across without being the
+answer. That is a fair trade for a hint, since an assisted solve never records a
+score anyway, so a wasteful army costs the player nothing they would have kept.
+
+It is shipped on the word of the person who played it. No search here has found
+a line through it, so `build_pack.py` did not replay it, and the level carries
+`replayed: false` to say so. That is a weaker footing than anything else in the
+pack, and the only one of its kind.
+
+The level plays perfectly regardless, because the game never needed a worked
+answer at all. It reads one only to place a layout for the last hint, and reads
+the jump sequence not at all — that exists purely so `build_pack.py` can replay a
 solution and refuse to write a level whose answer does not hold up. And since a
 player may bring as many soldiers as they like, row 4 is always completable; par
 is the target, not a gate.

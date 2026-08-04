@@ -467,11 +467,22 @@ export default {
     }
     play.army = new Set(level.answer.map((c) => key(c)));
     play.history = [];
+    play.moves = [];
     play.picked = null;
+    remember(level, play);
+    const many = level.answer.length;
     return {
-      text: `An army of ${level.par} that reaches row ${level.row} is on the `
-            + 'board. Now jump it up — the sequence is yours to find, and there '
-            + 'is more than one.',
+      text: many === level.par
+        ? `An army of ${level.par} that reaches row ${level.row} is on the `
+          + 'board. Now jump it up — the sequence is yours to find, and there '
+          + 'is more than one.'
+        // Above par, and said so. Better an army that works than none, but a
+        // hint that quietly handed over a wasteful answer would be teaching
+        // the wrong number.
+        : `An army of ${many} that reaches row ${level.row} is on the board. `
+          + `It is well past par — Conway's number is ${level.par} — so this `
+          + 'will get you across but it is not the answer. Nobody here has '
+          + 'found the tight one.',
     };
   },
 };

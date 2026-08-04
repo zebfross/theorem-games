@@ -54,6 +54,24 @@ DEPTH = 9
 
 PAR = {1: 2, 2: 4, 3: 8, 4: 20}
 
+# Row 4, played by hand by Zeb when every search here had failed: a solid block
+# eight columns wide and four rows deep. Thirty-two soldiers, well above
+# Conway's twenty, so it is not par — but the last hint's job is to unstick
+# somebody, and an arrangement that works is worth more than none. Assisted
+# solves never record a score anyway, so handing over a wasteful army costs the
+# player nothing they would have kept.
+#
+# Not replayed by this build: no search here has found a line through it. It is
+# shipped on the word of the person who played it, which is a weaker footing
+# than everything else in the pack and is labelled as such in the game and in
+# the README.
+PLAYED = {
+    4: [(-7, 0), (-6, 0), (-5, 0), (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0),
+        (-7, -1), (-6, -1), (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1),
+        (-7, -2), (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2),
+        (-7, -3), (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3)],
+}
+
 # How far the search for a working army of exactly par soldiers may range.
 # Known solutions are compact, so a narrow pool near the target column finds
 # them quickly where a wide one would not finish.
@@ -95,12 +113,16 @@ def build():
                 'par': PAR[row],
                 'width': WIDTH,
                 'depth': DEPTH,
-                'answer': [],
+                'answer': [list(c) for c in PLAYED.get(row, [])],
                 'moves': [],
                 'cited': True,
+                # True only when this build replayed the answer itself.
+                'replayed': False,
             })
-            print(f'  row {row}: par {PAR[row]}, shipped on Conway\'s authority '
-                  f'— no army found here, so no last hint')
+            n = len(PLAYED.get(row, []))
+            print(f'  row {row}: par {PAR[row]}, shipped on Conway\'s authority; '
+                  + (f'hint gives a played army of {n} (above par, not replayed here)'
+                     if n else 'no army, so no last hint'))
             continue
         found = find_army(row)
         if not found:
