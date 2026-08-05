@@ -32,13 +32,26 @@ SIZE = 500.0
 MARGIN = 40.0
 
 
-def loop(rng, corners, radius, centre, wobble=0.30):
-    """A closed polyline through `corners` points, in a scrambled order.
+def loop(rng, corners, radius, centre, wobble=0.30, star=None):
+    """A closed polyline through `corners` points on a jittered circle.
 
-    Points sit on a circle with a jittered radius and a jittered angle, then are
-    visited in a shuffled order. Visiting them in angular order would give a
-    convex polygon with no crossings at all; shuffling is what makes the strand
-    cross itself.
+    Visiting the points in angular order would give a convex polygon with no
+    crossings at all, so the order is what makes the strand cross itself. Two
+    orders are on offer, and they are good at different things.
+
+    A **shuffled** order is the obvious one and gives a pleasant tangle, but its
+    regions come out as long thin lenses. That matters because every region has
+    to be comfortably clickable, and past three or four crossings a shuffled
+    drawing nearly always has a sliver too thin to pin. The dense end of the
+    pack was starved by exactly this: the build could barely find anything above
+    four crossings that survived the clearance bar.
+
+    A **star** order — step `star` points round the circle each time, coprime
+    with `corners` so the walk closes only after visiting all of them — gives the
+    {n/k} star polygons. Those are dense in crossings and, being regular, have
+    regions of even size. The jitter above keeps them from being exactly regular,
+    which both avoids the degeneracies the arrangement cannot handle and stops
+    every level looking like a pentagram.
     """
     cx, cy = centre
     pts = []
@@ -47,9 +60,18 @@ def loop(rng, corners, radius, centre, wobble=0.30):
         r = radius * (1 + rng.uniform(-wobble, wobble))
         pts.append((round(cx + r * math.cos(a), 3),
                     round(cy + r * math.sin(a), 3)))
-    order = list(range(corners))
-    rng.shuffle(order)
+    if star:
+        order = [(i * star) % corners for i in range(corners)]
+    else:
+        order = list(range(corners))
+        rng.shuffle(order)
     return [pts[i] for i in order]
+
+
+def star_steps(corners):
+    """The steps that make a single closed star polygon on `corners` points."""
+    return [k for k in range(2, corners // 2 + 1)
+            if math.gcd(k, corners) == 1]
 
 
 def smooth(points, rounds=3):
@@ -80,7 +102,7 @@ def smooth(points, rounds=3):
     return points
 
 
-def drawing(rng, strands, corners):
+def drawing(rng, strands, corners, star=None):
     """A whole drawing: `strands` closed polylines over a shared field."""
     out = []
     for s in range(strands):
@@ -90,7 +112,7 @@ def drawing(rng, strands, corners):
         off = 0 if strands == 1 else (SIZE - 2 * MARGIN) * 0.14
         centre = (SIZE / 2 + off * math.cos(ang), SIZE / 2 + off * math.sin(ang))
         radius = (SIZE / 2 - MARGIN) * rng.uniform(0.72, 0.95)
-        out.append(smooth(loop(rng, corners, radius, centre)))
+        out.append(smooth(loop(rng, corners, radius, centre, star=star)))
     return out
 
 

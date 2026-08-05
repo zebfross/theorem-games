@@ -43,9 +43,33 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(os.path.dirname(HERE), 'data')
 
 PAD = 16.0
-CLEARANCE = 18.0        # units of room a pin point needs on every side
-PER_SHAPE = 6           # levels allowed to share one pinning structure
-MAX_REGIONS = 7         # subsets to search grow as 2^this
+
+# How much room a pin point needs on every side, as a share of the width of the
+# view it is drawn in.
+#
+# It was an absolute 18 units against a fixed 532-unit view. That is the same
+# 3.4%, but stated as a share it survives the change below: the view is now
+# cropped to the drawing rather than fixed, so a drawing that used to sit in the
+# middle of the box using two thirds of the width now fills it, and every region
+# is correspondingly bigger on screen. Judging clearance against the fixed box
+# would have thrown away drawings that are perfectly clickable once cropped.
+CLEARANCE = 0.034
+PER_SHAPE = 2           # levels allowed to share one pinning structure
+MAX_REGIONS = 9         # subsets to search grow as 2^this
+
+# How many levels each crossing count may contribute.
+#
+# Left to itself the build is overwhelmingly bottom-heavy, because small
+# drawings are far commoner and far cheaper to answer. The first 120-level pack
+# came out 24 levels at 2 crossings and one at 6 — and at 2 crossings with a
+# single loop there is exactly *one* diagram, the figure eight, so those 24 were
+# the same puzzle drawn 24 ways. Zeb spotted it straight away: "levels 1-2 to
+# 12-2 are very similar, basically the same pattern over and over."
+#
+# The count of distinct diagrams grows fast with crossings, so the quota grows
+# with it. Where a size cannot fill its quota the build simply ships fewer, and
+# says so.
+QUOTA = {2: 4, 3: 18, 4: 30, 5: 24, 6: 8}
 
 # A hard stop per drawing. Most solve in milliseconds, but the cost of a single
 # tautness query grows with the number of arcs as well as the number of subsets,
@@ -85,6 +109,18 @@ class _TooSlow(BaseException):
     prevent. Inheriting from BaseException means nothing between here and there
     catches it by accident.
     """
+
+
+def _crop(strands):
+    """A square view fitted to the drawing, rather than to the whole field.
+
+    Square so the rope keeps its proportions whatever the board's shape.
+    """
+    xs = [x for s in strands for x, _ in s]
+    ys = [y for s in strands for _, y in s]
+    side = max(max(xs) - min(xs), max(ys) - min(ys)) + 2 * PAD
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+    return [cx - side / 2, cy - side / 2, side, side]
 
 
 def _give_up(signum, frame):
@@ -142,12 +178,13 @@ def _build_level(rng, strand_count, corners, want_crossings):
     # so what is checked is how far the region's own pin point sits from the
     # nearest wall. The level that prompted this had a region of area 1150,
     # over the old threshold, whose pin point had 8 units of room.
+    box = _crop(pts)
     for f, site in zip(inner, sites):
         poly = [tuple(q) for q in f['polygon']]
         n = len(poly)
         room = min(arrangement._dist_to_segment(site, poly[i], poly[(i + 1) % n])
                    for i in range(n))
-        if room < CLEARANCE:
+        if room < CLEARANCE * box[2]:
             return None
 
     strands = [[tuple(p) for p in s] for s in pts]
@@ -185,7 +222,7 @@ def _build_level(rng, strand_count, corners, want_crossings):
         'crossings': crossings,
         'regions': len(faces),
         'strands': len(pts),
-        'viewBox': [-PAD, -PAD, draw.SIZE + 2 * PAD, draw.SIZE + 2 * PAD],
+        'viewBox': [round(v, 3) for v in box],
     }
 
 
@@ -194,13 +231,21 @@ def build(target, seed=20260804):
     levels = []
     seen = {}
     tries = 0
+    per_c = {}
     while len(levels) < target and tries < target * 400:
         tries += 1
         strand_count = rng.choice([1, 1, 1, 2])
-        lv = build_level(rng, strand_count, rng.randint(5, 9), (2, 6))
+        # A wider corner count than the 5-9 that produced the bottom-heavy pack.
+        # Crossings rise with corners, and the quota below is what stops the
+        # cheap small drawings from filling the pack before the big ones arrive.
+        lv = build_level(rng, strand_count, rng.randint(6, 11), (2, max(QUOTA)))
         if tries % 500 == 0:
-            print(f'  {tries} drawings, {len(levels)} levels', flush=True)
+            print(f'  {tries} drawings, {len(levels)} levels '
+                  + '(' + ' '.join(f'{c}x:{n}' for c, n in sorted(per_c.items()))
+                  + ')', flush=True)
         if not lv:
+            continue
+        if per_c.get(lv['crossings'], 0) >= QUOTA.get(lv['crossings'], 0):
             continue
         # Two drawings with the same crossings, strands and pinning sets pose
         # much the same puzzle, so a few of each is variety and a hundred is
@@ -212,6 +257,7 @@ def build(target, seed=20260804):
         if seen.get(key, 0) >= PER_SHAPE:
             continue
         seen[key] = seen.get(key, 0) + 1
+        per_c[lv['crossings']] = per_c.get(lv['crossings'], 0) + 1
         levels.append(lv)
     # Easiest first: fewest crossings, then fewest pins needed.
     levels.sort(key=lambda l: (l['crossings'], l['effectiveMinimum'], l['strands']))
@@ -225,6 +271,8 @@ if __name__ == '__main__':
     want = int(sys.argv[1]) if len(sys.argv) > 1 else 60
     os.makedirs(os.path.join(DATA, 'levels'), exist_ok=True)
     levels, tries = build(want)
+    for name in os.listdir(os.path.join(DATA, 'levels')):
+        os.remove(os.path.join(DATA, 'levels', name))
     for lv in levels:
         with open(os.path.join(DATA, 'levels', lv['id'] + '.json'), 'w') as f:
             json.dump(lv, f, separators=(',', ':'))
@@ -240,6 +288,10 @@ if __name__ == '__main__':
     for lv in levels:
         by_c[lv['crossings']] = by_c.get(lv['crossings'], 0) + 1
     print(f'wrote {len(levels)} levels from {tries} drawings')
+    short = {c: q - by_c.get(c, 0) for c, q in sorted(QUOTA.items())
+             if by_c.get(c, 0) < q}
+    if short:
+        print('short of quota:', short, '- those sizes ran out, not a failure')
     print('by crossings:', dict(sorted(by_c.items())))
     print('pins needed :', dict(sorted(
         (k, sum(1 for l in levels if l['effectiveMinimum'] == k))
