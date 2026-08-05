@@ -59,10 +59,22 @@ share of what is enumerated:
         7         10         2
         8         27         1
 
-The drops are the solver declining, not the drawings failing — and declining is
-a property of the diagram, not of how it is drawn: all sixteen layouts of the
-trefoil shadow decline identically. So the ceiling here is the solver, and no
-amount of further work on enumeration or drawing moves it.
+Broken down at eight crossings, where there are enough diagrams to be worth
+counting:
+
+    declined by the solver   16
+    every region too tight    7
+    no layout reproduced it   3
+    certified                 1
+
+So the solver is the main loss, and declining is a property of the diagram
+rather than of how it is drawn — all sixteen layouts of the trefoil shadow
+decline identically, so redrawing cannot rescue one. The other ten are worth
+something: a lower clearance bar and a better embedder could reach them. But
+they would then face the same 59% decline, which is about four more levels out
+of twenty-seven, and does not change what this is capable of.
+
+The ceiling is the solver. Nothing further in enumeration or drawing moves it.
 
 Usage:  python3 tools/build_enumerated.py [max crossings]
 """
