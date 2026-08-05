@@ -184,9 +184,6 @@ function plates(level, play) {
     }
     return out;
   }
-  if (play.history.length) {
-    out.push({ key: 'undo', caption: 'Take that jump back', on: true });
-  }
   if (level.wall) {
     out.push({ key: 'give', caption: 'I cannot do it', on: true });
   }
@@ -343,13 +340,30 @@ export default {
     return { changed: true };
   },
 
+  undoable: (level, play) => play.history.length > 0,
+
+  /** Take the last jump back.
+   *
+   *  This was a plate on the board, which meant it vanished the moment the
+   *  level ended — precisely when it is most wanted, having just spent the last
+   *  jump or landed a row short. As an engine hook it survives the finish and
+   *  puts the board back in play, and it sits where Undo sits in every other
+   *  game rather than somewhere this one invented.
+   *
+   *  The move log is popped alongside the army: it is what the build replays to
+   *  check a shipped answer, so a log that remembered a jump the board has
+   *  forgotten would be a solution that never happened.
+   */
+  undo(level, play) {
+    if (!play.history.length) return false;
+    if (play.moves) play.moves.pop();
+    play.army = play.history.pop();
+    play.picked = null;
+    play.done = null;
+    return true;
+  },
+
   plate(level, play, which) {
-    if (which === 'undo' && play.history.length) {
-      if (play.moves) play.moves.pop();
-      play.army = play.history.pop();
-      play.picked = null;
-      return { changed: true };
-    }
     if (which === 'give') { play.done = 'gave-up'; return { changed: true }; }
     if (which === 'copy') {
       // The army as it *started*, not as it stands: after a few jumps the
