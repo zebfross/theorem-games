@@ -133,6 +133,30 @@ looks it up by bitmask. Writing the opponent in the game module instead means a
 second implementation of the theorem, free to drift from the one that was
 checked, and the drift shows up as a level whose par cannot actually be reached.
 
+## Undo (optional)
+
+```js
+undoable(level, play)  // -> is there anything to take back
+undo(level, play)      // take one back; -> true if it did
+```
+
+Supply both and an **Undo** button appears; leave them out and it does not. The
+engine handles coming back out of a finished level, which is the case that
+matters: played move by move, the move worth taking back is usually the one that
+just ended things.
+
+Undo one *round*, not one half of one. Where a click also provokes a reply,
+snapshot before the click and restore both together — a move you never saw the
+answer to is not one you would want to reconsider.
+
+**Whether undo should cost the player their best score is a judgement about your
+game, not a rule.** It does not in Sprague–Grundy, because the opponent there is
+a fixed table: it answers the same way every time, so any position reachable by
+undoing is equally reachable by pressing Clear and replaying the same moves.
+Undo is a shortcut for that rather than a source of anything new, and a hint is
+not. If your game has a random element or hidden information, undo *is* new
+information, and it should mark the attempt the way a hint does.
+
 ## The run
 
 Frames are recorded by *distance moved*, not on a step timer, so the scrub bar

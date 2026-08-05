@@ -365,6 +365,7 @@ export default {
       theirs: [],
       hinted: null,
       showValues: false,
+      past: [],
     };
   },
 
@@ -429,6 +430,11 @@ export default {
     }
     if (!want) return { message: 'That is not a move here.' };
 
+    // Both halves of the round happen inside this one click, so one snapshot
+    // takes back your move and their reply together — which is the only
+    // sensible unit, since a move you cannot see the answer to is not a move
+    // you would want to reconsider.
+    play.past.push({ mask: play.mask, moves: play.moves, theirs: play.theirs });
     play.mask = want.mask;
     play.moves += 1;
     play.hinted = null;
@@ -453,6 +459,28 @@ export default {
   draw: (level, play) => render(level, play),
 
   over: (level, play) => play.done !== null,
+
+  undoable: (level, play) => play.past.length > 0,
+
+  /** Take back your last move and their reply to it.
+   *
+   *  This costs nothing and is deliberately not treated as help, unlike a hint.
+   *  The opponent is a fixed table, so it answers the same way every time: any
+   *  position reachable by undoing is equally reachable by pressing Clear and
+   *  replaying the same moves. Undo is a shortcut for that, not a source of
+   *  anything you could not already have found out — so a best score survives
+   *  it, and a par still has to be a par.
+   */
+  undo(level, play) {
+    const back = play.past.pop();
+    if (!back) return false;
+    play.mask = back.mask;
+    play.moves = back.moves;
+    play.theirs = back.theirs;
+    play.done = null;
+    play.hinted = null;
+    return true;
+  },
 
   verdict(level, play) {
     const thing = level.kind === 'kayles' ? 'pin'

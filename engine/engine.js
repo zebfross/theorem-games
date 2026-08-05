@@ -157,6 +157,11 @@ function status(readout) {
   el('clear').disabled = app.phase === 'running'
     || (app.phase === 'result' && !!app.game.sim);
   el('stuck').disabled = app.phase === 'running';
+  // Undo belongs to games that can offer it and is absent everywhere else,
+  // rather than sitting there permanently dead.
+  el('undo').hidden = !app.game.undo;
+  el('undo').disabled = app.phase === 'running'
+    || !(app.game.undoable ? app.game.undoable(app.level, app.play) : true);
 }
 
 board.addEventListener('click', (ev) => {
@@ -178,6 +183,23 @@ board.addEventListener('click', (ev) => {
     if (app.game.over && app.game.over(app.level, app.play)) finishRun();
   }
 });
+
+/** Take a move back, and come out of the result if that is where we were.
+ *
+ *  Undoing into a finished level is the point of it rather than an edge case:
+ *  a game played move by move ends the moment a move ends it, so the move worth
+ *  taking back is usually the one that just finished the level.
+ */
+function undoMove() {
+  if (!app.game.undo || !app.game.undo(app.level, app.play)) return;
+  stopBrowsing();
+  app.phase = 'placing';
+  el('verdict').hidden = true;
+  el('alts').hidden = true;
+  say('');
+  draw();
+  status();
+}
 
 function say(text, isTip = true) {
   const hint = el('hint');
@@ -482,6 +504,7 @@ async function boot() {
 
   publish();
   el('run').addEventListener('click', startRun);
+  el('undo').addEventListener('click', undoMove);
   el('clear').addEventListener('click', () => { app.hintTier = 0; resetLevel(false); });
   el('again').addEventListener('click', () => resetLevel(true));
   el('stuck').addEventListener('click', nudge);
