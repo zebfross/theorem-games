@@ -55,6 +55,14 @@
       "theorem": "The pinning ideal of a multiloop — Simon & Stucky, via Arettines",
       "levels": 84,
       "added": "2026-08-04"
+    },
+    {
+      "id": "grundy",
+      "title": "Sprague–Grundy",
+      "blurb": "Four games that look nothing alike. Every one of them is Nim.",
+      "theorem": "Sprague; Grundy, every impartial game is a Nim heap",
+      "levels": 13,
+      "added": "2026-08-05"
     }
   ]
 }

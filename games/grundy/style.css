@@ -1,0 +1,109 @@
+/* Sprague–Grundy: coins, skittles and twigs, all of them Nim heaps.
+
+   Scoped to #board — a game's stylesheet is loaded into the whole page, and an
+   unscoped class here can reach the level picker and the buttons. This game
+   uses .link, .value and .ground, all of which are ordinary enough words to
+   collide with something. */
+
+/* -- coins, for Nim and take-away ------------------------------------- */
+
+#board .coin {
+  fill: var(--rope);
+  stroke: #0e1a15;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+/* An inner rim, so a stack of coins reads as coins rather than as dots. */
+#board .rim {
+  fill: none;
+  stroke: #00000038;
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
+/* -- skittles, for Kayles --------------------------------------------- */
+
+#board .pin {
+  fill: #e6e0d2;
+  stroke: #0e1a15;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+/* The catch between two pins that stand side by side: clicking it takes both.
+   Drawn only where that move is legal, so the rule is visible on the board
+   rather than only written above it. */
+#board .link {
+  fill: var(--brass-dark);
+  stroke: var(--brass);
+  stroke-width: 1.5;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+#board .link:hover { opacity: 1; }
+
+/* -- twigs, for Hackenbush -------------------------------------------- */
+
+#board .twig {
+  stroke: var(--rope);
+  stroke-width: 9;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+#board .joint {
+  fill: var(--rope-dark);
+  stroke: none;
+  pointer-events: none;
+}
+
+/* The ground. Everything hangs off it, and anything that stops touching it
+   falls — so it is drawn as something solid rather than as a hairline. */
+#board .ground {
+  stroke: var(--brass);
+  stroke-width: 4;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* -- what just happened ------------------------------------------------ */
+
+/* The opponent's last move, left on the board as an outline until you move
+   again. Without it a reply that takes three coins from a row is a board that
+   silently changed shape between one click and the next. */
+#board .lastreply {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+#board .twig.lastreply { stroke: var(--bad); }
+
+/* The move the last hint gave away. */
+#board .hinted {
+  stroke: var(--good);
+  stroke-width: 4;
+  filter: drop-shadow(0 0 7px #6fdc9a88);
+}
+
+#board .twig.hinted { stroke: var(--good); stroke-width: 11; }
+#board .link.hinted { fill: var(--good); opacity: 1; }
+
+/* -- the heaps underneath ---------------------------------------------- */
+
+/* The Nim value of each independent part, once the second hint has lifted the
+   disguise. This is the whole theorem in one number per part. */
+#board .value {
+  fill: var(--good);
+  font: 600 30px ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-anchor: middle;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #0e1a15;
+  stroke-width: 5;
+}

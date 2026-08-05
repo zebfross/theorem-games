@@ -116,6 +116,23 @@ is handed `null` where the sim would be, and with no recorded frames the
 scrubber stays hidden, since there is nothing to replay that the player did
 not already watch happen.
 
+### Games with an opponent
+
+A game where something moves back fits the same shape: make the reply inside
+`click`, synchronously, before returning `{changed}`. There is no need to wait
+for a repaint — the engine redraws once, with both moves already made.
+
+That leaves one problem, which is that the board silently changes shape between
+one click and the next. Keep the pieces the opponent just took and draw them as
+outlines until the player moves again; Sprague–Grundy does this and without it a
+reply that takes three coins from a row is unreadable.
+
+**Ship the opponent as data, not as code.** Sprague–Grundy stores the reply to
+every position it can face — computed by the same search that computes par — and
+looks it up by bitmask. Writing the opponent in the game module instead means a
+second implementation of the theorem, free to drift from the one that was
+checked, and the drift shows up as a level whose par cannot actually be reached.
+
 ## The run
 
 Frames are recorded by *distance moved*, not on a step timer, so the scrub bar

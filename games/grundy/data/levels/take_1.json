@@ -1,0 +1,1 @@
+{"id":"take_1","kind":"take","name":"One row, at most three","tag":"Take-away","chip":"10","limit":3,"units":10,"start":1023,"par":3,"wall":false,"value":2,"policy":{"511":255,"255":127,"127":15,"7":0,"3":0,"1":0,"63":15,"31":15,"15":7},"careless":0.0408,"rows":[[0,1,2,3,4,5,6,7,8,9]],"lengths":[10]}

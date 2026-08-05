@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A row of coins, a rack of skittles and a Hackenbush twig, each labelled with the Nim heap it is worth, XOR-ing to zero">
+  <!-- The whole game in one picture: three positions played by three different
+       sets of rules, each labelled with the single Nim heap it is worth. They
+       XOR to zero, which is the losing position — so this is what you want to
+       hand your opponent. -->
+
+  <!-- Coins: a row of three is worth three. -->
+  <g>
+    <circle cx="46" cy="96" r="17" fill="#d9a441" stroke="#0e1a15" stroke-width="2"/>
+    <circle cx="46" cy="96" r="10" fill="none" stroke="#00000038" stroke-width="2.5"/>
+    <circle cx="80" cy="96" r="17" fill="#d9a441" stroke="#0e1a15" stroke-width="2"/>
+    <circle cx="80" cy="96" r="10" fill="none" stroke="#00000038" stroke-width="2.5"/>
+    <circle cx="114" cy="96" r="17" fill="#d9a441" stroke="#0e1a15" stroke-width="2"/>
+    <circle cx="114" cy="96" r="10" fill="none" stroke="#00000038" stroke-width="2.5"/>
+  </g>
+
+  <!-- Skittles: an unbroken rack of four is worth one, which no length predicts. -->
+  <g fill="#e6e0d2" stroke="#0e1a15" stroke-width="2">
+    <path d="M152 78 c7 0 8 9 4 14 c6 5 8 14 8 19 c0 4 -5 5 -12 5 c-7 0 -12 -1 -12 -5 c0 -5 2 -14 8 -19 c-4 -5 -3 -14 4 -14 z"/>
+    <path d="M182 78 c7 0 8 9 4 14 c6 5 8 14 8 19 c0 4 -5 5 -12 5 c-7 0 -12 -1 -12 -5 c0 -5 2 -14 8 -19 c-4 -5 -3 -14 4 -14 z"/>
+  </g>
+
+  <!-- Hackenbush: a fork rooted at the ground, worth one more than what grows
+       out of it. -->
+  <g stroke="#d9a441" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M252 148 L252 116"/>
+    <path d="M252 116 L232 92"/>
+    <path d="M252 116 L272 92"/>
+  </g>
+  <g fill="#8a5a1c">
+    <circle cx="252" cy="116" r="5"/>
+    <circle cx="232" cy="92" r="5"/>
+    <circle cx="272" cy="92" r="5"/>
+  </g>
+  <path d="M214 148 L292 148" stroke="#e8c37a" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- The heaps they are really made of, and the sum that loses. -->
+  <g fill="#6fdc9a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+     font-size="26" font-weight="600" text-anchor="middle">
+    <text x="80" y="56">3</text>
+    <text x="167" y="56">1</text>
+    <text x="252" y="56">2</text>
+  </g>
+  <g fill="#a8b8ae" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+     font-size="20" text-anchor="middle">
+    <text x="124" y="56">^</text>
+    <text x="210" y="56">^</text>
+  </g>
+  <text x="160" y="172" fill="#a8b8ae" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+        font-size="17" text-anchor="middle">3 ^ 1 ^ 2 = 0</text>
+</svg>

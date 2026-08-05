@@ -1,0 +1,1 @@
+{"id":"wall","kind":"nim","name":"One, two, three","tag":"The wall","chip":"1\u00b72\u00b73","limit":0,"units":6,"start":63,"par":0,"wall":true,"value":0,"policy":{"62":30,"59":3,"57":9,"31":30,"15":9,"7":3,"8":0,"1":0,"2":0,"26":10,"24":0,"14":10,"6":0},"careless":0.0,"rows":[[0],[1,2],[3,4,5]],"lengths":[1,2,3]}
