@@ -25,6 +25,9 @@
 <main>
   <div id="stage">
     <canvas id="view"></canvas>
+    <!-- Fills while a sharper pass is computing. Decorative: the readout below
+         says "drawing…" in words, so this is hidden from assistive tech. -->
+    <div id="working" aria-hidden="true"></div>
     <p id="limit" hidden>At the limit of the fixed-point arithmetic, around
        2<sup>−220</sup>. Past here even the reference orbit cannot separate one
        pixel from the next.</p>

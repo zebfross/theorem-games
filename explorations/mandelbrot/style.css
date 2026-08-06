@@ -62,3 +62,29 @@ body.explorer footer p { max-width: 68ch; }
    alone they come out as the browser's default blue on a dark green field. */
 body.explorer .brand a { color: var(--brass); }
 body.explorer .brand a:hover { color: var(--ink); }
+
+/* A hairline along the top of the picture while a sharper pass is computing.
+ *
+ * Zooming shows the last sharp frame stretched into place, which is the right
+ * thing to look at but reads as permanent fuzz — there is nothing to say the
+ * real picture is on its way. This says so, and stays out of the way while it
+ * does: two pixels, no chrome, gone the moment the sharp pass lands.
+ *
+ * It only appears if the frame takes longer than a moment. Near the top of the
+ * set every frame is instant, and a bar that flashed on each one would be
+ * worse than no bar at all.
+ */
+#working {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 2px;
+  width: 0;
+  background: linear-gradient(90deg, #d9a44100, var(--brass, #e8c37a));
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: width 140ms linear, opacity 220ms ease;
+  pointer-events: none;
+}
+
+#working.on { opacity: 0.9; }

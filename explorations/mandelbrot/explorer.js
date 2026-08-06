@@ -24,6 +24,16 @@ const CORES = Math.max(2, Math.min(12, navigator.hardwareConcurrency || 4));
 // Coarse first, then sharper. The coarse pass is 64 times cheaper and lands
 // almost instantly, so panning and zooming never show a blank canvas.
 const PASSES = [8, 3, 1];
+// What each pass actually costs, for the progress hairline. A pass at step n
+// computes 1/n² of the pixels, so the three are worth about 1.4%, 10% and 89%
+// of the frame. Counting passes instead would jump the bar to two thirds while
+// barely any of the work was done, which is a worse lie than no bar.
+const PASS_COST = PASSES.map((step) => 1 / (step * step));
+const TOTAL_COST = PASS_COST.reduce((a, b) => a + b, 0);
+// How long a frame has to take before the bar is worth showing. Near the top of
+// the set frames land in a few milliseconds and a bar flashing on every one of
+// them would be worse than none.
+const SHOW_AFTER = 150;
 
 const canvas = document.getElementById('view');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -35,6 +45,50 @@ const snap = document.createElement('canvas');
 const nctx = snap.getContext('2d', { alpha: false });
 
 const el = (id) => document.getElementById(id);
+
+/* ---------- the progress hairline ---------- */
+
+const bar = () => el('working');
+let barTimer = null;
+
+/** A new frame: rewind the bar, and arm it in case this one is slow. */
+function progressStart() {
+  clearTimeout(barTimer);
+  const b = bar();
+  // Rewind without animating. The width is transitioned so that it slides
+  // forward smoothly, and without this the reset slides visibly *backward*
+  // first, which reads as the render undoing itself.
+  b.style.transition = 'none';
+  b.style.width = '0%';
+  void b.offsetWidth;
+  b.style.transition = '';
+  // If it is already showing, leave it showing. Holding a wheel down runs
+  // frames together, and fading out and in between each one is a flicker where
+  // a bar that simply keeps refilling is information.
+  if (!b.classList.contains('on')) {
+    barTimer = setTimeout(() => b.classList.add('on'), SHOW_AFTER);
+  }
+}
+
+/** How far through the whole frame we are, weighted by what each pass costs. */
+function progressAt(p) {
+  let before = 0;
+  for (let i = 0; i < p.passIndex; i++) before += PASS_COST[i];
+  const within = p.chunks ? p.done / p.chunks : 1;
+  const done = (before + PASS_COST[p.passIndex] * within) / TOTAL_COST;
+  bar().style.width = `${(done * 100).toFixed(1)}%`;
+}
+
+/** The sharp pass has landed. Fill, then fade. */
+function progressDone() {
+  clearTimeout(barTimer);
+  const b = bar();
+  b.style.width = '100%';
+  b.classList.remove('on');
+  // Snap back to zero only once the fade has finished, or the next frame starts
+  // with a full bar visibly rewinding.
+  setTimeout(() => { if (!b.classList.contains('on')) b.style.width = '0%'; }, 260);
+}
 
 /** Hand back to the browser between passes, and always come back.
  *
@@ -150,6 +204,7 @@ function render() {
   // the coarse passes are the only thing standing between the viewer and a
   // blank canvas, which at depth is twenty seconds of black.
   app.covered = reproject();
+  progressStart();
   runPass(0);
   status();
 }
@@ -205,9 +260,10 @@ function runPass(passIndex) {
   }
   app.pending = 0;
   app.passIters = 0;
+  const chunks = app.queue.length;      // before the workers start popping it
   app.pass = { job, passIndex, w, h, step, x0, y0, scale, maxIter, useBulb,
                deep: app.deep, cxd: toNumber(app.cx), cyd: toNumber(app.cy),
-               t0: performance.now() };
+               t0: performance.now(), chunks, done: 0 };
 
   for (const worker of app.workers) feed(worker);
   if (!app.pending) finishPass();
@@ -240,6 +296,8 @@ function onBand(ev) {
   sctx.putImageData(img, 0, at);
 
   app.pending--;
+  p.done++;
+  progressAt(p);
   feed(ev.target);
   if (app.pending === 0) finishPass();
 }
@@ -269,6 +327,7 @@ function finishPass() {
     snap.height = canvas.height;
     nctx.drawImage(canvas, 0, 0);
     app.snapAt = { cx: app.cx, cy: app.cy, span: app.span };
+    progressDone();
     status(performance.now() - p.t0);
   }
 }

@@ -84,6 +84,20 @@ test.describe('the homepage', () => {
     }
   });
 
+  test('the Mandelbrot progress hairline clears when a frame lands',
+    async ({ page }) => {
+      // It exists to say "a sharper picture is coming" while zooming. A bar
+      // left showing after the picture arrived would say the opposite forever.
+      await page.goto('/explorations/mandelbrot/');
+      const bar = page.locator('#working');
+      await expect(bar).toHaveCount(1);
+      await expect(page.locator('#timing')).not.toContainText('drawing', {
+        timeout: 30000,
+      });
+      await expect.poll(async () => bar.evaluate(
+        (e) => e.classList.contains('on')), { timeout: 5000 }).toBe(false);
+    });
+
   test('every exploration opens', async ({ page }) => {
     for (const e of SHELF) {
       const res = await page.goto(`/explorations/${e.id}/`);
