@@ -245,13 +245,25 @@ test.describe('Route inspection, played', () => {
     await page.goto('/play.html?game=postman');
     await page.waitForSelector('#board *', { state: 'attached' });
 
-    const count = await page.evaluate(
-      () => window.theoremGames.index.levels.length);
+    const ids = await page.evaluate(
+      () => window.theoremGames.index.levels.map((l) => l.id));
 
-    for (let i = 0; i < count; i++) {
+    for (const want of ids) {
+      // Mark the attempt now on the board, then wait for it to be replaced.
+      //
+      // Waiting for the level's id instead does not work, and fails in the one
+      // case that looks safest: picking the level already loaded. The id
+      // matches before the click has done anything, so the wait returns at
+      // once, the walk starts, and the fetch lands in the middle of it and
+      // swaps in a fresh attempt — the cost reset to zero seven clicks in.
+      // Locally the fetch is too quick for that to happen. Over the network it
+      // is not, which is why only the live run caught it.
+      await page.evaluate(() => { window.theoremGames.play.__before = true; });
       await page.locator('#browse').click();
-      await page.locator('#picker .chip').nth(i).click();
-      await page.waitForSelector('#board *', { state: 'attached' });
+      await page.locator('#picker .chip').nth(ids.indexOf(want)).click();
+      await page.waitForFunction(
+        (level) => window.theoremGames.level.id === level
+          && !window.theoremGames.play.__before, want);
 
       const { id, par, answer } = await page.evaluate(() => ({
         id: window.theoremGames.level.id,
