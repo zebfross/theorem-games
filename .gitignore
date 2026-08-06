@@ -10,3 +10,8 @@ reference/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Playwright
+node_modules/
+test-results/
+playwright-report/

@@ -34,7 +34,7 @@
     },
     {
       "id": "marriage",
-      "title": "Hall's marriage theorem",
+      "title": "Hall’s marriage theorem",
       "blurb": "Give every applicant a job they can do — and when you cannot, prove it.",
       "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
       "levels": 41,
@@ -42,7 +42,7 @@
     },
     {
       "id": "soldiers",
-      "title": "Conway's soldiers",
+      "title": "Conway’s soldiers",
       "blurb": "Jump soldiers over each other to cross a line — there is a row nobody reaches.",
       "theorem": "Conway — 2, 4, 8, 20 soldiers reach rows 1 to 4, and row 5 is impossible",
       "levels": 4,

@@ -40,6 +40,26 @@ jobs:
       - name: Every tool still compiles
         run: python3 -m compileall -q lib tools games
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Open the site and press things
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy:
     needs: check
     if: github.event_name != 'pull_request'
@@ -84,19 +104,30 @@ jobs:
             .htaccess index.html play.html engine games explorations docs \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 
-      - name: It is actually up
-        # A deploy that copied files onto a host serving something else is not
-        # a deploy. This asks the live site the same questions a visitor's
-        # browser would, over the real certificate.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Playwright
         run: |
-          set -e
-          for url in \
-            "https://theorem.games/" \
-            "https://theorem.games/games/registry.json" \
-            "https://theorem.games/engine/engine.js" \
-            "https://theorem.games/explorations/registry.json" \
-            "https://theorem.games/explorations/mandelbrot/"; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url")
-            echo "  $code  $url"
-            [ "$code" = "200" ] || exit 1
-          done
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Play the live site
+        # The same suite the check job ran, pointed at theorem.games. Running it
+        # twice is not redundant: locally it proves the code works, here it
+        # proves *this deploy* put that code on the server. The explorations
+        # shelf was missing from the server for a day while the repository was
+        # perfectly correct, and only a check against the live site could have
+        # said so.
+        env:
+          BASE_URL: https://theorem.games
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-live
+          path: playwright-report/
+          retention-days: 7
