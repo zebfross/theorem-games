@@ -30,6 +30,12 @@ try {
     .explorations || [];
 } catch { SHELF = []; }
 
+// Boards are waited for as *attached*, not visible. Playwright calls an
+// element visible only if its bounding box has area, and a horizontal <line>
+// has no height — so a game drawing streets rather than shapes would hang here
+// forever while rendering perfectly. What is being asked is "did the game draw
+// anything", which is attachment.
+
 /** Fail the test on anything the page logs as broken.
  *
  *  Worth attaching everywhere even though none of the three regressions threw:
@@ -147,7 +153,7 @@ test.describe('the engine', () => {
     // a different URL — a cache-busting query, say — gives the page two engines
     // and two sets of listeners, and every button stops working without a word.
     await page.goto(`/play.html?game=${GAMES[0].id}`);
-    await page.waitForSelector('#board *');
+    await page.waitForSelector('#board *', { state: 'attached' });
     const loads = await page.evaluate(() =>
       performance.getEntriesByType('resource')
         .filter((r) => /engine\/engine\.js/.test(r.name)).map((r) => r.name));
@@ -159,7 +165,7 @@ test.describe('the engine', () => {
     // Links to removed games outlive the games. Taut's did.
     const errors = watchForErrors(page);
     await page.goto('/play.html?game=no-such-game');
-    await page.waitForSelector('#board *');
+    await page.waitForSelector('#board *', { state: 'attached' });
     await expect(page.locator('#title')).not.toBeEmpty();
     expect(errors).toEqual([]);
   });
@@ -170,7 +176,7 @@ for (const game of GAMES) {
     test('opens, draws a board and names itself', async ({ page }) => {
       const errors = watchForErrors(page);
       await page.goto(`/play.html?game=${game.id}`);
-      await page.waitForSelector('#board *');
+      await page.waitForSelector('#board *', { state: 'attached' });
       await expect(page.locator('#title')).toHaveText(game.title);
       expect(await page.locator('#board *').count()).toBeGreaterThan(0);
       expect(errors).toEqual([]);
@@ -179,7 +185,7 @@ for (const game of GAMES) {
     test('level select opens, and picking a level loads it', async ({ page }) => {
       const errors = watchForErrors(page);
       await page.goto(`/play.html?game=${game.id}`);
-      await page.waitForSelector('#board *');
+      await page.waitForSelector('#board *', { state: 'attached' });
 
       await expect(page.locator('#picker')).toBeHidden();
       await page.locator('#browse').click();
@@ -191,7 +197,7 @@ for (const game of GAMES) {
       // Take the last one, so it is not usually the level already loaded.
       const before = await page.locator('#board').innerHTML();
       await chips.last().click();
-      await page.waitForSelector('#board *');
+      await page.waitForSelector('#board *', { state: 'attached' });
       await expect(page.locator('#picker')).toBeHidden();
       await expect
         .poll(async () => (await page.locator('#board').innerHTML()) !== before,
@@ -203,7 +209,7 @@ for (const game of GAMES) {
     test('Clear leaves a board you can still play', async ({ page }) => {
       const errors = watchForErrors(page);
       await page.goto(`/play.html?game=${game.id}`);
-      await page.waitForSelector('#board *');
+      await page.waitForSelector('#board *', { state: 'attached' });
       await page.locator('#clear').click();
       expect(await page.locator('#board *').count()).toBeGreaterThan(0);
       expect(errors).toEqual([]);
@@ -212,7 +218,7 @@ for (const game of GAMES) {
     test('Stuck? gives a hint', async ({ page }) => {
       const errors = watchForErrors(page);
       await page.goto(`/play.html?game=${game.id}`);
-      await page.waitForSelector('#board *');
+      await page.waitForSelector('#board *', { state: 'attached' });
       await page.locator('#stuck').click();
       await expect(page.locator('#hint')).not.toBeEmpty();
       expect(errors).toEqual([]);

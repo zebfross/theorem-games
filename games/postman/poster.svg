@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A small street grid with two corners marked as odd and one street drawn doubled between them">
+  <!-- The theorem in one picture. Two corners have an odd number of streets
+       meeting them, so they cannot be balanced by walking in and out; the round
+       has to pass through each an extra time, which means doubling the streets
+       along a path between them. The dashed street is that repeat, and it is
+       the whole of what the round costs above the length of the map. -->
+
+  <!-- The map. -->
+  <g stroke="#ffffff2e" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M70 40 L160 40"/>
+    <path d="M160 40 L250 40"/>
+    <path d="M70 40 L70 100"/>
+    <path d="M160 40 L160 100"/>
+    <path d="M250 40 L250 100"/>
+    <path d="M70 100 L160 100"/>
+    <path d="M160 100 L250 100"/>
+    <path d="M70 100 L70 145"/>
+    <path d="M70 145 L160 145"/>
+    <path d="M160 100 L160 145"/>
+  </g>
+
+  <!-- The street a cheapest round walks twice. -->
+  <path d="M160 100 L160 145" stroke="#ef7a6a" stroke-width="9"
+        stroke-linecap="round" stroke-dasharray="13 7" fill="none"/>
+
+  <!-- Corners. The two lit ones are where an odd number of streets meet. -->
+  <g fill="#16302a" stroke="#6b4a12" stroke-width="2.5">
+    <circle cx="70" cy="40" r="11"/>
+    <circle cx="160" cy="40" r="11"/>
+    <circle cx="250" cy="40" r="11"/>
+    <circle cx="70" cy="100" r="11"/>
+    <circle cx="250" cy="100" r="11"/>
+    <circle cx="70" cy="145" r="11"/>
+  </g>
+  <g fill="#16302a" stroke="#6fdc9a" stroke-width="4">
+    <circle cx="160" cy="100" r="11"/>
+    <circle cx="160" cy="145" r="11"/>
+  </g>
+
+  <!-- The depot, and the postman standing on it. -->
+  <circle cx="70" cy="40" r="11" fill="#6b4a12" stroke="#e8c37a" stroke-width="3.5"/>
+  <circle cx="70" cy="40" r="7" fill="#d9a441" stroke="#0e1a15" stroke-width="2"/>
+</svg>

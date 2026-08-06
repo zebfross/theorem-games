@@ -1,0 +1,75 @@
+/* Route inspection: a street map, and the streets you have already walked.
+
+   Scoped to #board — a game's stylesheet is loaded into the whole page, and an
+   unscoped class here can reach the level picker and the buttons. */
+
+/* A street nobody has walked yet. */
+#board .street {
+  stroke: #ffffff26;
+  stroke-width: 7;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+/* Walked once: what the round is made of. */
+#board .street.once {
+  stroke: var(--rope);
+  stroke-width: 8;
+}
+
+/* Walked twice. This is the cost of the round above the length of the streets,
+   so it is the one thing on the board worth reading at a glance, and it is
+   drawn as the one thing that is not the colour of progress. */
+#board .street.twice {
+  stroke: var(--bad);
+  stroke-width: 9;
+  stroke-dasharray: 13 7;
+}
+
+/* Where the last hint says a cheapest round doubles. */
+#board .street.doubled {
+  stroke: var(--good);
+  stroke-width: 11;
+  stroke-dasharray: 13 7;
+  opacity: 0.85;
+}
+
+/* The streets you could take from where you stand. Drawn under the corners so
+   a move is visible without having to work out what joins to what. */
+#board .onward {
+  stroke: var(--brass);
+  stroke-width: 2.5;
+  stroke-dasharray: 4 6;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+#board .corner {
+  fill: #16302a;
+  stroke: var(--brass-dark);
+  stroke-width: 2.5;
+  cursor: pointer;
+}
+
+/* A corner where an odd number of streets meet: one that cannot balance, and
+   so has to be passed through more than once. Shown by the second hint. */
+#board .corner.odd {
+  stroke: var(--good);
+  stroke-width: 4;
+  filter: drop-shadow(0 0 6px #6fdc9a66);
+}
+
+/* Home. */
+#board .corner.depot {
+  fill: var(--brass-dark);
+  stroke: var(--brass);
+  stroke-width: 3.5;
+}
+
+/* The postman. */
+#board .here {
+  fill: var(--rope);
+  stroke: #0e1a15;
+  stroke-width: 2;
+  pointer-events: none;
+}

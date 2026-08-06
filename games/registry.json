@@ -55,6 +55,14 @@
       "theorem": "Sprague; Grundy, every impartial game is a Nim heap",
       "levels": 12,
       "added": "2026-08-05"
+    },
+    {
+      "id": "postman",
+      "title": "Route inspection",
+      "blurb": "Walk every street and come home, repeating as little as you can.",
+      "theorem": "Guan; Edmonds & Johnson — the cheapest repeat is a matching on the odd corners",
+      "levels": 9,
+      "added": "2026-08-06"
     }
   ]
 }
