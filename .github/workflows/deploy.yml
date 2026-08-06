@@ -49,11 +49,19 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Load the deploy key
+        # The host key is pinned in a secret rather than fetched with
+        # ssh-keyscan at deploy time. Keyscan is a network call to a shared host
+        # that rate-limits, and it failed one run in four from a runner — with
+        # its stderr sent to /dev/null, so the log said only "exit code 1".
+        # Pinning removes the call, and trusting a key recorded once beats
+        # trusting whatever answers on the day.
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy
           chmod 600 ~/.ssh/deploy
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "${{ secrets.DEPLOY_HOSTKEY }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          test -s ~/.ssh/known_hosts || { echo "no host key"; exit 1; }
 
       - name: Publish
         # --delete makes the server mirror the repo, so a game removed here
