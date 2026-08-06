@@ -1,0 +1,87 @@
+# Check, then publish to theorem.games.
+#
+# The site is static — no build step, no bundler — so deploying is a file copy
+# and the interesting part is what runs before it. Both checks here exist
+# because the failures they catch are silent ones: a stylesheet that reaches
+# past the board and disables the level picker, or a registry promising levels
+# whose files were never written. Neither shows up until somebody clicks.
+#
+# Pull requests get the checks and nothing else. Only main deploys.
+
+name: check and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # A second push while the first is still copying would interleave two rsyncs
+  # into the same directory. Let the newer one win and cancel the older.
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: No game stylesheet reaches a class the engine styles
+        run: python3 tools/check_styles.py
+
+      - name: Every level the index promises is present and parses
+        run: python3 tools/check_data.py
+
+      - name: Every tool still compiles
+        run: python3 -m compileall -q lib tools games
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load the deploy key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Publish
+        # --delete makes the server mirror the repo, so a game removed here
+        # disappears there without anybody remembering to go and delete it.
+        # The two excludes are directories the server owns rather than the
+        # repo: .well-known is how the host proves the domain to Let's Encrypt
+        # at renewal time, and deleting it would break the certificate.
+        #
+        # Only what the site actually serves is sent. lib/ is build-time Python,
+        # tools/ builds the packs, and reference/ is a 733MB catalogue clone.
+        run: |
+          rsync -az --delete \
+            --exclude '.well-known' --exclude 'cgi-bin' \
+            -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
+            index.html play.html engine games docs \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
+
+      - name: It is actually up
+        # A deploy that copied files onto a host serving something else is not
+        # a deploy. This asks the live site the same questions a visitor's
+        # browser would, over the real certificate.
+        run: |
+          set -e
+          for url in \
+            "https://theorem.games/" \
+            "https://theorem.games/games/registry.json" \
+            "https://theorem.games/engine/engine.js"; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url")
+            echo "  $code  $url"
+            [ "$code" = "200" ] || exit 1
+          done

@@ -37,7 +37,7 @@
       "title": "Hall's marriage theorem",
       "blurb": "Give every applicant a job they can do — and when you cannot, prove it.",
       "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
-      "levels": 40,
+      "levels": 41,
       "added": "2026-08-03"
     },
     {
@@ -53,7 +53,7 @@
       "title": "Sprague–Grundy",
       "blurb": "Four games that look nothing alike. Every one of them is Nim.",
       "theorem": "Sprague; Grundy, every impartial game is a Nim heap",
-      "levels": 13,
+      "levels": 12,
       "added": "2026-08-05"
     }
   ]
