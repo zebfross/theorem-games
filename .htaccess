@@ -1,0 +1,26 @@
+# Cache policy for a static site whose filenames are not versioned.
+#
+# Without this the host's defaults apply, and they assume assets are
+# fingerprinted: engine.js and style.css were served with max-age=604800, so a
+# returning visitor kept week-old JavaScript and never saw a deploy. There is no
+# build step here and no hashes in filenames, so the only safe answer is to make
+# the browser ask.
+#
+# "no-cache" does not mean "do not store" — it means revalidate before use. The
+# browser still holds the file and still gets a 304 when nothing changed, which
+# costs a header exchange rather than a download.
+
+<IfModule mod_headers.c>
+  # The app and its data. These change on every deploy.
+  <FilesMatch "\.(html|js|css|json)$">
+    Header set Cache-Control "no-cache"
+    Header unset Expires
+    Header unset Pragma
+  </FilesMatch>
+
+  # Pictures. A stale poster is cosmetic rather than broken, so these get a day.
+  <FilesMatch "\.(svg|png|jpg|webp|ico)$">
+    Header set Cache-Control "public, max-age=86400"
+    Header unset Expires
+  </FilesMatch>
+</IfModule>

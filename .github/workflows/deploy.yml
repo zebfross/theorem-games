@@ -64,11 +64,16 @@ jobs:
         #
         # Only what the site actually serves is sent. lib/ is build-time Python,
         # tools/ builds the packs, and reference/ is a 733MB catalogue clone.
+        #
+        # .htaccess is listed explicitly because it is a dotfile and because
+        # --delete would otherwise remove it: it lives in the docroot, so a
+        # deploy that did not send it would treat it as something the repo had
+        # deleted, and the host's week-long asset caching would come back.
         run: |
           rsync -az --delete \
             --exclude '.well-known' --exclude 'cgi-bin' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
-            index.html play.html engine games docs \
+            .htaccess index.html play.html engine games docs \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 
       - name: It is actually up
