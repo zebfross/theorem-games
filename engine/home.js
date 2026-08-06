@@ -19,6 +19,22 @@ import { counts, order, newest } from './plays.js';
 const grid = document.getElementById('games');
 const empty = document.getElementById('games-empty');
 
+/* Data files revalidate rather than trusting whatever the browser stored.
+ *
+ * The site went out with the host's default headers, which cached assets for a
+ * week and left the JSON to heuristics. Fixing the headers fixed new visitors
+ * and did nothing for anybody who had already loaded the page: their browser
+ * went on serving a registry listing a game that had been removed, and a plain
+ * reload did not touch it, because a reload revalidates the document and not
+ * what fetch() pulls in behind it.
+ *
+ * "no-cache" here is not "do not store" — the browser keeps the file and asks
+ * whether it changed, which is a 304 and a header exchange when it has not. For
+ * a registry read once a page load that is free, and it means the data can
+ * never be staler than the last request.
+ */
+const FRESH = { cache: 'no-cache' };
+
 /** How many levels of this game have a recorded best, and how many are perfect.
  *
  *  Read by prefix rather than by consulting the level list, so the homepage
@@ -117,7 +133,7 @@ async function boot() {
 
   let registry;
   try {
-    registry = await (await fetch('games/registry.json')).json();
+    registry = await (await fetch('games/registry.json', FRESH)).json();
   } catch {
     empty.hidden = false;
     empty.textContent = 'The game registry could not be loaded.';
@@ -155,7 +171,7 @@ async function boot() {
   // They get their own section rather than being dressed up as puzzles with an
   // empty score, and the file is optional so the page works without it.
   try {
-    const more = await (await fetch('explorations/registry.json')).json();
+    const more = await (await fetch('explorations/registry.json', FRESH)).json();
     const list = more.explorations || [];
     if (list.length) {
       document.getElementById('explorations').hidden = false;

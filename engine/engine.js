@@ -19,6 +19,22 @@ export const SVG_NS = 'http://www.w3.org/2000/svg';
 export const el = (id) => document.getElementById(id);
 export const board = el('board');
 
+/* Data files revalidate rather than trusting whatever the browser stored.
+ *
+ * The site went out with the host's default headers, which cached assets for a
+ * week and left the JSON to heuristics. Fixing the headers fixed new visitors
+ * and did nothing for anybody who had already loaded the page: their browser
+ * went on serving a registry listing a game that had been removed, and a plain
+ * reload did not touch it, because a reload revalidates the document and not
+ * what fetch() pulls in behind it.
+ *
+ * "no-cache" here is not "do not store" — the browser keeps the file and asks
+ * whether it changed, which is a 304 and a header exchange when it has not. For
+ * a registry read once a page load that is free, and it means the data can
+ * never be staler than the last request.
+ */
+const FRESH = { cache: 'no-cache' };
+
 export function svgEl(name, attrs) {
   const node = document.createElementNS(SVG_NS, name);
   for (const k in attrs) node.setAttribute(k, attrs[k]);
@@ -415,7 +431,7 @@ function resetLevel(keep) {
 
 async function loadLevel(id) {
   const url = `../games/${app.game.id}/data/levels/${encodeURIComponent(id)}.json`;
-  app.level = await (await fetch(url)).json();
+  app.level = await (await fetch(url, FRESH)).json();
   app.play = app.game.start(app.level);
   app.hintTier = 0;
   app.usedHint = false;
@@ -477,7 +493,7 @@ function publish() {
 }
 
 async function boot() {
-  const registry = await (await fetch('../games/registry.json')).json();
+  const registry = await (await fetch('../games/registry.json', FRESH)).json();
   const wanted = new URLSearchParams(location.search).get('game');
   const entry = registry.games.find((g) => g.id === wanted) || registry.games[0];
 
@@ -499,7 +515,7 @@ async function boot() {
   // header here. A dropdown hides the collection behind something you have to
   // already know to look at, and leaves no room to say what any game is.
 
-  app.index = await (await fetch(`../games/${app.game.id}/data/index.json`)).json();
+  app.index = await (await fetch(`../games/${app.game.id}/data/index.json`, FRESH)).json();
   el('coverage').textContent = app.index.note || '';
 
   publish();
