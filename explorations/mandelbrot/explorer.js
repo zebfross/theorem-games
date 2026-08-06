@@ -51,27 +51,49 @@ const el = (id) => document.getElementById(id);
 const bar = () => el('working');
 let barTimer = null;
 
-/** A new frame: rewind the bar, and arm it in case this one is slow. */
+/** A new frame: rewind the bar, and arm it in case this one is slow.
+ *
+ *  Two shapes, because there are two situations. A single slow frame has a
+ *  measurable fraction done and gets a filling bar. A frame that replaced one
+ *  which never finished — which is every frame of a continuous zoom — has no
+ *  meaningful fraction at all: it starts again from nothing each time, so a
+ *  fill would sit at zero and show the viewer an empty bar while insisting
+ *  something was happening. That case sweeps instead.
+ */
 function progressStart() {
-  clearTimeout(barTimer);
   const b = bar();
+  const already = b.classList.contains('on');
   // Rewind without animating. The width is transitioned so that it slides
   // forward smoothly, and without this the reset slides visibly *backward*
   // first, which reads as the render undoing itself.
   b.style.transition = 'none';
-  b.style.width = '0%';
+  if (already) {
+    b.classList.add('busy');
+    b.style.width = '26%';          // the sliver the keyframes slide about
+  } else {
+    b.classList.remove('busy');
+    b.style.width = '0%';
+  }
   void b.offsetWidth;
   b.style.transition = '';
-  // If it is already showing, leave it showing. Holding a wheel down runs
-  // frames together, and fading out and in between each one is a flicker where
-  // a bar that simply keeps refilling is information.
-  if (!b.classList.contains('on')) {
-    barTimer = setTimeout(() => b.classList.add('on'), SHOW_AFTER);
+  // Arm the delay only if nothing is armed already, and never cancel one that
+  // is. Cancelling it here is why a continuous zoom showed no bar at all:
+  // wheel events arrive faster than the delay, so every frame threw away the
+  // timer the frame before had set, and it could never reach 150ms. What the
+  // delay is for is "has the viewer been waiting a noticeable time", and while
+  // a zoom is held down they have been waiting the whole while — it is one
+  // wait, not a series of unrelated ones.
+  if (!already && barTimer === null) {
+    barTimer = setTimeout(() => {
+      barTimer = null;
+      b.classList.add('on');
+    }, SHOW_AFTER);
   }
 }
 
 /** How far through the whole frame we are, weighted by what each pass costs. */
 function progressAt(p) {
+  if (bar().classList.contains('busy')) return;   // sweeping; no fraction to show
   let before = 0;
   for (let i = 0; i < p.passIndex; i++) before += PASS_COST[i];
   const within = p.chunks ? p.done / p.chunks : 1;
@@ -82,7 +104,9 @@ function progressAt(p) {
 /** The sharp pass has landed. Fill, then fade. */
 function progressDone() {
   clearTimeout(barTimer);
+  barTimer = null;
   const b = bar();
+  b.classList.remove('busy');
   b.style.width = '100%';
   b.classList.remove('on');
   // Snap back to zero only once the fade has finished, or the next frame starts

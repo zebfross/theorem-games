@@ -88,3 +88,21 @@ body.explorer .brand a:hover { color: var(--ink); }
 }
 
 #working.on { opacity: 0.9; }
+
+/* A zoom held down never lets a frame finish, so there is no fraction to fill:
+ * each one starts again from nothing. A sliver sweeping across says the same
+ * thing honestly — work is happening, and how much is left is not known. */
+#working.busy {
+  background: linear-gradient(90deg, #d9a44100, var(--brass, #e8c37a), #d9a44100);
+  animation: working-sweep 1.15s ease-in-out infinite;
+}
+
+@keyframes working-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(385%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Hold it still rather than sweeping; it is still saying "working". */
+  #working.busy { animation: none; transform: translateX(0); }
+}

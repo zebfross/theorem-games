@@ -98,6 +98,40 @@ test.describe('the homepage', () => {
         (e) => e.classList.contains('on')), { timeout: 5000 }).toBe(false);
     });
 
+  test('the Mandelbrot hairline shows during a continuous zoom',
+    async ({ page }) => {
+      // The case it was written for and the case it first got wrong. Each frame
+      // used to cancel the timer the frame before had armed, so holding a zoom
+      // — the one time you most want to be told a sharper picture is coming —
+      // was the one time nothing appeared.
+      await page.goto('/explorations/mandelbrot/');
+      await expect(page.locator('#timing')).not.toContainText('drawing',
+        { timeout: 30000 });
+      // Somewhere deep first. Near the top of the set a frame lands in
+      // milliseconds and showing nothing is the right answer, so a test that
+      // zoomed there would be asserting the opposite of the intended
+      // behaviour and would fail on a fast machine for a good reason.
+      await page.locator('[data-goto*="-0.163490122116363"]').click();
+      await expect(page.locator('#timing')).not.toContainText('drawing',
+        { timeout: 60000 });
+
+      await page.evaluate(() => {
+        const view = document.getElementById('view');
+        const r = view.getBoundingClientRect();
+        window.__stop = setInterval(() => view.dispatchEvent(new WheelEvent(
+          'wheel', { deltaY: -120, clientX: r.left + r.width / 2,
+            clientY: r.top + r.height / 2, bubbles: true, cancelable: true })),
+        60);
+      });
+      // Showing means visible, not merely flagged: a bar that is "on" with no
+      // width is an empty strip, which is how the first fix looked.
+      await expect.poll(async () => page.evaluate(() => {
+        const b = document.getElementById('working');
+        return b.classList.contains('on') && b.getBoundingClientRect().width > 4;
+      }), { timeout: 8000 }).toBe(true);
+      await page.evaluate(() => clearInterval(window.__stop));
+    });
+
   test('every exploration opens', async ({ page }) => {
     for (const e of SHELF) {
       const res = await page.goto(`/explorations/${e.id}/`);
