@@ -127,6 +127,15 @@ def main():
                 fail(problems, f'{eid}: listed but explorations/{eid}/index.html '
                                f'is missing')
 
+    # engine.js is loaded by play.html and imported by every game module, by a
+    # fixed relative path. ES modules are keyed by URL, so a query string on the
+    # script tag makes those two different modules and boots the engine twice.
+    # It broke every button on the page and threw nothing to say so.
+    page = open(os.path.join(ROOT, 'play.html')).read()
+    if 'engine/engine.js?' in page:
+        fail(problems, 'play.html loads engine/engine.js with a query string; '
+                       'games import it without one, so that is two engines')
+
     print(f'checked {len(games)} games and {len(shelf)} explorations')
     for entry in games:
         idx = os.path.join(ROOT, 'games', entry['id'], 'data', 'index.json')

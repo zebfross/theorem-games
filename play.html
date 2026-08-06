@@ -80,6 +80,11 @@
   </p>
 </footer>
 
-<script type="module" src="engine/engine.js?v=2"></script>
+<!-- No cache-busting query on this one. Every game does
+     `import { board, svgEl } from '../../engine/engine.js'`, and ES
+     modules are keyed by URL: a query here makes that a second,
+     separate instance, which boots the engine twice onto the same
+     page. Nothing throws — the buttons just stop working. -->
+<script type="module" src="engine/engine.js"></script>
 </body>
 </html>
