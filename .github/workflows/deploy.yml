@@ -73,7 +73,7 @@ jobs:
           rsync -az --delete \
             --exclude '.well-known' --exclude 'cgi-bin' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
-            .htaccess index.html play.html engine games docs \
+            .htaccess index.html play.html engine games explorations docs \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 
       - name: It is actually up
@@ -85,7 +85,9 @@ jobs:
           for url in \
             "https://theorem.games/" \
             "https://theorem.games/games/registry.json" \
-            "https://theorem.games/engine/engine.js"; do
+            "https://theorem.games/engine/engine.js" \
+            "https://theorem.games/explorations/registry.json" \
+            "https://theorem.games/explorations/mandelbrot/"; do
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$url")
             echo "  $code  $url"
             [ "$code" = "200" ] || exit 1

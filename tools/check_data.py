@@ -106,13 +106,36 @@ def main():
         if os.path.isdir(full) and name not in seen:
             fail(problems, f'{name}: a game directory the registry never lists')
 
-    print(f'checked {len(games)} games')
+    # The homepage reads this too, and hides the shelf if the fetch fails —
+    # which is right for a clone with no explorations and wrong for a deploy
+    # that forgot to copy them. explorations/ was left out of the rsync list
+    # for a day and nothing anywhere said so.
+    ex_path = os.path.join(ROOT, 'explorations', 'registry.json')
+    shelf = []
+    if os.path.exists(ex_path):
+        try:
+            shelf = json.load(open(ex_path)).get('explorations', [])
+        except ValueError as e:
+            fail(problems, f'explorations/registry.json will not parse - {e}')
+        for e in shelf:
+            eid = e.get('id')
+            if not eid:
+                fail(problems, 'an exploration has no id')
+                continue
+            page = os.path.join(ROOT, 'explorations', eid, 'index.html')
+            if not os.path.exists(page):
+                fail(problems, f'{eid}: listed but explorations/{eid}/index.html '
+                               f'is missing')
+
+    print(f'checked {len(games)} games and {len(shelf)} explorations')
     for entry in games:
         idx = os.path.join(ROOT, 'games', entry['id'], 'data', 'index.json')
         rows = json.load(open(idx))['levels'] if os.path.exists(idx) else []
         walls = sum(1 for m in rows if m.get('wall'))
         print(f'  {entry["id"]:<10} {len(rows):>5} levels'
               + (f'  ({walls} wall)' if walls else ''))
+    for e in shelf:
+        print(f'  {e["id"]:<10}        exploration')
 
     if problems:
         print(f'\n{len(problems)} problem(s):', file=sys.stderr)
