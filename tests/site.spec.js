@@ -225,3 +225,64 @@ for (const game of GAMES) {
     });
   });
 }
+
+/* Playing a level all the way through, with real clicks.
+ *
+ * Every other test here presses a button and checks the page responded. This
+ * one walks a whole round and checks the score, which is the only way to
+ * exercise the chain the player actually depends on: the level data, the click
+ * handling, the running cost, noticing the round is finished, the verdict, and
+ * par. A game can pass every other test in this file while scoring wrongly.
+ *
+ * Route inspection is where this is cheap to do, because each of its levels
+ * ships the round the build already verified — so the test does not need to
+ * know anything about postmen, only how to follow it.
+ */
+test.describe('Route inspection, played', () => {
+  test('every shipped round walks to par through the board', async ({ page }) => {
+    test.slow();
+    const errors = watchForErrors(page);
+    await page.goto('/play.html?game=postman');
+    await page.waitForSelector('#board *', { state: 'attached' });
+
+    const count = await page.evaluate(
+      () => window.theoremGames.index.levels.length);
+
+    for (let i = 0; i < count; i++) {
+      await page.locator('#browse').click();
+      await page.locator('#picker .chip').nth(i).click();
+      await page.waitForSelector('#board *', { state: 'attached' });
+
+      const { id, par, answer } = await page.evaluate(() => ({
+        id: window.theoremGames.level.id,
+        par: window.theoremGames.level.par,
+        answer: window.theoremGames.level.answer,
+      }));
+
+      for (const corner of answer.slice(1)) {
+        // Worked out immediately before each click rather than all at once up
+        // front. Finishing a level eases the view, and that animation can still
+        // be running when the next level loads — so coordinates taken in one
+        // batch go stale as the viewBox slides under them, and the walk lands
+        // on the wrong corners. Asking per click costs a round trip and cannot
+        // drift.
+        const { x, y } = await page.evaluate((n) => {
+          const svg = document.getElementById('board');
+          const pt = svg.createSVGPoint();
+          [pt.x, pt.y] = window.theoremGames.level.nodes[n];
+          const p = pt.matrixTransform(svg.getScreenCTM());
+          return { x: p.x, y: p.y };
+        }, corner);
+        await page.mouse.click(x, y);
+      }
+
+      await expect(page.locator('#verdict'), `${id} should finish`)
+        .toBeVisible();
+      await expect(page.locator('#verdict-title'), `${id} should be perfect`)
+        .toHaveText('The cheapest round there is.');
+      const walked = await page.evaluate(() => window.theoremGames.play.cost);
+      expect(walked, `${id} should cost par`).toBe(par);
+    }
+    expect(errors).toEqual([]);
+  });
+});
