@@ -1,0 +1,24 @@
+Pinning — GPL-3.0
+
+Copyright (c) 2026 Zeb Fross
+
+This game embeds geometry and pinning data derived from the LooPindex
+catalogue of multiloops by Christopher-Lloyd Simon and Ben Stucky, which is
+licensed GPL-3.0. Because the 1074 levels in data/ are derived from it, this
+game is GPL-3.0 too, and the full text is in LICENSE beside this file.
+
+The rest of the repository — the engine, lib/, and every other game — is MIT
+and inherits nothing from the catalogue. See ../../LICENSE.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.

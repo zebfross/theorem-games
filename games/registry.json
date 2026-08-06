@@ -49,14 +49,6 @@
       "added": "2026-08-03"
     },
     {
-      "id": "taut",
-      "title": "Taut",
-      "blurb": "Pinning, on drawings generated here rather than taken from a catalogue.",
-      "theorem": "The pinning ideal of a multiloop — Simon & Stucky, via Arettines",
-      "levels": 84,
-      "added": "2026-08-04"
-    },
-    {
       "id": "grundy",
       "title": "Sprague–Grundy",
       "blurb": "Four games that look nothing alike. Every one of them is Nim.",

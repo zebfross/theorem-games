@@ -1,14 +1,19 @@
-"""The enumerated pipeline: every diagram once, drawn properly. Not yet shipped.
+"""Every pinning diagram, enumerated once and drawn properly. Groundwork.
 
-`build_pack.py` next to this file is what produced the pack the game currently
-ships, by sampling random drawings. This is the replacement for it, and the two
-are kept apart so each stays reproducible while the question below is open.
+This game ships 1074 levels derived from the LooPindex catalogue, which is why
+*this game* is GPL-3.0 while the engine and everything else here is MIT. To
+replace that catalogue with generated levels you would need to produce diagrams
+of the same quality, and this is how far that got.
 
-Pinning's 1074 levels come from the LooPindex catalogue, which is why that game
-carries GPL-3.0 and, through it, so does this repository. These are generated,
-so this game is MIT like everything else.
+It came out of Taut, a second copy of this game built on random drawings, which
+was removed: its levels topped out at eight regions where the catalogue's are
+mostly twelve, and small diagrams do not have enough distinct answers to stay
+interesting. Zeb, on the pack it shipped: "a lot of our auto-generated puzzles
+have similar solutions."
 
-## Why this was rewritten
+Sampling was the wrong instrument, and these two files are the right one.
+
+## What this does
 
 The first version scattered random points, kept whatever survived a battery of
 filters, and needed a quota per crossing count plus a cap on how many levels
@@ -303,11 +308,25 @@ def build(top):
 
 
 if __name__ == '__main__':
-    top = int(sys.argv[1]) if len(sys.argv) > 1 else 7
-    os.makedirs(os.path.join(DATA, 'levels'), exist_ok=True)
+    # Reports by default and writes nothing. An earlier version of this file
+    # wrote its pack straight into the game's data directory, which was
+    # harmless when that game's data was generated and would now overwrite the
+    # catalogue this game actually ships. Writing takes an explicit path.
+    #
+    #   python3 tools/enumerate_diagrams.py [max crossings] [--out DIR]
+    top = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 7
+    out = sys.argv[sys.argv.index('--out') + 1] if '--out' in sys.argv else None
     levels = build(top)
-    for name in os.listdir(os.path.join(DATA, 'levels')):
-        os.remove(os.path.join(DATA, 'levels', name))
+    by_c = {}
+    for lv in levels:
+        by_c[lv['crossings']] = by_c.get(lv['crossings'], 0) + 1
+    print(f'{len(levels)} levels the solver would certify')
+    print('by crossings:', dict(sorted(by_c.items())))
+    if not out:
+        print('nothing written; pass --out DIR to write a pack')
+        sys.exit(0)
+    DATA = out
+    os.makedirs(os.path.join(DATA, 'levels'), exist_ok=True)
     for lv in levels:
         with open(os.path.join(DATA, 'levels', lv['id'] + '.json'), 'w') as f:
             json.dump(lv, f, separators=(',', ':'))
