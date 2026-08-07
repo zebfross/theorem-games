@@ -63,6 +63,14 @@
       "theorem": "Guan; Edmonds & Johnson — the cheapest repeat is a matching on the odd corners",
       "levels": 9,
       "added": "2026-08-06"
+    },
+    {
+      "id": "sorting",
+      "title": "Sorting networks",
+      "blurb": "Build a network that sorts every input, with as few comparators as you can.",
+      "theorem": "The 0-1 principle — a network sorts everything iff it sorts every string of noughts and ones",
+      "levels": 10,
+      "added": "2026-08-06"
     }
   ]
 }

@@ -1,0 +1,63 @@
+/* Sorting networks: wires running left to right, comparators across them.
+
+   Scoped to #board — a game's stylesheet is loaded into the whole page, and an
+   unscoped class here can reach the level picker and the buttons. */
+
+#board .wire {
+  stroke: #ffffff2e;
+  stroke-width: 3;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+/* A comparator you placed. */
+#board .comp {
+  stroke: var(--rope);
+  stroke-width: 6;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+
+/* One that came with the level. Dimmer, and not yours to remove — the
+   difference has to be visible before the first click, or the board looks like
+   work you did and cannot undo. */
+#board .comp.given {
+  stroke: var(--brass-dark);
+  cursor: default;
+}
+
+/* The one firing as the run passes it. */
+#board .comp.firing {
+  stroke: var(--good);
+  stroke-width: 8;
+  filter: drop-shadow(0 0 7px #6fdc9a77);
+}
+
+#board .end {
+  fill: var(--rope);
+  stroke: none;
+  pointer-events: none;
+}
+
+#board .end.given { fill: var(--brass-dark); }
+
+/* Half of a comparator: the first wire clicked, waiting for its partner. */
+#board .picked {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+/* The values running down the wires. Zero and one are told apart by fill
+   rather than by a label, because at this size a glyph is unreadable and the
+   only thing that matters is which is heavier. */
+#board .bead {
+  stroke: #0e1a15;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+#board .bead.zero { fill: #16302a; stroke: var(--brass-dark); }
+#board .bead.one { fill: var(--rope); }

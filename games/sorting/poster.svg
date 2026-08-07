@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="Four wires crossed by five comparators, with an unsorted input of ones and noughts entering on the left and coming out sorted on the right">
+  <!-- The smallest network on four wires: five comparators, which is optimal.
+       A single input of noughts and ones goes in scrambled and comes out with
+       the ones at the bottom — and by the 0-1 principle, a network that does
+       that for every such input sorts everything there is. -->
+
+  <g stroke="#ffffff2e" stroke-width="3" stroke-linecap="round">
+    <path d="M56 40 L286 40"/>
+    <path d="M56 74 L286 74"/>
+    <path d="M56 108 L286 108"/>
+    <path d="M56 142 L286 142"/>
+  </g>
+
+  <!-- The five comparators, in the order the optimal network applies them. -->
+  <g stroke="#d9a441" stroke-width="6" stroke-linecap="round">
+    <path d="M96 40 L96 74"/>
+    <path d="M130 108 L130 142"/>
+    <path d="M164 40 L164 108"/>
+    <path d="M198 74 L198 142"/>
+    <path d="M232 74 L232 108"/>
+  </g>
+  <g fill="#d9a441">
+    <circle cx="96" cy="40" r="5"/><circle cx="96" cy="74" r="5"/>
+    <circle cx="130" cy="108" r="5"/><circle cx="130" cy="142" r="5"/>
+    <circle cx="164" cy="40" r="5"/><circle cx="164" cy="108" r="5"/>
+    <circle cx="198" cy="74" r="5"/><circle cx="198" cy="142" r="5"/>
+    <circle cx="232" cy="74" r="5"/><circle cx="232" cy="108" r="5"/>
+  </g>
+
+  <!-- Going in: 1 0 1 0. A one is filled, a nought is hollow. -->
+  <g stroke="#0e1a15" stroke-width="2">
+    <circle cx="34" cy="40" r="11" fill="#d9a441"/>
+    <circle cx="34" cy="74" r="11" fill="#16302a" stroke="#6b4a12"/>
+    <circle cx="34" cy="108" r="11" fill="#d9a441"/>
+    <circle cx="34" cy="142" r="11" fill="#16302a" stroke="#6b4a12"/>
+  </g>
+
+  <!-- Coming out: 0 0 1 1. -->
+  <g stroke="#0e1a15" stroke-width="2">
+    <circle cx="300" cy="40" r="11" fill="#16302a" stroke="#6b4a12"/>
+    <circle cx="300" cy="74" r="11" fill="#16302a" stroke="#6b4a12"/>
+    <circle cx="300" cy="108" r="11" fill="#6fdc9a"/>
+    <circle cx="300" cy="142" r="11" fill="#6fdc9a"/>
+  </g>
+</svg>

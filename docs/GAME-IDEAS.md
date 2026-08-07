@@ -288,7 +288,7 @@ achieves it and walking it. The one trap in generation was maps with no loop —
 a tree forces every street to be walked exactly twice, par comes out at double
 the total, and there is nothing whatever to choose.
 
-## Sorting networks and the 0-1 principle
+## ~~Sorting networks and the 0-1 principle~~ — built
 
 **Knuth; the 0-1 principle.** A network of comparators sorts every input
 exactly when it sorts every input made only of zeros and ones. So correctness
@@ -319,6 +319,13 @@ comparator by comparator.
 
 **The risk** is that the first level teaches nothing: three wires and three
 comparators is almost forced. The ladder probably wants to start at four.
+
+**Built**; see `games/sorting/`. The risk was real and measured: guessing at
+random finishes three wires in par 21.8% of the time, against 0.18% at four. It
+is kept as the level that teaches the mechanic and the README says so. Seven
+wires proved out of reach for the search, so the pack takes its variety from
+partly-built networks to finish instead — the same question from a different
+starting state.
 
 ---
 
