@@ -103,7 +103,10 @@ at the top of the games nobody has played rather than the bottom of everything.
 That is all a tie-break can do — it cannot lift a new game above a played one,
 and nothing short of ranking by plays *per day* could, which is far too noisy at
 these numbers. So the homepage also carries a **recently added** shelf: the
-games sharing the latest date, in a place popularity does not reach into.
+three newest, in a place popularity does not reach into — plus any that share a
+date with the third, so a day's work is never shown in part. Every card carries
+the date it was added, which is what keeps the shelf honest when the newest
+thing on it is not very new.
 
 ## Licence
 

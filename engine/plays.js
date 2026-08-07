@@ -126,16 +126,23 @@ export function order(games, counts) {
 
 /** The newest games, for the shelf that popularity cannot push anything off.
  *
- *  The most recent batch only — the games sharing the latest date — rather than
- *  the top few by date. Taking the top three of five put a game from the first
- *  day of the project under a heading saying "recently added", which is the
- *  shelf lying to fill itself. One card that is genuinely new beats three that
- *  are not.
+ *  The most recent `howMany`, and then as many more as share a date with the
+ *  last of them, so a shelf never shows two of the three games added on the
+ *  same day and silently drops the third.
+ *
+ *  This used to be the latest date only, on the reasoning that taking a top few
+ *  by date would file something months old under "recently added" — the shelf
+ *  lying to fill itself. The reasoning was sound and the outcome was not: one
+ *  game a day means a shelf of one card, which reads as an empty shelf rather
+ *  than a discreet one. What actually stops it lying is that every card carries
+ *  the date it was added, so a stale entry says so itself.
  */
-export function newest(games, howMany = 4) {
-  const dated = games.filter((g) => g.added);
-  if (!dated.length) return [];
-  const latest = dated.reduce(
-    (a, g) => (String(g.added) > a ? String(g.added) : a), '');
-  return dated.filter((g) => String(g.added) === latest).slice(0, howMany);
+export function newest(games, howMany = 3) {
+  const dated = games.filter((g) => g.added)
+    .sort((a, b) => String(b.added).localeCompare(String(a.added)));
+  if (dated.length <= howMany) return dated;
+  let cut = howMany;
+  while (cut < dated.length
+    && String(dated[cut].added) === String(dated[cut - 1].added)) cut++;
+  return dated.slice(0, cut);
 }

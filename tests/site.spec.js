@@ -138,6 +138,20 @@ test.describe('the homepage', () => {
       await page.evaluate(() => clearInterval(window.__stop));
     });
 
+  test('the recently added shelf holds at least three', async ({ page }) => {
+    // It used to show only the games sharing the very latest date, which with
+    // one game a day is a shelf of one card — an empty-looking shelf rather
+    // than a discreet one.
+    await page.goto('/index.html');
+    const fresh = page.locator('#fresh-grid h2');
+    const want = Math.min(3, GAMES.filter((g) => g.added).length);
+    expect(await fresh.count(),
+      'the newest shelf should not be nearly empty').toBeGreaterThanOrEqual(want);
+    // And everything on it must be a real game, not a heading with nothing under it.
+    const titles = await fresh.allTextContents();
+    for (const t of titles) expect(GAMES.map((g) => g.title)).toContain(t);
+  });
+
   test('every exploration opens', async ({ page }) => {
     for (const e of SHELF) {
       const res = await page.goto(`/explorations/${e.id}/`);
