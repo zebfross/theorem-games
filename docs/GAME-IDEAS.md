@@ -191,7 +191,7 @@ minimum — but a good short interlude.
 
 ---
 
-## Hall's marriage theorem — in progress
+## ~~Hall's marriage theorem~~ — built
 
 **Hall; König.** Everyone can be matched to a job they are qualified for exactly
 when every group of k applicants has at least k jobs open to them between them.
@@ -227,7 +227,7 @@ had stopped as soon as some group of size k had deficiency k, on the theory that
 nothing could beat it. One unqualified applicant is such a group; four
 unqualified applicants have deficiency 4.
 
-## Conway's soldiers — started
+## ~~Conway's soldiers~~ — built
 
 **Conway.** Soldiers below a line, jumping peg-solitaire style. The fewest
 needed to put a man on row n is 2, 4, 8, 20 — and row 5 is impossible for any
@@ -258,9 +258,11 @@ what the rest of this repo does, and is the right call here too, since the pars
 are classical and the interesting question is whether a given army works rather
 than which army is smallest.
 
-Not playable yet: the mechanics are verified, the board is not built.
+**Built**; see `games/soldiers/`. Rows 1 to 3 ship armies found by search and
+replayed; row 4 ships an army of exactly twenty on Conway's authority, since
+re-deriving it means searching about 10^11 armies. Row 5 is the wall.
 
-## The Chinese postman
+## ~~The Chinese postman~~ — built, as Route inspection
 
 **Euler; Edmonds & Johnson.** A connected graph has a closed walk using every
 edge exactly once iff every vertex has even degree. When it does not, the
@@ -277,6 +279,98 @@ Failure is watchable: run the route and the streets you never reached stay dark,
 which is the art gallery's trick again. The risk is that it is close to
 max-flow — another weighted graph with pipes and junctions — so it would want to
 look quite different to earn its place.
+
+**Built**; see `games/postman/`. The resemblance to max-flow turned out not to
+matter, because the mechanic is different in the hand: max-flow is a set of
+pipes you cut all at once, this is a walk you make one step at a time, and the
+board fills in behind you. Every par is checked by constructing a round that
+achieves it and walking it. The one trap in generation was maps with no loop —
+a tree forces every street to be walked exactly twice, par comes out at double
+the total, and there is nothing whatever to choose.
+
+## Sorting networks and the 0-1 principle
+
+**Knuth; the 0-1 principle.** A network of comparators sorts every input
+exactly when it sorts every input made only of zeros and ones. So correctness
+over an infinity of inputs collapses to 2^n checks, and a network that fails
+has a *witness*: a specific input it leaves out of order.
+
+The game: lay comparators across n wires so that every input comes out sorted,
+using as few as you can. Par is the optimal size, which is known and small.
+Searched here rather than looked up, by breadth-first search over the set of
+0/1 vectors not yet sorted:
+
+    wires        3   4   5   6
+    comparators  3   5   9  12
+
+which agrees with the classical values. Seven and eight are 16 and 19 in the
+literature; this search has not been run that far.
+
+**Why it is the strongest candidate on this page.** It is the best failure this
+list has ever had. Every other game shows you *that* you fell short — a dark
+corner, a leak, a street unwalked. This one hands you the exact input your
+network gets wrong and runs it down the wires in front of you. That is not a
+picture of failure, it is a counterexample, and it is the theorem itself doing
+the work: the 0-1 principle is precisely what makes the witness findable.
+
+It also looks like nothing on the shelf — horizontal wires and vertical bars,
+no graph, no polygon, no board — and the player builds the thing being scored,
+comparator by comparator.
+
+**The risk** is that the first level teaches nothing: three wires and three
+comparators is almost forced. The ladder probably wants to start at four.
+
+---
+
+## Fewest monochromatic triangles — Goodman
+
+**Ramsey; Goodman.** Colour the edges of a complete graph with two colours and
+some triangle always ends up all one colour, once the graph is big enough. That
+much is R(3,3) = 6 and is a yes-or-no fact. Goodman sharpened it into a
+*minimum*: the fewest single-coloured triangles a colouring can leave. Counted
+here by exhaustion:
+
+    K4  0        K6  2
+    K5  0        K7  4
+
+**Why it fits.** The ladder writes itself. On K5 you can avoid them entirely,
+and finding that colouring is a real puzzle. On K6 you cannot — that is the
+party problem everybody has heard — but the game is not "you lose", it is *how
+few*, and the answer is exactly two. That is the move that saves it from the
+happy ending problem's fate: the player builds a colouring and is scored on it,
+rather than being told the thing they were avoiding was unavoidable all along.
+
+Failure points at itself: the offending triangles light up.
+
+**The risk is generation.** K7 is 2^21 colourings, which brute force handles.
+K8 is 2^28 and needs Goodman's formula for the bound plus a construction that
+attains it, and shipping a par this repository has not verified would be a
+first. The pack may simply have to stop at seven.
+
+---
+
+## The fifteen puzzle, and the half that cannot be solved
+
+**Permutation parity.** Sliding tiles: exactly half of all arrangements can be
+solved and half cannot, and which is which is settled by the parity of the
+permutation together with the row the blank sits on. Sam Loyd is said to have
+offered a prize for one of the impossible ones.
+
+Par is exact and cheap on a three-by-three: the whole state space is 181440
+arrangements, so breadth-first search from the goal gives the true minimum
+number of slides for every level at build time.
+
+**Why it might work.** The mechanic needs no explaining at all, which is rare,
+and the capstone is a wall in the same shape as Conway's row 5 — a level that
+cannot be finished, where the invariant is the reason and the hint is the
+proof.
+
+**Why it might not.** The failure is weak: you do not fall short in a way the
+board can show you, you just keep sliding. And the resemblance to Conway's
+soldiers — an invariant with an impossible capstone — is closer than the
+resemblance between route inspection and max-flow turned out to be.
+
+---
 
 ## A known-good coin
 
