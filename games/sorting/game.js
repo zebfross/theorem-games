@@ -42,6 +42,8 @@ const slotX = (k) => LEFT + 34 + k * STEP;
  *  par, since the view is set once when the level loads and cannot grow.
  */
 const span = (level) => level.prefix.length + level.par + 4;
+const wiresEnd = (level) => LEFT + 34 + span(level) * STEP;
+const OUT = 52;           // room past the wires for the outgoing values
 
 /** Run one input through a network, keeping every intermediate. */
 function trace(wires, comps, input) {
@@ -81,10 +83,52 @@ function witness(wires, comps) {
 
 const all = (level, play) => [...level.prefix, ...play.added];
 
+/** The input to show on the board.
+ *
+ *  Not decoration. While a network is still wrong this is the input it gets
+ *  wrong, so what sits on the board is the thing that has to be fixed; once it
+ *  is right this is the most scrambled input there is, so what sits on the
+ *  board is the network doing its hardest case.
+ *
+ *  The board used to show nothing at all until Run was pressed, which left the
+ *  placing phase as a row of identical grey lines with no hint of what was
+ *  being sorted or why. Zeb: "it isn't clear how the wires are different or
+ *  even need to be sorted at all."
+ */
+function probe(level, comps) {
+  const bad = witness(level.wires, comps);
+  // Ones on the top wires is as unsorted as an input can be, since sorted
+  // means the ones have all reached the bottom.
+  return bad === null ? (1 << Math.ceil(level.wires / 2)) - 1 : bad;
+}
+
+/** Wires holding a one that still has a nought below it — the inversion. */
+function offending(wires, v) {
+  const out = [];
+  for (let a = 0; a < wires; a++) {
+    if (!((v >> a) & 1)) continue;
+    for (let b = a + 1; b < wires; b++) {
+      if (!((v >> b) & 1)) { out.push(a, b); return out; }
+    }
+  }
+  return out;
+}
+
+function bead(x, y, on, extra = '') {
+  const g = svgEl('g', { class: 'beadgroup' });
+  g.appendChild(svgEl('circle', {
+    cx: x, cy: y, r: 13, class: `bead ${on ? 'one' : 'zero'}${extra}`,
+  }));
+  const t = svgEl('text', { x, y: y + 5, class: 'beadlabel' });
+  t.textContent = on ? '1' : '0';
+  g.appendChild(t);
+  return g;
+}
+
 function render(level, play, phase) {
   board.replaceChildren();
   const comps = all(level, play);
-  const width = LEFT + 34 + Math.max(span(level), comps.length + 1) * STEP;
+  const width = Math.max(wiresEnd(level), LEFT + 34 + (comps.length + 1) * STEP);
 
   for (let k = 0; k < level.wires; k++) {
     board.appendChild(svgEl('line', {
@@ -92,16 +136,39 @@ function render(level, play, phase) {
     }));
   }
 
-  // Values, when a run is showing them. Drawn per wire at the stage reached.
   const show = play.sim && phase !== 'placing' ? play.sim : null;
+  const input = show ? show.input : probe(level, comps);
+  const stages = trace(level.wires, comps, input);
+  const result = stages[stages.length - 1];
+
+  // What goes in, always. Left of the wires, so the board says what is being
+  // sorted before a single comparator has been placed.
+  const inLabel = svgEl('text', { x: LEFT - 26, y: TOP - 24, class: 'endlabel' });
+  inLabel.textContent = 'in';
+  board.appendChild(inLabel);
+  for (let k = 0; k < level.wires; k++) {
+    board.appendChild(bead(LEFT - 26, wireY(k), (input >> k) & 1));
+  }
+
+  // And what comes out. The pair still in the wrong order is ringed, which is
+  // the whole of what the player is trying to get rid of.
+  const wrong = offending(level.wires, result);
+  const outLabel = svgEl('text', { x: width + OUT / 2, y: TOP - 24,
+    class: 'endlabel' });
+  outLabel.textContent = wrong.length ? 'out — not sorted' : 'out — sorted';
+  board.appendChild(outLabel);
+  for (let k = 0; k < level.wires; k++) {
+    board.appendChild(bead(width + OUT / 2, wireY(k), (result >> k) & 1,
+      wrong.includes(k) ? ' wrong' : ''));
+  }
+
+  // While the run is going, the values travel: drawn at the comparator they
+  // have just passed rather than parked at the left.
   if (show) {
-    const v = show.stages[show.at];
+    const v = stages[show.at];
+    const x = show.at === 0 ? LEFT + 6 : slotX(show.at - 1) + STEP * 0.5;
     for (let k = 0; k < level.wires; k++) {
-      const on = (v >> k) & 1;
-      board.appendChild(svgEl('circle', {
-        cx: LEFT - 26, cy: wireY(k), r: 13,
-        class: 'bead' + (on ? ' one' : ' zero'),
-      }));
+      board.appendChild(bead(x, wireY(k), (v >> k) & 1, ' moving'));
     }
   }
 
@@ -148,18 +215,30 @@ export default {
 
   start: () => ({ added: [], picked: null, sim: null, showWitness: false }),
 
-  view: (level) => [0, 0, LEFT + 34 + span(level) * STEP,
+  view: (level) => [0, 0, wiresEnd(level) + OUT + 26,
     TOP + (level.wires - 1) * GAP + TOP],
 
   runnable: (level, play) => play.added.length > 0,
 
   describe(level, play) {
     const n = play.added.length;
+    const comps = all(level, play);
+    const total = 1 << level.wires;
+    // How many inputs are still coming out wrong. This is the number that
+    // actually moves as you work, and watching it fall is the game — "5 added"
+    // said nothing about whether any of them helped.
+    let wrong = 0;
+    for (let v = 0; v < total; v++) {
+      if (!isSorted(level.wires, trace(level.wires, comps, v).at(-1))) wrong++;
+    }
+    const verb = level.prefix.length ? 'Finish it' : 'Build it';
     return {
-      goal: level.prefix.length
-        ? `Finish the network. <b>${level.par}</b> more comparators will do it.`
-        : `Sort ${level.wires} wires. <b>${level.par}</b> comparators will do it.`,
-      status: `${n} added${n === level.par ? ' · that is par' : ''}`,
+      goal: `${verb} so every input comes out in order — <b>0</b>s above `
+        + `<b>1</b>s. <b>${level.par}</b> comparators will do it.`,
+      status: wrong
+        ? `${wrong} of ${total} inputs still come out wrong · ${n} added`
+        : `every one of the ${total} inputs sorted · ${n} added`
+          + (n === level.par ? ' · that is par' : ''),
     };
   },
 
@@ -210,20 +289,16 @@ export default {
     replay: false,
 
     create(level, play) {
-      // The input the run shows is chosen by the theorem, not for effect: if
-      // the network is wrong, it is the lowest zero-one input it gets wrong.
-      // Otherwise it is the most scrambled input there is, so a network that
-      // works is seen doing its hardest case.
+      // The same input the board has been showing all along, so pressing Run
+      // animates the thing already on screen rather than swapping in another.
+      // Chosen by the theorem rather than for effect: the input the network
+      // gets wrong while it is wrong, the most scrambled one once it is right.
       const comps = all(level, play);
-      const bad = witness(level.wires, comps);
-      const input = bad === null ? (1 << level.wires) - 1 - 0 : bad;
-      const scramble = bad === null
-        ? parseInt('1'.repeat(Math.floor(level.wires / 2))
-          .padEnd(level.wires, '0'), 2)
-        : input;
+      const input = probe(level, comps);
       const sim = {
-        level, play, comps, bad,
-        stages: trace(level.wires, comps, scramble),
+        level, play, comps, input,
+        bad: witness(level.wires, comps),
+        stages: trace(level.wires, comps, input),
         at: 0, held: 0,
       };
       play.sim = sim;

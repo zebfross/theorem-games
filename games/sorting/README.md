@@ -30,6 +30,25 @@ That is the reason this game is here. Every other game on the shelf shows you
 **that** you fell short — a dark corner, a leak, an unwalked street. This one
 hands you the counterexample.
 
+## What the board shows
+
+An input on the left and what it becomes on the right, at all times — not only
+once you press Run. Which input is not arbitrary: while the network is still
+wrong it is the input the network *gets wrong*, so what sits on the board is the
+thing to be fixed, with the pair still out of order ringed. Once the network is
+right it becomes the most scrambled input there is, so the board shows it doing
+its hardest case.
+
+The status line counts how many of the 2^n inputs still come out wrong, which
+is the number that moves as you work. It had said "5 added", which tells you
+nothing about whether any of them helped.
+
+This was all added after the fact. The first version showed nothing until Run
+was pressed, which left the placing phase as a row of identical grey lines —
+Zeb: "it isn't clear how the wires are different or even need to be sorted at
+all." The wires are not different. The values on them are, and they were
+invisible.
+
 ## Par is searched for, not quoted
 
 The smallest networks are classical, and they are found here rather than looked

@@ -61,3 +61,31 @@
 
 #board .bead.zero { fill: #16302a; stroke: var(--brass-dark); }
 #board .bead.one { fill: var(--rope); }
+
+/* The pair still in the wrong order at the output. This is the thing being got
+   rid of, so it is the one thing on the board drawn to be noticed. */
+#board .bead.wrong {
+  stroke: var(--bad);
+  stroke-width: 3.5;
+}
+
+/* Values partway down the wires during a run. */
+#board .bead.moving { filter: drop-shadow(0 0 6px #00000066); }
+
+#board .beadlabel {
+  fill: var(--ink);
+  font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+/* A one is filled and dark-on-light; a nought is hollow. Flipping the label
+   colour keeps both readable against their own fill. */
+#board .bead.one + .beadlabel { fill: #0e1a15; }
+
+#board .endlabel {
+  fill: var(--ink-dim);
+  font: 500 15px system-ui, sans-serif;
+  text-anchor: middle;
+  pointer-events: none;
+}
