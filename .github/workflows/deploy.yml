@@ -101,7 +101,7 @@ jobs:
           rsync -az --delete \
             --exclude '.well-known' --exclude 'cgi-bin' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
-            .htaccess index.html play.html engine games explorations docs \
+            .htaccess index.html play.html engine games explorations docs api \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 
       - uses: actions/setup-node@v4

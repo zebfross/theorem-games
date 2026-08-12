@@ -12,9 +12,14 @@
  *   wrangler deploy
  *
  * What it stores: one integer per game id. No visitor identifier, no address,
- * no timestamp, nothing that could be tied back to a person — the site has
- * never had a way to know who you are and this does not give it one. The
- * counts are public, because they are shown on the homepage anyway.
+ * no timestamp, nothing that could be tied back to a person. The counts are
+ * public, because they are shown on the homepage anyway.
+ *
+ * This used to add that the site had no way of knowing who you are. It now can,
+ * if you choose to sign in — see api/ — and the sentence has been corrected
+ * rather than quietly left standing. Nothing about *this* file changed: the
+ * counter has no idea whether anyone is signed in and still records only a
+ * number per game.
  *
  * What it does not do: stop somebody determined to inflate a number. Per-IP
  * rate limiting below turns away the casual case; a real effort would need

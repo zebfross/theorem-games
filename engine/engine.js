@@ -14,6 +14,8 @@
  */
 
 import { record as recordPlay } from './plays.js';
+import { begin as beginAccount, mount as mountAccount, sync as syncAccount }
+  from './account.js';
 
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 export const el = (id) => document.getElementById(id);
@@ -318,6 +320,10 @@ function finishRun() {
   if (v.won) {
     if (app.usedHint) localStorage.setItem(key('hinted', app.level.id), '1');
     else if (v.score !== undefined) recordBest(app.level.id, v.score);
+    // Copy it to the account, if there is one. Never waited on: a slow or
+    // absent backend must not hold up the verdict the player is reading, and
+    // the record is already safe in this browser either way.
+    syncAccount();
   }
   renderPicker();
   easeView(app.frames.length ? app.frames[app.frames.length - 1].view : null);
@@ -541,3 +547,9 @@ async function boot() {
 }
 
 boot();
+
+// The account rides alongside. Started after boot so that a backend that is
+// slow, absent or unreachable cannot delay the board appearing — the game has
+// never needed one and still does not.
+mountAccount(el('account'));
+beginAccount();

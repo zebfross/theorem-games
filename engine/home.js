@@ -15,6 +15,7 @@
  */
 
 import { counts, order, newest } from './plays.js';
+import { begin, mount } from './account.js';
 
 const grid = document.getElementById('games');
 const empty = document.getElementById('games-empty');
@@ -184,3 +185,13 @@ async function boot() {
 }
 
 boot();
+
+// The account, started alongside rather than before it: the gallery has to draw
+// whether or not there is a backend to ask.
+//
+// Synced bests are not redrawn into the cards. Signing in comes back through a
+// full page load, so the numbers are right the moment it matters; the only
+// stale case is a homepage left open while the same account plays elsewhere,
+// which is a refresh away and not worth a second rendering path.
+mount(document.getElementById('account'));
+begin();

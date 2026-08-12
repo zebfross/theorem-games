@@ -1,0 +1,18 @@
+# Everything under /api goes to one file.
+#
+# The site is static except for this directory, so the rewrite is scoped here
+# rather than at the root — nothing about serving index.html, the engine or a
+# thousand level files should have to pass a rewrite rule first.
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+
+# Never cache an answer about who is signed in.
+<IfModule mod_headers.c>
+  Header always set Cache-Control "no-store"
+</IfModule>
+
+# The schema is documentation, not something to serve.
+<FilesMatch "\.(sql|md)$">
+  Require all denied
+</FilesMatch>

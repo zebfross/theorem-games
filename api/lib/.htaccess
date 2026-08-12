@@ -1,0 +1,4 @@
+# Nothing in here is an endpoint. These files define functions and are pulled in
+# by ../index.php; fetching one directly produces no output and leaks nothing,
+# but a file that is never meant to be requested should not answer 200 either.
+Require all denied

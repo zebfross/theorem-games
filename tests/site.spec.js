@@ -160,6 +160,55 @@ test.describe('the homepage', () => {
   });
 });
 
+test.describe('accounts', () => {
+  // The same assertions run against the dev server's stand-in and against the
+  // real PHP on theorem.games. That is the point: two implementations of one
+  // contract is exactly where a shape quietly drifts.
+
+  test('says nobody is signed in, in the shape the client expects',
+    async ({ page }) => {
+      await page.goto('/index.html');
+      const me = await page.evaluate(async () =>
+        (await fetch('/api/me', { credentials: 'same-origin' })).json());
+      expect(me).toHaveProperty('user');
+      expect(me.user).toBeNull();
+    });
+
+  test('progress is an object, empty, and read-only when signed out',
+    async ({ page }) => {
+      await page.goto('/index.html');
+      const got = await page.evaluate(async () => {
+        const read = await fetch('/api/progress', { credentials: 'same-origin' });
+        const body = await read.json();
+        const write = await fetch('/api/progress', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bests: { 'gallery.r4_1': { score: 2 } } }),
+        });
+        return { readStatus: read.status, bests: body.bests, writeStatus: write.status };
+      });
+      expect(got.readStatus).toBe(200);
+      // An object, never a list — the client iterates it with Object.entries
+      // and a field that is sometimes [] is a trap for whoever reads it next.
+      expect(Array.isArray(got.bests)).toBe(false);
+      expect(got.bests).toEqual({});
+      // Writing without an account must be refused, or anybody could post
+      // scores into somebody else's record.
+      expect(got.writeStatus).toBe(401);
+    });
+
+  test('offers a way in without nagging', async ({ page }) => {
+    const errors = watchForErrors(page);
+    await page.goto('/index.html');
+    const button = page.locator('#account button');
+    await expect(button).toHaveText(/sign in/i);
+    // And the site is entirely usable without touching it.
+    await expect(page.locator('#games h2')).toHaveCount(GAMES.length);
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('the engine', () => {
   test('loads exactly once per page', async ({ page }) => {
     // Every game imports ../../engine/engine.js by a fixed path, and engine.js

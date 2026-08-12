@@ -108,6 +108,20 @@ date with the third, so a day's work is never shown in part. Every card carries
 the date it was added, which is what keeps the shelf honest when the newest
 thing on it is not very new.
 
+## Accounts
+
+Optional, and the site is complete without one. Progress lives in your browser
+as it always has; signing in keeps a copy so a best made on a laptop is there on
+a phone. Sign-in is GitHub OAuth, so **no password ever reaches this site**, and
+what is stored is a GitHub account id, a display name, and one score per level.
+Merging is a minimum, never a replacement — an account cannot be wiped by
+signing in from an empty browser, and a browser's records cannot be wiped by an
+empty account.
+
+The engine treats it as an extra throughout: no network call is waited on, and
+with the backend absent or down every page behaves exactly as it did before
+accounts existed. See [api/](api/).
+
 ## Licence
 
 The engine, `lib/`, and every game but one are **MIT** — see [LICENSE](LICENSE).
