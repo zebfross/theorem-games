@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "serve": "python3 tools/serve.py",
+    "test": "playwright test",
+    "check": "python3 tools/check_styles.py && python3 tools/check_data.py && python3 tools/check_deploy.py && python3 -m compileall -q lib tools games && playwright test"
+  },
   "devDependencies": {
     "@playwright/test": "^1.62.1"
   }

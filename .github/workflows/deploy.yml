@@ -37,6 +37,9 @@ jobs:
       - name: Every level the index promises is present and parses
         run: python3 tools/check_data.py
 
+      - name: Everything the site needs is in the list the deploy copies
+        run: python3 tools/check_deploy.py
+
       - name: Every tool still compiles
         run: python3 -m compileall -q lib tools games
 
@@ -101,8 +104,9 @@ jobs:
           rsync -az --delete \
             --exclude '.well-known' --exclude 'cgi-bin' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
-            .htaccess index.html play.html favicon.svg favicon-32.png \
-            apple-touch-icon.png engine games explorations docs api \
+            .htaccess index.html play.html LICENSE \
+            favicon.svg favicon-32.png apple-touch-icon.png \
+            engine games explorations docs api \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 
       - uses: actions/setup-node@v4

@@ -43,8 +43,28 @@ direction*: better to refuse to answer than to answer wrongly.
 
 ## Verifying
 
-There is no test runner. What there is instead, and what has actually caught
-things:
+Before pushing, run exactly what CI runs:
+
+```
+npm run check
+```
+
+The style and data checks, the deploy-list check, a compile of every tool, and
+a real browser that opens every game and presses its buttons. About fifteen
+seconds. `npm run serve` starts the dev server on :8000 if you want to look at
+something by hand.
+
+One gap is worth knowing about, because it is the one that keeps biting. The
+dev server hands out the whole tree, so a browser test cannot tell whether a
+file will actually reach the server — the deploy copies a *named list* of
+paths, and anything missing from it works perfectly here and 404s in
+production, usually reporting nothing at all. `tools/check_deploy.py` closes
+that by checking the list rather than the site: every top-level path is either
+deployed or explicitly marked as not served, so adding a file to the root
+forces a decision instead of allowing an omission. It found the root `LICENSE`
+missing — the GPL notice in `games/pinning/NOTICE` had been pointing at a 404.
+
+Beyond the runner, what has actually caught things:
 
 - **Check your data against itself.** Pinning's extractor computes each
   region's degree from its own geometry and requires it to match the degree the
