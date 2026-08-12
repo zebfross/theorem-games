@@ -157,7 +157,7 @@ export function mount(host) {
       b.title = 'Your bests are saved to this account';
       b.addEventListener('click', signOut);
     } else {
-      b.textContent = 'Sign in to save';
+      b.textContent = 'Sign in';
       b.title = 'Keep your bests across machines. Signs in with GitHub.';
       b.addEventListener('click', signIn);
     }
