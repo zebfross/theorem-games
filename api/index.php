@@ -62,9 +62,11 @@ function start_github_login(): void
 {
     $cfg = config();
     $id = $cfg['github']['client_id'] ?? '';
-    if ($id === '') {
-        // Not configured yet. Say so plainly rather than bouncing the player
-        // to a broken GitHub page.
+    // Both halves, not just the id. Half-configured is the dangerous state: the
+    // redirect to GitHub works, the player authorises, and they come back to a
+    // token exchange that cannot succeed — which spends their consent to reach
+    // an error. Not offering sign-in at all is the better failure.
+    if ($id === '' || ($cfg['github']['client_secret'] ?? '') === '') {
         reply(['error' => 'sign-in is not configured on this server'], 503);
     }
     begin_session();
