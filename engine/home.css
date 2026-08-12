@@ -11,8 +11,32 @@ body.home main {
   padding: 0.5rem 1.25rem 2rem;
 }
 
+/* The mark sits beside the title, and only on the front door — the game page
+   shares .brand for the name of the game being played, where a site logo over
+   the board would be noise. */
+body.home header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+body.home .brand-mark {
+  /* width alone, with height auto, so the intrinsic ratio is kept whatever
+     the artwork is replaced with later. flex: none stops it being squeezed
+     when the blurb is long and the window is narrow. */
+  width: 50px;
+  height: auto;
+  flex: none;
+}
 body.home header .brand p {
   max-width: 52ch;
+}
+
+@media (max-width: 30rem) {
+  /* On a phone the blurb runs to four or five lines and the mark ends up
+     stranded beside a tall block of text, so align it to the title instead of
+     to the middle of the paragraph. */
+  body.home header .brand { align-items: flex-start; }
+  body.home .brand-mark { width: 40px; margin-top: 0.1rem; }
 }
 
 .game-grid {

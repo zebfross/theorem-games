@@ -105,7 +105,7 @@ jobs:
             --exclude '.well-known' --exclude 'cgi-bin' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             .htaccess index.html play.html LICENSE \
-            favicon.svg favicon-32.png apple-touch-icon.png \
+            favicon.svg favicon-32.png apple-touch-icon.png logo.png \
             engine games explorations docs api \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}"
 

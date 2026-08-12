@@ -68,16 +68,29 @@ def deploy_sources() -> list[str]:
     return [t for t in tokens[1:] if not t.startswith(("-", '"', "'"))]
 
 
-def tracked_top_level() -> set[str]:
+def repo_top_level() -> set[str]:
+    """Everything the repository holds — committed, or new and not ignored.
+
+    `--others` is the important half. A file that has just been created is
+    precisely the one most likely to be missing from the deploy list, and a
+    check that only saw committed files would stay quiet until the commit had
+    already been made. `--exclude-standard` keeps .gitignore in charge of what
+    counts as scratch, so a stray working file is the author's to ignore
+    rather than something this has to guess at.
+    """
     out = subprocess.run(
-        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
     return {line.split("/", 1)[0] for line in out.splitlines() if line}
 
 
 def main() -> int:
     served = deploy_sources()
-    tracked = tracked_top_level()
+    tracked = repo_top_level()
     problems = []
 
     duplicates = {p for p in served if served.count(p) > 1}

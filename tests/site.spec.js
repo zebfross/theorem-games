@@ -217,6 +217,17 @@ test.describe('the icons', () => {
   // square nobody thinks to check. This suite also runs against the live site
   // after every deploy, which is the only place that gap shows up.
 
+  test('the brand mark renders, rather than being a broken image',
+    async ({ page }) => {
+      await page.goto('/index.html');
+      // A broken <img> is silent: no console entry, no failed assertion
+      // anywhere else, just a gap where the mark should be. naturalWidth is
+      // the only thing that actually knows.
+      const drawn = await page.locator('.brand-mark').evaluate(
+        (img) => img.complete && img.naturalWidth > 0);
+      expect(drawn).toBe(true);
+    });
+
   for (const where of ['/index.html', '/play.html']) {
     test(`every icon ${where} asks for is really there`, async ({ page }) => {
       await page.goto(where);
