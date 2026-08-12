@@ -209,6 +209,30 @@ test.describe('accounts', () => {
   });
 });
 
+test.describe('the icons', () => {
+  // A root-level asset is a particular deploy hazard here, because the rsync
+  // sends a named list of paths rather than the whole tree: a file that works
+  // perfectly on a local server can simply not exist on the server, and a
+  // missing favicon is invisible — no error, no console entry, just a blank
+  // square nobody thinks to check. This suite also runs against the live site
+  // after every deploy, which is the only place that gap shows up.
+
+  for (const where of ['/index.html', '/play.html']) {
+    test(`every icon ${where} asks for is really there`, async ({ page }) => {
+      await page.goto(where);
+      const hrefs = await page.$$eval(
+        'link[rel~="icon"], link[rel="apple-touch-icon"]',
+        (links) => links.map((l) => l.getAttribute('href')));
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) {
+        const res = await page.request.get(href);
+        expect(res.status(), `${href} from ${where}`).toBe(200);
+        expect(res.headers()['content-type'], href).toMatch(/^image\//);
+      }
+    });
+  }
+});
+
 test.describe('the engine', () => {
   test('loads exactly once per page', async ({ page }) => {
     // Every game imports ../../engine/engine.js by a fixed path, and engine.js

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img"
+     aria-label="theorem.games">
+<title>theorem.games</title>
+<!-- The site mark: a pi whose crossbar is a game controller.
+
+     Drawn rather than traced, in the site's own tokens — felt behind, ink for
+     the mark, brass for the buttons — so the icon and the page cannot drift
+     apart. Deliberately the inverse of the logo on white: there the mark is
+     dark on a light ground, here it is light on felt, because a dark green pi
+     on a transparent ground would vanish against this site's own background
+     and against a dark tab strip.
+
+     Opaque on purpose. A transparent favicon has to survive whatever is behind
+     it, and the two places it lands — a light tab strip and a dark one — want
+     opposite things.
+
+     No face, unlike the full logo. A favicon is 16 CSS pixels, so 32 device
+     pixels at best: rendered there the two eyes and the smile fuse into a
+     shape that reads as a letter U, which is worse than leaving them out,
+     because a stray glyph looks like a mistake where an empty controller just
+     looks like a controller. Everything here is sized to survive that
+     reduction — nothing is thinner than the wall, and nothing relies on a gap
+     narrower than it.
+
+     Order matters: the legs are drawn first and the controller is filled, so
+     the joint where they meet is covered rather than overlapped. -->
+
+<rect width="64" height="64" rx="13" fill="#1d3a30"/>
+
+<!-- The two legs, starting up inside the controller so the join is hidden.
+     Strokes with round caps rather than outlined shapes: the whole mark is
+     built from rounded geometry. -->
+<g fill="none" stroke="#f2ece1" stroke-width="7.5" stroke-linecap="round">
+  <path d="M 27 31 C 27 42.5 25.4 48 20.9 51.4"/>
+  <path d="M 40.6 31 C 40.6 43.5 41.6 48.4 44.8 50.9
+           C 47.3 52.7 49.7 51.4 49.5 48.7"/>
+</g>
+
+<!-- The controller. Filled with the background so it hides the tops of the
+     legs, then walled in ink. -->
+<rect x="10" y="13" width="44" height="19" rx="9.5"
+      fill="#1d3a30" stroke="#f2ece1" stroke-width="4.5"/>
+
+<!-- Buttons in brass: a plus on the left, a four-way pad on the right. They
+     merge into two gold marks when shrunk, which is the intent — the colour
+     is what has to survive, not the count. -->
+<g fill="#e8c37a">
+  <rect x="16.6" y="21.05" width="8.8" height="2.9" rx="1.45"/>
+  <rect x="19.55" y="18.1" width="2.9" height="8.8" rx="1.45"/>
+  <circle cx="43.5" cy="18.6" r="2.3"/>
+  <circle cx="43.5" cy="26.4" r="2.3"/>
+  <circle cx="39.6" cy="22.5" r="2.3"/>
+  <circle cx="47.4" cy="22.5" r="2.3"/>
+</g>
+</svg>
