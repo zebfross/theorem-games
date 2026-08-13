@@ -14,7 +14,7 @@
  * index just to draw a homepage — Pinning's alone is 158KB.
  */
 
-import { counts, order, newest } from './plays.js';
+import { counts, order, newest, SHOW_PLAYS_FROM } from './plays.js';
 import { begin, mount } from './account.js';
 
 const grid = document.getElementById('games');
@@ -98,7 +98,7 @@ function card(game, kind = 'game') {
     when.textContent = `added ${game.added}`;
     body.appendChild(when);
   }
-  if (game.plays > 0) {
+  if (game.plays >= SHOW_PLAYS_FROM) {
     const plays = document.createElement('span');
     plays.className = 'game-plays';
     plays.textContent = game.plays === 1 ? '1 play' : `${game.plays} plays`;

@@ -107,6 +107,26 @@ export async function counts() {
   return { counts: local(), shared: false };
 }
 
+/** Below this, a card says nothing about how often it has been played.
+ *
+ *  A count on a card is social proof, and social proof only helps while the
+ *  number is an argument in the game's favour. "1 play" is not — it reads as
+ *  nobody is playing this, and discourages exactly the click it was put there
+ *  to encourage. Every game passes through that window on its way up, so
+ *  without a floor the badge works against a game precisely while it most
+ *  needs the help.
+ *
+ *  Only the display is withheld. `order()` still ranks on the real count, so a
+ *  game with nineteen plays still sorts above one with three; it simply does
+ *  not announce a number that would argue against it.
+ *
+ *  25 rather than a tuned value: it is roughly where a count stops reading as
+ *  "somebody tried this" and starts reading as "people play this". There is no
+ *  measurement behind it, and it should be revisited once the counts are real
+ *  enough to look at.
+ */
+export const SHOW_PLAYS_FROM = 25;
+
 /** Most played first; among equals, most recently added first.
  *
  *  The date only decides ties, which in practice means it decides the order of

@@ -233,6 +233,23 @@ test.describe('play counts', () => {
       }
     });
 
+  test('a count is shown only once it argues for the game', async ({ page }) => {
+    // Counts are supplied here rather than recorded, so this says nothing
+    // about the live tally and changes nothing on the server.
+    const [below, at] = [GAMES[0], GAMES[1]];
+    await page.route('**/api/counts', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ [below.id]: 24, [at.id]: 25 }),
+    }));
+    await page.goto('/index.html');
+    const card = (g) => page.locator('.game-card', { hasText: g.title });
+    await expect(card(at).locator('.game-plays')).toHaveText('25 plays');
+    // 24 is a real count that still ranks; it just does not announce itself,
+    // because "24 plays" is a weaker argument than saying nothing.
+    await expect(card(below).locator('.game-plays')).toHaveCount(0);
+  });
+
   test('a game that does not exist cannot be counted', async ({ page }) => {
     await page.goto('/index.html');
     // Refused rather than accepted, or the table fills with rows for games
