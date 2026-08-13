@@ -20,6 +20,31 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY provider_account (provider, provider_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- How often each game has been played through to a verdict, which is what the
+-- homepage orders its cards by. One row per game, one integer each: this knows
+-- nothing about who played, only that somebody did.
+CREATE TABLE IF NOT EXISTS plays (
+  game_id    VARCHAR(32) NOT NULL,
+  n          INT UNSIGNED NOT NULL DEFAULT 0,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (game_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Throttling for the one endpoint anybody can post to, without keeping a
+-- record of who posted.
+--
+-- The key is a salted hash of the address and the minute, never the address
+-- itself, and the row is dead within two minutes. Salted because an unsalted
+-- hash of an IPv4 address is not a protection at all — the whole space can be
+-- walked in seconds — so it would amount to storing the address in a costume.
+CREATE TABLE IF NOT EXISTS rate_buckets (
+  bucket     CHAR(64) NOT NULL,
+  n          INT UNSIGNED NOT NULL DEFAULT 0,
+  expires_at DATETIME NOT NULL,
+  PRIMARY KEY (bucket),
+  KEY expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS bests (
   user_id    INT UNSIGNED NOT NULL,
   -- "<game>.<level>", the same name the browser has always used, so a record

@@ -93,8 +93,14 @@ function current_user(): ?array
     return $st->fetch() ?: null;
 }
 
-/** Answer with JSON, and never let a proxy or browser keep it. */
-function reply(array $body, int $status = 200): void
+/** Answer with JSON, and never let a proxy or browser keep it.
+ *
+ *  Takes an object as well as an array because some replies are a map whose
+ *  keys are data — the play counts are keyed by game id — and an empty PHP
+ *  array encodes as `[]`, which is the wrong shape for something a caller
+ *  reads by key.
+ */
+function reply(array|object $body, int $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');

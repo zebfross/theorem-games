@@ -9,10 +9,17 @@
  * homepage still renders in the registry's order. Nothing here is ever allowed
  * to throw into the page.
  *
- * ENDPOINT is deliberately empty in the repo. A clone runs with local counts
- * and no network traffic at all; publishing a shared counter is a decision the
- * person deploying makes, not one that ships turned on. tools/counter-worker.js
- * is a counter small enough to read in one sitting if you want one.
+ * ENDPOINT is this site's own backend, which is a path rather than a host: the
+ * counter is two routes in api/, so a play is counted by the same origin that
+ * served the page. No third party sees it, and there is nothing to configure.
+ *
+ * This was empty for a long time, on the reasoning that a clone should send
+ * nothing anywhere unless somebody decided otherwise. A relative path keeps
+ * that promise in the way that actually matters — a clone still contacts
+ * nobody but itself, and a clone with no PHP gets a 404, catches it, and falls
+ * back to local counts exactly as it did when this was blank.
+ * tools/counter-worker.js is still here as the standalone alternative, for a
+ * deployment with no server of its own.
  *
  * WHAT COUNTS AS A PLAY: one per level played through to a verdict. Somebody
  * who works through thirty pinning puzzles counts thirty times, because they
@@ -32,7 +39,7 @@
  * answer: a place a new game is seen that popularity cannot push it out of.
  */
 
-const ENDPOINT = '';           // e.g. 'https://plays.example.workers.dev'
+const ENDPOINT = '/api';       // this site's own backend; see api/
 const LOCAL = 'plays.local';
 const TIMEOUT = 2500;
 

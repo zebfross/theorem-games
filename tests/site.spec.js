@@ -209,6 +209,40 @@ test.describe('accounts', () => {
   });
 });
 
+test.describe('play counts', () => {
+  // These run against the live site too, so nothing here records a play: an
+  // assertion that inflated a real game's count would be a test changing the
+  // thing it measures. The counting path itself is exercised server-side by
+  // a self-check that cleans up after itself.
+
+  test('counts are a map, and a map is what the homepage reads',
+    async ({ page }) => {
+      await page.goto('/index.html');
+      const got = await page.evaluate(async () => {
+        const res = await fetch('/api/counts');
+        return { status: res.status, body: await res.json() };
+      });
+      expect(got.status).toBe(200);
+      // An object, never a list. home.js looks counts up by game id, and a
+      // field that is sometimes [] silently reads as every game on zero.
+      expect(Array.isArray(got.body)).toBe(false);
+      expect(typeof got.body).toBe('object');
+      for (const [id, n] of Object.entries(got.body)) {
+        expect(GAMES.some((g) => g.id === id)).toBe(true);
+        expect(Number.isInteger(n)).toBe(true);
+      }
+    });
+
+  test('a game that does not exist cannot be counted', async ({ page }) => {
+    await page.goto('/index.html');
+    // Refused rather than accepted, or the table fills with rows for games
+    // that were never shipped, and anybody could invent one.
+    const status = await page.evaluate(async () =>
+      (await fetch('/api/play/not-a-real-game', { method: 'POST' })).status);
+    expect(status).toBe(404);
+  });
+});
+
 test.describe('the icons', () => {
   // A root-level asset is a particular deploy hazard here, because the rsync
   // sends a named list of paths rather than the whole tree: a file that works

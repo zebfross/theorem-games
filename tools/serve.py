@@ -21,8 +21,19 @@ import json
 import os
 import socketserver
 import sys
+from urllib.parse import unquote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@functools.lru_cache(maxsize=1)
+def _game_ids():
+    """The ids the site ships, as the real backend reads them."""
+    try:
+        with open(os.path.join(ROOT, 'games', 'registry.json')) as f:
+            return {g['id'] for g in json.load(f).get('games', []) if 'id' in g}
+    except OSError:
+        return set()
 
 
 class NoCache(http.server.SimpleHTTPRequestHandler):
@@ -39,6 +50,20 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
                 else (401, {'error': 'not signed in'})
         if path == '/api/logout':
             return 200, {'user': None}
+        if path == '/api/counts':
+            # A shared counter that has seen nothing, which is the shape the
+            # homepage has to handle anyway on a freshly migrated database.
+            return 200, {}
+        if path.startswith('/api/play/'):
+            if self.command != 'POST':
+                return 404, {'error': 'no such endpoint'}
+            # The real backend checks the id against the registry rather than
+            # against a pattern, so this does too — a stand-in that accepts
+            # what production refuses is a stand-in that hides a bug.
+            game = unquote(path[len('/api/play/'):])
+            if game not in _game_ids():
+                return 404, {'error': 'no such game'}
+            return 200, {'ok': True}
         if path.startswith('/api/'):
             return 404, {'error': 'no such endpoint'}
         return None

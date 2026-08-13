@@ -51,6 +51,14 @@ switch ("$method $route") {
 
     case 'POST progress':
         reply(['bests' => (object) merge_progress()]);
+
+    case 'GET counts':
+        reply((object) read_counts());
+}
+
+// The game id is part of the path, so this one cannot be a switch arm.
+if ($method === 'POST' && str_starts_with($route, 'play/')) {
+    record_play(rawurldecode(substr($route, strlen('play/'))));
 }
 
 reply(['error' => 'no such endpoint'], 404);
@@ -182,6 +190,128 @@ function github_get(string $url, string $token): array
     $body = curl_exec($ch);
     curl_close($ch);
     return is_string($body) ? (json_decode($body, true) ?: []) : [];
+}
+
+
+/* ---------- play counts ---------- */
+
+/**
+ * What the homepage orders its cards by. One integer per game, and nothing
+ * else — this endpoint has no idea whether anybody is signed in, and the
+ * counting path never looks.
+ *
+ * Answers an empty map rather than an error when the database is unreachable,
+ * because the homepage treats "no counts" as "leave the gallery in registry
+ * order", which is the right thing to show and not worth an error for.
+ */
+function read_counts(): array
+{
+    $pdo = db();
+    if (!$pdo) {
+        return [];
+    }
+    $out = [];
+    foreach ($pdo->query('SELECT game_id, n FROM plays') as $row) {
+        $out[$row['game_id']] = (int) $row['n'];
+    }
+    return $out;
+}
+
+/** The ids the site actually ships, read from the registry the page uses.
+ *
+ *  A pattern match would let anything id-shaped create a row, and the table
+ *  would slowly fill with games that do not exist. The registry is the real
+ *  list and the server can simply read it, so it does.
+ */
+function known_games(): array
+{
+    static $ids = null;
+    if ($ids !== null) {
+        return $ids;
+    }
+    $ids = [];
+    $raw = @file_get_contents(__DIR__ . '/../games/registry.json');
+    $data = $raw === false ? null : json_decode($raw, true);
+    foreach ($data['games'] ?? [] as $g) {
+        if (isset($g['id']) && is_string($g['id'])) {
+            $ids[$g['id']] = true;
+        }
+    }
+    return $ids;
+}
+
+function record_play(string $id): void
+{
+    if (!isset(known_games()[$id])) {
+        reply(['error' => 'no such game'], 404);
+    }
+    $pdo = db();
+    if (!$pdo) {
+        // Nothing to record into, and nothing the player needs to know: their
+        // browser keeps its own tally either way.
+        reply(['ok' => false], 503);
+    }
+    if (rate_limited($pdo)) {
+        reply(['ok' => false], 429);
+    }
+    $pdo->prepare(
+        'INSERT INTO plays (game_id, n, updated_at) VALUES (?, 1, ?)
+         ON DUPLICATE KEY UPDATE n = n + 1, updated_at = VALUES(updated_at)'
+    )->execute([$id, gmdate('Y-m-d H:i:s')]);
+    reply(['ok' => true]);
+}
+
+/**
+ * A ceiling on how fast one address can post plays, without keeping a record
+ * of the address.
+ *
+ * Generous on purpose: a play is one level rather than one visit, and somebody
+ * enjoying a game finishes several a minute. Throttling that would quietly
+ * under-count exactly the players the number exists to notice.
+ *
+ * This turns away the casual case and nothing more. Stopping somebody
+ * determined to inflate a number needs something that can tell people apart,
+ * which is the thing this is built not to do. Ranking a handful of games is
+ * not worth that trade, so the counts are a weathervane and the homepage says
+ * as much by also carrying a recently-added shelf that popularity cannot
+ * push anything off.
+ */
+function rate_limited(PDO $pdo): bool
+{
+    $window = 60;
+    $allowed = 90;
+    // REMOTE_ADDR only. X-Forwarded-For is written by the client on a host
+    // like this one, so trusting it would let anyone past the limit by
+    // inventing a new address per request.
+    $who = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $bucket = hash('sha256', rate_salt() . '|' . intdiv(time(), $window) . '|' . $who);
+    $now = time();
+
+    $pdo->prepare('DELETE FROM rate_buckets WHERE expires_at < ?')
+        ->execute([gmdate('Y-m-d H:i:s', $now)]);
+    $pdo->prepare(
+        'INSERT INTO rate_buckets (bucket, n, expires_at) VALUES (?, 1, ?)
+         ON DUPLICATE KEY UPDATE n = n + 1'
+    )->execute([$bucket, gmdate('Y-m-d H:i:s', $now + $window * 2)]);
+
+    $st = $pdo->prepare('SELECT n FROM rate_buckets WHERE bucket = ?');
+    $st->execute([$bucket]);
+    return ((int) $st->fetchColumn()) > $allowed;
+}
+
+/** Unguessable and stable, so the hash above is not an address in a costume. */
+function rate_salt(): string
+{
+    $cfg = config();
+    $salt = $cfg['plays_salt'] ?? '';
+    if (is_string($salt) && $salt !== '') {
+        return $salt;
+    }
+    // Nothing configured: derive from something already secret and already on
+    // this machine, with a domain separator so it cannot collide with any
+    // other use of the same material. Setting plays_salt in the config is
+    // better, and this means it is optional rather than a thing to forget.
+    return hash('sha256', 'theorem.games/plays|' . ($cfg['db']['pass'] ?? ''));
 }
 
 
