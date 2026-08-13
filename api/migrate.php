@@ -32,7 +32,12 @@ foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
     $pdo->exec($stmt);
 }
 
-foreach (['users', 'bests'] as $table) {
+// Report whatever the schema actually made, rather than a list kept by hand.
+// Two tables were added and this went on printing the original two, so the
+// run that created them looked identical to a run that did nothing — a
+// migration tool quietly under-reporting the migration.
+foreach ($pdo->query('SHOW TABLES') as $row) {
+    $table = array_values($row)[0];
     $n = $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
     echo "  $table: ready, $n rows\n";
 }

@@ -210,11 +210,21 @@ function read_counts(): array
     if (!$pdo) {
         return [];
     }
-    $out = [];
-    foreach ($pdo->query('SELECT game_id, n FROM plays') as $row) {
-        $out[$row['game_id']] = (int) $row['n'];
+    try {
+        $out = [];
+        foreach ($pdo->query('SELECT game_id, n FROM plays') as $row) {
+            $out[$row['game_id']] = (int) $row['n'];
+        }
+        return $out;
+    } catch (Throwable $e) {
+        // Every other failure here is already soft — no config, no database,
+        // no account all answer normally — and this one was not, so a deploy
+        // that landed before its migration turned a homepage request into a
+        // 500. There is a correct answer available when the query fails, and
+        // it is the same one a database with nothing in it gives.
+        error_log('theorem.games: cannot read play counts: ' . $e->getMessage());
+        return [];
     }
-    return $out;
 }
 
 /** The ids the site actually ships, read from the registry the page uses.
@@ -251,13 +261,21 @@ function record_play(string $id): void
         // browser keeps its own tally either way.
         reply(['ok' => false], 503);
     }
-    if (rate_limited($pdo)) {
-        reply(['ok' => false], 429);
+    try {
+        if (rate_limited($pdo)) {
+            reply(['ok' => false], 429);
+        }
+        $pdo->prepare(
+            'INSERT INTO plays (game_id, n, updated_at) VALUES (?, 1, ?)
+             ON DUPLICATE KEY UPDATE n = n + 1, updated_at = VALUES(updated_at)'
+        )->execute([$id, gmdate('Y-m-d H:i:s')]);
+    } catch (Throwable $e) {
+        // Nobody is waiting on this and the browser keeps its own tally, so a
+        // counter that cannot write is worth a line in the log and nothing on
+        // the player's screen.
+        error_log('theorem.games: cannot record a play: ' . $e->getMessage());
+        reply(['ok' => false], 503);
     }
-    $pdo->prepare(
-        'INSERT INTO plays (game_id, n, updated_at) VALUES (?, 1, ?)
-         ON DUPLICATE KEY UPDATE n = n + 1, updated_at = VALUES(updated_at)'
-    )->execute([$id, gmdate('Y-m-d H:i:s')]);
     reply(['ok' => true]);
 }
 

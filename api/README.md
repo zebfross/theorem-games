@@ -90,6 +90,13 @@ cd ~/theorem.games && php api/migrate.php
 Safe to run repeatedly. It refuses to run over the web — a migration endpoint
 anybody can reach is a migration anybody can run.
 
+**A schema change ships before its migration**, because the deploy copies files
+and this is run by hand afterwards. That window is real and was walked into
+once: the play counter went live while its table did not exist. Endpoints
+degrade rather than fail across it — a query that cannot run answers the way an
+empty database answers — so the gap costs a line in the error log and nothing
+on anybody's screen. Run the migration promptly anyway.
+
 ## What is checked
 
 `tests/site.spec.js` asserts the contract against both the real PHP and the
