@@ -447,3 +447,90 @@ test.describe('Route inspection, played', () => {
     expect(errors).toEqual([]);
   });
 });
+
+/* Chomp, played to the end on every bar.
+ *
+ * The same reasoning as the walk above, for the game where it matters most.
+ * Chomp's levels ship three tables that have to agree with each other — the
+ * opponent's reply, the count of moves still needed, and a move that achieves
+ * that count — and nothing in the browser recomputes any of them. A table that
+ * disagreed with the other two would look completely fine until somebody
+ * played the level and could not reach par.
+ *
+ * Following `best` from the live position, rather than from a line worked out
+ * up front, is the point: it means the reply table is being exercised as the
+ * opponent, not just read.
+ */
+test.describe('Chomp, played', () => {
+  test('every bar is won by its shipped line, in exactly par', async ({ page }) => {
+    test.slow();
+    const errors = watchForErrors(page);
+    await page.goto('/play.html?game=chomp');
+    await page.waitForSelector('#board *', { state: 'attached' });
+
+    const ids = await page.evaluate(
+      () => window.theoremGames.index.levels.map((l) => l.id));
+
+    for (const want of ids) {
+      await page.evaluate(() => { window.theoremGames.play.__before = true; });
+      await page.locator('#browse').click();
+      await page.locator('#picker .chip').nth(ids.indexOf(want)).click();
+      await page.waitForFunction(
+        (level) => window.theoremGames.level.id === level
+          && !window.theoremGames.play.__before, want);
+
+      const par = await page.evaluate(() => window.theoremGames.level.par);
+      let clicks = 0;
+      for (;;) {
+        const step = await page.evaluate(() => {
+          const { level, play } = window.theoremGames;
+          if (play.done) return null;
+          const mv = level.best[play.pos.join('')];
+          if (mv === undefined) return { stuck: play.pos.join('') };
+          const svg = document.getElementById('board');
+          const pt = svg.createSVGPoint();
+          pt.x = Number(mv[1]) * 100 + 50;
+          pt.y = (level.rows - 1 - Number(mv[0])) * 100 + 50;
+          const s = pt.matrixTransform(svg.getScreenCTM());
+          return { x: s.x, y: s.y };
+        });
+        if (step === null) break;
+        // Following the winning line must never arrive somewhere with no
+        // winning move; if it does, the three tables disagree.
+        expect(step.stuck, `${want} lost the win at ${step.stuck}`).toBeUndefined();
+        await page.mouse.click(step.x, step.y);
+        clicks += 1;
+        expect(clicks, `${want} overran par`).toBeLessThanOrEqual(par);
+      }
+
+      await expect(page.locator('#verdict'), `${want} should finish`).toBeVisible();
+      await expect(page.locator('#verdict-title'), `${want} should be perfect`)
+        .toHaveText('Perfect.');
+      const moves = await page.evaluate(() => window.theoremGames.play.moves);
+      expect(moves, `${want} should win in par`).toBe(par);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test('eating the poison loses, which is the only rule', async ({ page }) => {
+    // The fail state, asserted rather than assumed. A theorem game that cannot
+    // be lost is not a game — that is what removed Untangling — and here the
+    // losing move is always legal and always available, so it is worth
+    // checking it actually ends the level rather than being ignored.
+    const errors = watchForErrors(page);
+    await page.goto('/play.html?game=chomp');
+    await page.waitForSelector('#board .chomp-choc', { state: 'attached' });
+    const at = await page.evaluate(() => {
+      const svg = document.getElementById('board');
+      const pt = svg.createSVGPoint();
+      pt.x = 50;
+      pt.y = (window.theoremGames.level.rows - 1) * 100 + 50;
+      const q = pt.matrixTransform(svg.getScreenCTM());
+      return { x: q.x, y: q.y };
+    });
+    await page.mouse.click(at.x, at.y);
+    await expect(page.locator('#verdict')).toBeVisible();
+    await expect(page.locator('#verdict-title')).toHaveText('You have to eat it.');
+    expect(errors).toEqual([]);
+  });
+});

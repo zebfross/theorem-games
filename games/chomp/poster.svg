@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img"
+     aria-label="A chocolate bar with a bite taken from the top right and a poisoned corner">
+<title>Chomp</title>
+<!-- A bar mid-game: the top-right quadrant already gone, which is the one
+     shape every move in this game makes. The poisoned corner sits bottom
+     left, still there, still waiting for somebody to run out of alternatives. -->
+<g stroke-linejoin="round">
+  <!-- rows from the bottom: widths 6, 6, 4, 2 -->
+  <g fill="#6f4426" stroke="#8f5c34" stroke-width="2.5">
+    <rect x="46"  y="118" width="38" height="38" rx="6"/>
+    <rect x="88"  y="118" width="38" height="38" rx="6"/>
+    <rect x="130" y="118" width="38" height="38" rx="6"/>
+    <rect x="172" y="118" width="38" height="38" rx="6"/>
+    <rect x="214" y="118" width="38" height="38" rx="6"/>
+
+    <rect x="46"  y="76" width="38" height="38" rx="6"/>
+    <rect x="88"  y="76" width="38" height="38" rx="6"/>
+    <rect x="130" y="76" width="38" height="38" rx="6"/>
+    <rect x="172" y="76" width="38" height="38" rx="6"/>
+    <rect x="214" y="76" width="38" height="38" rx="6"/>
+
+    <rect x="46"  y="34" width="38" height="38" rx="6"/>
+    <rect x="88"  y="34" width="38" height="38" rx="6"/>
+    <rect x="130" y="34" width="38" height="38" rx="6"/>
+  </g>
+
+  <!-- what a single move took: everything up and to the right of one square -->
+  <g fill="none" stroke="#a8b8ae" stroke-width="2" stroke-dasharray="6 5" opacity="0.5">
+    <rect x="172" y="34" width="38" height="38" rx="6"/>
+    <rect x="214" y="34" width="38" height="38" rx="6"/>
+  </g>
+
+  <!-- the poisoned corner -->
+  <rect x="4" y="118" width="38" height="38" rx="6"
+        fill="#7a2b28" stroke="#ef7a6a" stroke-width="3"/>
+  <circle cx="23" cy="137" r="9.5" fill="none" stroke="#ef7a6a" stroke-width="2.6"/>
+  <circle cx="19.4" cy="135" r="2.3" fill="#ef7a6a"/>
+  <circle cx="26.6" cy="135" r="2.3" fill="#ef7a6a"/>
+
+  <!-- the rest of the bottom two rows, above the poison -->
+  <g fill="#6f4426" stroke="#8f5c34" stroke-width="2.5">
+    <rect x="4" y="76" width="38" height="38" rx="6"/>
+    <rect x="4" y="34" width="38" height="38" rx="6"/>
+  </g>
+</g>
+</svg>

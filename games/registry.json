@@ -1,76 +1,84 @@
 {
-  "games": [
-    {
-      "id": "pinning",
-      "title": "Pinning",
-      "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
-      "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)",
-      "levels": 1074,
-      "added": "2026-08-01"
-    },
-    {
-      "id": "maxflow",
-      "title": "Max-flow min-cut",
-      "blurb": "Cut pipes until no water reaches the sink, spending as little as you can.",
-      "theorem": "Menger; Ford & Fulkerson, max-flow min-cut",
-      "levels": 117,
-      "added": "2026-08-01"
-    },
-    {
-      "id": "gallery",
-      "title": "Art gallery",
-      "blurb": "Station guards on the corners of a room until every part of it is watched.",
-      "theorem": "Chvátal, with Fisk's proof — ⌊n/3⌋ guards always suffice",
-      "levels": 114,
-      "added": "2026-08-01"
-    },
-    {
-      "id": "weighing",
-      "title": "Coin weighing",
-      "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
-      "theorem": "The counting bound — k weighings separate at most 3ᵏ cases",
-      "levels": 24,
-      "added": "2026-08-03"
-    },
-    {
-      "id": "marriage",
-      "title": "Hall’s marriage theorem",
-      "blurb": "Give every applicant a job they can do — and when you cannot, prove it.",
-      "theorem": "Hall; König — a matching exists unless some group shares too few jobs",
-      "levels": 41,
-      "added": "2026-08-03"
-    },
-    {
-      "id": "soldiers",
-      "title": "Conway’s soldiers",
-      "blurb": "Jump soldiers over each other to cross a line — there is a row nobody reaches.",
-      "theorem": "Conway — 2, 4, 8, 20 soldiers reach rows 1 to 4, and row 5 is impossible",
-      "levels": 4,
-      "added": "2026-08-03"
-    },
-    {
-      "id": "grundy",
-      "title": "Sprague–Grundy",
-      "blurb": "Four games that look nothing alike. Every one of them is Nim.",
-      "theorem": "Sprague; Grundy, every impartial game is a Nim heap",
-      "levels": 12,
-      "added": "2026-08-05"
-    },
-    {
-      "id": "postman",
-      "title": "Route inspection",
-      "blurb": "Walk every street and come home, repeating as little as you can.",
-      "theorem": "Guan; Edmonds & Johnson — the cheapest repeat is a matching on the odd corners",
-      "levels": 9,
-      "added": "2026-08-06"
-    },
-    {
-      "id": "sorting",
-      "title": "Sorting networks",
-      "blurb": "Build a network that sorts every input, with as few comparators as you can.",
-      "theorem": "The 0-1 principle — a network sorts everything iff it sorts every string of noughts and ones",
-      "levels": 10,
-      "added": "2026-08-06"
-    }
-  ]
+ "games": [
+  {
+   "id": "pinning",
+   "title": "Pinning",
+   "blurb": "Pin a loop of rope so that pulling it tight cannot untangle it.",
+   "theorem": "Simon & Stucky, the pinning ideal of a multiloop (arXiv:2405.16216)",
+   "levels": 1074,
+   "added": "2026-08-01"
+  },
+  {
+   "id": "maxflow",
+   "title": "Max-flow min-cut",
+   "blurb": "Cut pipes until no water reaches the sink, spending as little as you can.",
+   "theorem": "Menger; Ford & Fulkerson, max-flow min-cut",
+   "levels": 117,
+   "added": "2026-08-01"
+  },
+  {
+   "id": "gallery",
+   "title": "Art gallery",
+   "blurb": "Station guards on the corners of a room until every part of it is watched.",
+   "theorem": "Chv\u00e1tal, with Fisk's proof \u2014 \u230an/3\u230b guards always suffice",
+   "levels": 114,
+   "added": "2026-08-01"
+  },
+  {
+   "id": "weighing",
+   "title": "Coin weighing",
+   "blurb": "Find the fake coin with a balance, against scales that answer as unhelpfully as honesty allows.",
+   "theorem": "The counting bound \u2014 k weighings separate at most 3\u1d4f cases",
+   "levels": 24,
+   "added": "2026-08-03"
+  },
+  {
+   "id": "marriage",
+   "title": "Hall\u2019s marriage theorem",
+   "blurb": "Give every applicant a job they can do \u2014 and when you cannot, prove it.",
+   "theorem": "Hall; K\u00f6nig \u2014 a matching exists unless some group shares too few jobs",
+   "levels": 41,
+   "added": "2026-08-03"
+  },
+  {
+   "id": "soldiers",
+   "title": "Conway\u2019s soldiers",
+   "blurb": "Jump soldiers over each other to cross a line \u2014 there is a row nobody reaches.",
+   "theorem": "Conway \u2014 2, 4, 8, 20 soldiers reach rows 1 to 4, and row 5 is impossible",
+   "levels": 4,
+   "added": "2026-08-03"
+  },
+  {
+   "id": "grundy",
+   "title": "Sprague\u2013Grundy",
+   "blurb": "Four games that look nothing alike. Every one of them is Nim.",
+   "theorem": "Sprague; Grundy, every impartial game is a Nim heap",
+   "levels": 12,
+   "added": "2026-08-05"
+  },
+  {
+   "id": "postman",
+   "title": "Route inspection",
+   "blurb": "Walk every street and come home, repeating as little as you can.",
+   "theorem": "Guan; Edmonds & Johnson \u2014 the cheapest repeat is a matching on the odd corners",
+   "levels": 9,
+   "added": "2026-08-06"
+  },
+  {
+   "id": "sorting",
+   "title": "Sorting networks",
+   "blurb": "Build a network that sorts every input, with as few comparators as you can.",
+   "theorem": "The 0-1 principle \u2014 a network sorts everything iff it sorts every string of noughts and ones",
+   "levels": 10,
+   "added": "2026-08-06"
+  },
+  {
+   "id": "chomp",
+   "title": "Chomp",
+   "blurb": "Eat the chocolate. Leave the poisoned corner for them.",
+   "theorem": "Strategy stealing \u2014 the first player wins every rectangle, and the proof will not say how",
+   "levels": 10,
+   "added": "2026-08-14"
+  }
+ ]
 }

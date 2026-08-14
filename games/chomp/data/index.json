@@ -1,0 +1,86 @@
+{
+ "count": 10,
+ "note": "Every bar here is a rectangle, so every one of them is a win for whoever moves first. Strategy stealing proves that and says nothing about which move does it.",
+ "levels": [
+  {
+   "id": "2x3",
+   "rows": 2,
+   "cols": 3,
+   "par": 3,
+   "tag": "Two rows",
+   "chip": "2\u00d73"
+  },
+  {
+   "id": "2x5",
+   "rows": 2,
+   "cols": 5,
+   "par": 5,
+   "tag": "Two rows",
+   "chip": "2\u00d75"
+  },
+  {
+   "id": "2x7",
+   "rows": 2,
+   "cols": 7,
+   "par": 7,
+   "tag": "Two rows",
+   "chip": "2\u00d77"
+  },
+  {
+   "id": "3x4",
+   "rows": 3,
+   "cols": 4,
+   "par": 4,
+   "tag": "Three rows",
+   "chip": "3\u00d74"
+  },
+  {
+   "id": "3x7",
+   "rows": 3,
+   "cols": 7,
+   "par": 6,
+   "tag": "Three rows",
+   "chip": "3\u00d77"
+  },
+  {
+   "id": "4x5",
+   "rows": 4,
+   "cols": 5,
+   "par": 5,
+   "tag": "Four rows",
+   "chip": "4\u00d75"
+  },
+  {
+   "id": "4x7",
+   "rows": 4,
+   "cols": 7,
+   "par": 6,
+   "tag": "Four rows",
+   "chip": "4\u00d77"
+  },
+  {
+   "id": "5x5",
+   "rows": 5,
+   "cols": 5,
+   "par": 5,
+   "tag": "Five rows",
+   "chip": "5\u00d75"
+  },
+  {
+   "id": "5x7",
+   "rows": 5,
+   "cols": 7,
+   "par": 6,
+   "tag": "Five rows",
+   "chip": "5\u00d77"
+  },
+  {
+   "id": "6x7",
+   "rows": 6,
+   "cols": 7,
+   "par": 9,
+   "tag": "Six rows",
+   "chip": "6\u00d77"
+  }
+ ]
+}

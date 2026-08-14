@@ -1,0 +1,59 @@
+/* Chomp. Every selector is scoped to #board: this file is loaded into the whole
+   page, so an unscoped class here would reach the engine's own furniture and
+   quietly restyle it. Two games have already done that by accident. */
+
+#board .chomp-choc {
+  fill: #6f4426;
+  stroke: #8f5c34;
+  stroke-width: 3;
+}
+
+/* The moulded panel inside each square. Lighter at this size than it looks —
+   the squares are small on a six by seven bar and a strong facet turns the
+   whole board into noise. */
+#board .chomp-facet {
+  fill: none;
+  stroke: #9c6a3e;
+  stroke-width: 2.5;
+  opacity: 0.55;
+}
+
+#board .chomp-square { cursor: pointer; }
+
+#board .chomp-poison {
+  fill: #7a2b28;
+  stroke: var(--bad);
+  stroke-width: 3.5;
+}
+
+#board .chomp-skull {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+#board .chomp-eye { fill: var(--bad); }
+
+#board .chomp-jaw {
+  stroke: var(--bad);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+/* What they just took. Left as an outline until the player moves again, so a
+   reply that swallows half the bar can actually be read. */
+#board .chomp-gone {
+  fill: none;
+  stroke: var(--ink-dim);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+  opacity: 0.65;
+}
+
+/* The square a hint has given away. */
+#board .chomp-lit {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 5;
+}
