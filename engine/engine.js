@@ -340,6 +340,15 @@ function finishRun() {
     ? app.game.solutions.count(app.level) : 0;
   el('alts').hidden = alts < 2;
 
+  // Undo, offered again here because the row it normally lives in is hidden
+  // the moment a level ends — and a game played move by move ends on the move
+  // that ended it, which is the single move most worth taking back. `status()`
+  // has always enabled the button in the result phase for exactly that reason;
+  // the row around it disappearing is what made that unreachable, so a loss
+  // left the player with "Try again" and nothing between it and starting over.
+  el('undo-result').hidden = !app.game.undo
+    || !(app.game.undoable ? app.game.undoable(app.level, app.play) : true);
+
   const range = el('scrub-range');
   range.max = String(Math.max(0, app.frames.length - 1));
   range.value = range.max;
@@ -531,6 +540,7 @@ async function boot() {
   el('again').addEventListener('click', () => resetLevel(true));
   el('stuck').addEventListener('click', nudge);
   el('stuck-result').addEventListener('click', nudge);
+  el('undo-result').addEventListener('click', undoMove);
   el('alts').addEventListener('click', browseSolutions);
   el('next').addEventListener('click', nextLevel);
   el('scrub-range').addEventListener('input', (ev) => scrubTo(Number(ev.target.value)));

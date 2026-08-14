@@ -145,8 +145,13 @@ test.describe('the homepage', () => {
     await page.goto('/index.html');
     const fresh = page.locator('#fresh-grid h2');
     const want = Math.min(3, GAMES.filter((g) => g.added).length);
-    expect(await fresh.count(),
-      'the newest shelf should not be nearly empty').toBeGreaterThanOrEqual(want);
+    // Polled, not counted once. The shelf is built by home.js after the page
+    // loads, so a bare count() races it — and reads a half-built grid only
+    // when the machine is busy, which meant this passed alone and failed in
+    // the full suite. The assertion was right; the waiting was missing.
+    await expect.poll(() => fresh.count(),
+      { message: 'the newest shelf should not be nearly empty' })
+      .toBeGreaterThanOrEqual(want);
     // And everything on it must be a real game, not a heading with nothing under it.
     const titles = await fresh.allTextContents();
     for (const t of titles) expect(GAMES.map((g) => g.title)).toContain(t);
@@ -531,6 +536,52 @@ test.describe('Chomp, played', () => {
     await page.mouse.click(at.x, at.y);
     await expect(page.locator('#verdict')).toBeVisible();
     await expect(page.locator('#verdict-title')).toHaveText('You have to eat it.');
+    expect(errors).toEqual([]);
+  });
+
+  test('a lost level can be taken back and carried on with', async ({ page }) => {
+    // Engine behaviour rather than Chomp's, checked here because Chomp is
+    // where losing is a single click. #controls is hidden the moment a level
+    // ends, so a game played move by move lost the one control that matters
+    // most at that moment — the move worth taking back is the move that just
+    // ended things. The button was enabled the whole time; the row around it
+    // was gone. Five games offer undo and all of them had this.
+    const errors = watchForErrors(page);
+    await page.goto('/play.html?game=chomp');
+    await page.waitForSelector('#board .chomp-choc', { state: 'attached' });
+
+    const clickSquare = async (r, c) => {
+      const q = await page.evaluate(([row, col]) => {
+        const svg = document.getElementById('board');
+        const pt = svg.createSVGPoint();
+        pt.x = col * 100 + 50;
+        pt.y = (window.theoremGames.level.rows - 1 - row) * 100 + 50;
+        const s = pt.matrixTransform(svg.getScreenCTM());
+        return { x: s.x, y: s.y };
+      }, [r, c]);
+      await page.mouse.click(q.x, q.y);
+    };
+
+    await clickSquare(1, 2);
+    const before = await page.evaluate(() => window.theoremGames.play.pos.join(','));
+    await clickSquare(0, 0);
+    await expect(page.locator('#verdict')).toBeVisible();
+
+    // Visible, not merely present: the button was never hidden or disabled,
+    // it was inside a hidden row, so asserting on its own attributes would
+    // have passed throughout the bug.
+    await expect(page.locator('#undo-result')).toBeVisible();
+    await page.locator('#undo-result').click();
+
+    await expect(page.locator('#verdict')).toBeHidden();
+    const back = await page.evaluate(() => ({
+      pos: window.theoremGames.play.pos.join(','),
+      done: window.theoremGames.play.done,
+      phase: window.theoremGames.phase,
+    }));
+    expect(back.pos, 'the position before the fatal move').toBe(before);
+    expect(back.done).toBeNull();
+    expect(back.phase).toBe('placing');
     expect(errors).toEqual([]);
   });
 });
