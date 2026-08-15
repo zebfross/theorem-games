@@ -582,6 +582,22 @@ test.describe('Chomp, played', () => {
     expect(back.pos, 'the position before the fatal move').toBe(before);
     expect(back.done).toBeNull();
     expect(back.phase).toBe('placing');
+
+    // And the board is still usable, which the first version of this fix got
+    // wrong: it brought the player out of the verdict without bringing back
+    // the row the ordinary controls stand in, so undoing a loss left a board
+    // with no buttons on it whatever. Checking pos, done and phase sailed
+    // straight through that, because all three were correct.
+    await expect(page.locator('#controls')).toBeVisible();
+    await expect(page.locator('#undo')).toBeVisible();
+    await expect(page.locator('#clear')).toBeVisible();
+    await expect(page.locator('#stuck')).toBeVisible();
+
+    // Undoing twice is the whole point — a player who has just lost wants to
+    // walk back further than the move that lost it.
+    await page.locator('#undo').click();
+    await expect.poll(() => page.evaluate(
+      () => window.theoremGames.play.moves)).toBe(0);
     expect(errors).toEqual([]);
   });
 });

@@ -214,6 +214,13 @@ function undoMove() {
   app.phase = 'placing';
   el('verdict').hidden = true;
   el('alts').hidden = true;
+  // Everything finishRun() put away has to come back, not just the verdict.
+  // It hides the control row and may raise the scrub bar; undoing returns to
+  // placing, so both have to be undone too. Missing these left a board with
+  // no buttons at all — the verdict panel gone and the row it was standing in
+  // front of still hidden — which is a worse place to be than the loss was.
+  el('controls').hidden = false;
+  el('scrub').hidden = true;
   say('');
   draw();
   status();
