@@ -41,6 +41,26 @@ the verdict correct even when the animation misbehaves.
 If you cannot precompute, make sure your runtime check is *sound in the safe
 direction*: better to refuse to answer than to answer wrongly.
 
+## How a change reaches the site
+
+`main` is protected, and merging to it deploys to theorem.games automatically.
+So every change arrives by pull request, and a pull request needs all of:
+
+- the **`check`** job green — the same thing `npm run check` runs locally
+- an **approving review from a code owner**, and the branch up to date with main
+- conversations resolved, and **re-approval if you push after being approved**
+
+Fork, branch, open a pull request. A pull request from a fork runs the checks
+and nothing else: the deploy job is skipped for pull requests and the
+deployment secrets are unavailable to them, so no unreviewed change can reach
+the live site — not even one that edits the workflow that does the deploying.
+
+That last part is the reason review is not a formality here. A game is
+JavaScript served to every visitor from this site's own origin, on a site that
+now has accounts and a session cookie. There is no corner of this repository
+where an unreviewed change is harmless, which is why CODEOWNERS covers the
+whole tree rather than a list of sensitive paths.
+
 ## Verifying
 
 Before pushing, run exactly what CI runs:

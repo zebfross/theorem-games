@@ -1,0 +1,10 @@
+# Everything needs the owner's approval before it reaches main.
+#
+# This is what gives the branch rule its teeth: the rule asks for a review
+# from a code owner, and without this file there are no code owners, so any
+# approval from anybody would satisfy it.
+#
+# Deliberately the whole tree rather than a list of sensitive paths. A game is
+# JavaScript that runs on theorem.games for every visitor, so there is no
+# corner of this repository where an unreviewed change is harmless.
+* @zebfross
